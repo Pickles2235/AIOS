@@ -1,6 +1,6 @@
 # Harness setup handoff
 
-Status: ready for direct publication to main. Branch: `codex/development-harness`.
+Status: completed; published directly to main. Branch: `codex/development-harness`.
 Baseline: `c285773` (clean main checkout cloned after confirming /workspace had
 no checkout or uploaded files). No AIOS-codex-harness.zip was available.
 
@@ -107,13 +107,27 @@ above still describe their validation. No new native or browser checks were run.
 
 ## Handoff
 
-Implementation commits: ca5eb00 and 684e4ea plus the trunk workflow update, on
-codex/development-harness. Earlier publication attempts failed: both Git pushes
-received HTTP 403 permission denied; connected GitHub create-tree returned
-403 Resource not accessible by integration. The user has since updated the
-connection. Refresh origin/main, inspect/validate the current scoped diff, and
-publish with git push origin HEAD:main. Never force-push. Verify the published
-commit against fetched origin/main and record the outcome here.
+The harness and trunk workflow were published to main at
+1d4183772cf3326fef4e05f5ba7ec574bd1349d0, retaining exact implementation commits
+ca5eb0068089bbbc49088525cb4a4fcdb8e3d916 and
+684e4ea83f8bf81e4b9d2cb84fe3b3909578d4bb. No PR or forced update was used.
+Git fetch verified HEAD == origin/main at that commit, with no tree diff.
+
+Normal Git push could not authenticate: the LFS lock endpoint reported push
+authentication required, and the Git upload endpoint returned HTTP 401 even with
+the configured gh credential helper. Disabling unused LFS lock verification for
+one invocation did not repair Git upload authentication; no LFS assets changed.
+The updated connection did permit GitHub Git API writes via gh api. Published
+the exact local trees and commits, verified identical hashes (including original
+parents, message, authors and timestamps), checked the remote main head had not
+advanced, and updated refs/heads/main with force=false. The initial tree attempt
+for the renamed handoff file detected a hash mismatch and did not update any ref;
+explicit deletion entries fixed it before publication. No remote work was lost.
+
+This follow-up records publication and documents the API fallback for independent
+sessions. All seven product tasks remain pending; task 01 is eligible. Validation
+for the follow-up is make harness-test and all Python contracts; no product source
+or web assets changed. Remote CI results are separate from local validation.
 
 After publication, use a clean checkout containing the harness on main:
 

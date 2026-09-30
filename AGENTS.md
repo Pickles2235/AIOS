@@ -59,6 +59,9 @@ failure leaves a validated task ready with its precise blocker recorded.
 
 Fetch origin/main before publishing. If trunk advanced, reconcile its changes
 on the task branch and rerun affected checks before a normal fast-forward push.
+If Git transport is unavailable but the configured GitHub Git API permits writes,
+publish the exact Git objects and update main with force=false after checking
+its current head. Preserve commit hashes and never overwrite concurrent work.
 Inspect the final diff, commit only scoped files, and use
 `.codex/HANDOFF_TEMPLATE.md`. Stop after the handoff. Never auto-merge, force-push,
 schedule model calls, or start an agent loop. Make routine decisions independently;

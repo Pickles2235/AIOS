@@ -50,6 +50,7 @@ class QueueTests(unittest.TestCase):
         self.assertIn("Do not report unrun checks as passing", harness.prompt(tasks[0]))
         self.assertIn("git push origin HEAD:main", harness.prompt(tasks[0]))
         self.assertIn("completed only after verifying", harness.prompt(tasks[0]))
+        self.assertIn("update main with force=false", harness.prompt(tasks[0]))
         self.assertIn(".codex/HANDOFF_TEMPLATE.md", harness.prompt(tasks[0]))
         self.assertNotIn("open a draft PR", harness.prompt(tasks[0]))
 

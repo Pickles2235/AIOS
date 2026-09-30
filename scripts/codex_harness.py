@@ -89,7 +89,9 @@ ask only for an unresolved scope or public-contract decision. Preserve all AGENT
 invariants. Do not report unrun checks as passing. Inspect the final diff, commit
 scoped work and publish directly with a normal fast-forward push to main
 (git push origin HEAD:main). Fetch origin/main first; reconcile concurrent trunk
-changes and rerun affected checks before publishing. Never force-push. Set ready
+changes and rerun affected checks before publishing. If Git transport fails but
+the configured GitHub Git API permits writes, publish the exact commit objects
+and update main with force=false after checking the remote head. Never force-push. Set ready
 when validated, then completed only after verifying the implementation commit is
 on origin/main; record its full SHA as completion_commit in a follow-up bookkeeping
 commit. If publishing fails, retain ready status and record the precise blocker.

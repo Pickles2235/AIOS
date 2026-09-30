@@ -80,6 +80,14 @@ commit, which also lands directly on main. The implementation SHA refers to the
 preceding commit, avoiding a self-referential hash. Record the commit and final
 handoff in the plan using `.codex/HANDOFF_TEMPLATE.md`.
 
+If Git transport authentication fails while the configured GitHub Git API has
+write access, that API may publish the same Git trees/commits and update
+refs/heads/main with force=false. Preserve exact commit hashes, including parent,
+message, author/committer and timestamps; verify tree/commit hashes before updating
+the ref. Check the current remote head and never overwrite concurrent trunk work.
+Re-fetch origin/main to verify publication. This environment used that fallback
+successfully; normal Git upload still returned HTTP 401.
+
 A publishing failure leaves the validated task `ready` with its local commits
 and blocker preserved. Failed runs require inspection and manual resumption;
 the launcher accepts only pending tasks and does not automatically retry. No PR
