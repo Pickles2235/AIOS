@@ -111,9 +111,9 @@
       "dependencies": [
         "03-knowledge-instance"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/plans/04-mirror-onboarding.md",
-      "completion_commit": null
+      "completion_commit": "605ed162c9728f36f6de9f2efc97674240319fb7"
     },
     {
       "id": "05-local-snapshots",

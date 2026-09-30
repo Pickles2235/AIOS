@@ -1,6 +1,6 @@
 # 04-mirror-onboarding: Add first-run onboarding for mirrored repositories
 
-Status: ready. See the queue for authoritative status and dependencies.
+Status: completed. See the queue for authoritative status and dependencies.
 
 ## Baseline and resumption
 
@@ -83,3 +83,9 @@ Actual Linux validation:
   and -b; both fingerprints equal
   f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea.
 - git diff --check passed. Native macOS/private-estate verification not claimed.
+
+Implementation commit: 605ed162c9728f36f6de9f2efc97674240319fb7.
+Verified on fetched origin/main after exact-object GitHub API publication with
+force=false. Completed status recorded in this follow-up bookkeeping commit.
+No remaining blocker for this task. User requested the whole queue; continue
+with the next eligible task after verifying this bookkeeping publication.
