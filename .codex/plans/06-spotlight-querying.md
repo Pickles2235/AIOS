@@ -1,6 +1,6 @@
 # 06-spotlight-querying: Complete Spotlight-first querying and truthful knowledge-cloud feedback
 
-Status: ready. See the queue for authoritative status and dependencies.
+Status: completed. See the queue for authoritative status and dependencies.
 
 ## Baseline and resumption
 
@@ -86,3 +86,9 @@ Remote native run 36760467766 (task 05 bookkeeping) exposed macOS temp-directory
 alias fixture failures. Repairing and verifying native fixtures belongs to task 07;
 Linux gates do not establish manual macOS UX or private-estate acceptance. No such
 claim is made here. User authorized continuation through the entire task queue.
+
+Implementation commit: 8211189af380fde62009e91decbba9fdc6086f07.
+Verified on fetched origin/main after exact-object GitHub API publication with
+force=false. Completed status recorded in this follow-up bookkeeping commit.
+No remaining blocker for this task. User requested the whole queue; continue
+with the next eligible task after verifying this bookkeeping publication.

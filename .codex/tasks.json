@@ -173,9 +173,9 @@
       "dependencies": [
         "05-local-snapshots"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/plans/06-spotlight-querying.md",
-      "completion_commit": null
+      "completion_commit": "8211189af380fde62009e91decbba9fdc6086f07"
     },
     {
       "id": "07-macos-first-run",
