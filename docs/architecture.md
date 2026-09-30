@@ -33,8 +33,18 @@ and registers only `kb.*` operations. The browser API binds an ephemeral IPv4
 loopback port, exchanges a one-use URL-fragment capability for an HttpOnly
 same-site session, and requires same-origin CSRF tokens for POST queries.
 
+`internal/planner` supplies deterministic retrieval query planning for
+`kb.query`. Fixed intents or surfaced rule-based text classification select
+an inspectable query algebra; execution is bounded by time, candidates,
+entities, edges, traversal depth, and result count. Generic lookup resolves
+exact identity first, with lexical fallback for absent or ambiguous matches;
+explicit graph/path intents use validated canonical anchors. Results include
+the plan, stage trace, coverage, and active-generation evidence. See the
+[query planner reference](reference/repository-knowledge-v1.md#deterministic-query-planner).
+
 The browser UI is an embedded static projection of canonical SQLite evidence.
 There are no user-repository writes, arbitrary filesystem ingestion, live
-connectors, LLMs, task runtime, or action-capable operations. The optional
-local vector projection is rebuildable, disabled by default, and never
-evidence.
+connectors, LLM reasoning, agent/task planning or execution, or action-capable
+operations. Executing a bounded retrieval plan stays within read-only knowledge
+operations and supplies no agent runtime. The optional local vector projection
+is rebuildable, disabled by default, and never evidence.

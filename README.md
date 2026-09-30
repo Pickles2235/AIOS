@@ -9,8 +9,9 @@ stdio MCP tools.
 
 The browser UI remains a loopback-served frontend. Knowledge IR is the product
 and authority; FTS, graph, structural, vector, cache, and UI data are
-rebuildable projections. V1 has no live connectors, LLMs, planning, execution,
-agents, capability inventory, or recommendation surface.
+rebuildable projections. V1 includes deterministic, bounded retrieval query
+planning. Live connectors, LLM reasoning, agent/task planning and execution,
+agents, capability inventory, and recommendations remain outside its scope.
 
 Vector retrieval is optional and local-only. Enable it with
 `"vector":{"enabled":true}`; it is a retrieval aid, never evidence. Rebuild
@@ -44,9 +45,11 @@ arm64 additionally exercises the optional bundled vector runtime. Fixture
 acceptance proves the deterministic workflow, not readiness of the real
 25-repository estate; see [the acceptance handoff](docs/acceptance-handoff.md).
 
-`serve` provides read-only `kb.*` MCP operations, including bounded hybrid
-planning through `kb.query` and bounded architecture evidence through
-`kb.slice`. See
+`serve` provides read-only `kb.*` MCP operations, including deterministic bounded
+query planning through `kb.query` and bounded architecture evidence through
+`kb.slice`. The query planner selects and executes fixed retrieval operators
+over active canonical evidence under explicit budgets; it does not generate
+task plans or run agents. See
 [`docs/reference/repository-knowledge-v1.md`](docs/reference/repository-knowledge-v1.md).
 
 MCP responses use the V1 provenance envelope. Payload fields are nested under
@@ -56,8 +59,11 @@ canonical evidence chain.
 ## Roadmap boundary
 
 V1 is deterministic repository knowledge only. Connected capability inputs,
-bundled LLM reasoning, planning, execution, subagents, and autonomous reasoning
-are outside this release.
+bundled LLM reasoning, agent/task planning, action execution, subagents, and
+autonomous reasoning are outside this release. The `planning` and `execution`
+entries in `disabled_capabilities`, reported by CLI `status` and `kb.status`,
+describe these excluded agent capabilities; deterministic query planning
+remains available.
 
 ## Development harness
 

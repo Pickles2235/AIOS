@@ -64,6 +64,13 @@ guidance. A result limit always supplies
 
 ## Deterministic query planner
 
+Query planning means selecting and executing fixed retrieval operators over
+active canonical knowledge. `internal/planner` implements this deterministic
+bounded query algebra. LLM reasoning, agent/task planning, action execution,
+subagents, and autonomous reasoning remain outside V1. The existing
+`disabled_capabilities` entries `planning` and `execution` in CLI `status` and
+`kb.status` refer to those excluded agent capabilities, not retrieval planning.
+
 `kb.query` accepts text, an optional fixed intent, and the same repository/entity/language/classification/
 version/confidence filters as search, and bounded `time_ms`, `max_candidates`,
 `max_entities`, `max_edges`, `depth`, and `limit` inputs. It does not accept
@@ -79,7 +86,9 @@ Text-only compatibility inference is deterministic and surfaced; it never uses
 a model or hidden semantic heuristic. Generic lookup runs unique exact identity
 resolution first, then lexical FTS/BM25 only when exact is absent or ambiguous.
 Explicit graph/path modes validate canonical anchors before their capability.
-Vector remains local-only and disabled in V1.
+Vector retrieval remains local-only, optional, and disabled by default. When
+enabled and available, it runs after other retrieval routes are insufficient
+or for explicit `retrieval_mode:"vector"`; its scores never constitute evidence.
 
 `plan_explanation` records normalized intent, selected strategy, stage reasons,
 bounds, generation/projection versions, and coverage. Projection records are

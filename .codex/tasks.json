@@ -22,7 +22,7 @@
         "go test ./internal/planner ./internal/mcp ./cmd/aios"
       ],
       "dependencies": [],
-      "status": "pending",
+      "status": "ready",
       "plan": ".codex/plans/01-query-planning-docs.md",
       "completion_commit": null
     },

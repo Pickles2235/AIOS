@@ -4,7 +4,8 @@
 active immutable Knowledge IR observations and their evidence; graph and FTS
 only accelerate IR-backed lookup and are unavailable when their catalog
 fingerprint is stale. No tool reads arbitrary paths, writes source state,
-executes work, or invokes a model or service.
+executes agent tasks or actions, or invokes LLM reasoning or an external service.
+The optional local embedding model aids vector retrieval only.
 
 | Tool | Purpose |
 | --- | --- |
@@ -85,6 +86,13 @@ canonical database, rebuild projections first, then reindex only if canonical
 evidence validation still fails.
 
 ## `kb.query` planner modes
+
+Planning here means deterministic retrieval query planning implemented by
+`internal/planner`: selecting fixed, bounded operators over active Knowledge
+IR. It does not provide LLM reasoning, agent/task planning, or action execution.
+CLI `status` and `kb.status` retain `disabled_capabilities.planning` and
+`disabled_capabilities.execution` as `outside_v1` for those agent capabilities;
+these labels do not disable `kb.query` or the execution of retrieval operators.
 
 `kb.query` accepts optional fixed intents including `lookup`, `text_search`,
 `relationship_traversal`, `path_finding`, `impact`, `producers`, `consumers`,
