@@ -1,5 +1,7 @@
 import {expect, test} from "@playwright/test";
 
+test.beforeEach(async({page})=>{await page.route("**/api/v1/instance",route=>route.fulfill({json:{id:"instance",name:"Homefold",seed_colour:"#5865f2"}}))});
+
 test("renders only canonical generation data and supports keyboard selection", async ({page}) => {
   await page.route("**/api/v1/session", route => route.fulfill({json:{csrf_token:"csrf"}}));
   await page.route("**/api/v1/status", route => route.fulfill({json:{projection_state:"ready",repositories:[{id:"repo",generation:"g",revision:"r",active:true}]}}));
@@ -11,3 +13,11 @@ test("renders only canonical generation data and supports keyboard selection", a
 });
 test("reports no active generation without claiming loss",async({page})=>{await page.route("**/api/v1/session",route=>route.fulfill({json:{csrf_token:"csrf"}}));await page.route("**/api/v1/status",route=>route.fulfill({json:{projection_state:"no_active_generation",repositories:[]}}));await page.goto("/#token=test");await expect(page.getByText("No repository checkout has been changed.")).toBeVisible()});
 test("keeps canonical knowledge safe when a projection is unavailable",async({page})=>{await page.route("**/api/v1/session",route=>route.fulfill({json:{csrf_token:"csrf"}}));await page.route("**/api/v1/status",route=>route.fulfill({json:{projection_state:"unavailable",repositories:[{id:"repo",active:true}]}}));await page.goto("/#token=test");await expect(page.getByText("Knowledge is safe")).toBeVisible();await expect(page.getByText("Canonical source evidence remains intact")).toBeVisible()});
+
+test("saves and displays instance branding in the live entry point",async({page})=>{
+ let instance={id:"stable",name:"Homefold",seed_colour:"#5865f2"};
+ await page.route("**/api/v1/instance",route=>{if(route.request().method()==="POST")instance={...instance,...route.request().postDataJSON()};return route.fulfill({json:instance})});
+ await page.route("**/api/v1/session",r=>r.fulfill({json:{csrf_token:"csrf"}}));
+ await page.route("**/api/v1/status",r=>r.fulfill({json:{projection_state:"no_active_generation",repositories:[]}}));
+ await page.goto("/#token=test");await page.getByRole("button",{name:"Edit instance"}).click();await page.getByLabel("Instance name").fill("Research");await page.getByRole("button",{name:"Save instance"}).click();await expect(page.getByLabel("Knowledge instance")).toContainText("Research");expect(instance.id).toBe("stable");
+});

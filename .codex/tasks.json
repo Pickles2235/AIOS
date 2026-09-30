@@ -80,7 +80,7 @@
       "dependencies": [
         "02-variable-estate"
       ],
-      "status": "pending",
+      "status": "ready",
       "plan": ".codex/plans/03-knowledge-instance.md",
       "completion_commit": null
     },

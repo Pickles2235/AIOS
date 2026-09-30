@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -29,6 +30,7 @@ type Server struct {
 	origin, capability, session, csrf string
 	read                              *knowledge.Service
 	mu                                sync.Mutex
+	dataDir                           string
 }
 
 func token() string {
@@ -52,7 +54,11 @@ func New(cfg catalog.Config, db *store.Store, listener net.Listener) (*Server, e
 		_ = listener.Close()
 		return nil, fmt.Errorf("UI must bind loopback")
 	}
-	return &Server{listener: listener, origin: "http://" + listener.Addr().String(), capability: token(), read: knowledge.New(cfg, db)}, nil
+	if _, e := store.LoadInstance(filepath.Dir(db.Path())); e != nil {
+		_ = listener.Close()
+		return nil, e
+	}
+	return &Server{dataDir: filepath.Dir(db.Path()), listener: listener, origin: "http://" + listener.Addr().String(), capability: token(), read: knowledge.New(cfg, db)}, nil
 }
 func (s *Server) URL() string { return s.origin + "/#token=" + s.capability }
 func (s *Server) authorised(r *http.Request, csrf bool) bool {
@@ -122,6 +128,9 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 		s.csrf = token()
 		http.SetCookie(w, &http.Cookie{Name: "aios_kb_session", Value: s.session, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})
 		jsonBody(w, map[string]string{"csrf_token": s.csrf})
+		return
+	case "/api/v1/instance", "/api/v1/instance/logo":
+		s.instanceAPI(w, r)
 		return
 	case "/api/v1/status":
 		if r.Method != http.MethodGet || !s.authorised(r, false) {

@@ -96,3 +96,8 @@ must actually be on main; local completion claims do not satisfy dependencies.
 
 Use `make harness-test` after queue edits. All seven product tasks were seeded
 as pending; setting up this harness does not complete any of them.
+
+On a Linux worker without package-install privileges, `npx playwright install chromium`
+installs Chrome for Testing locally. Run `PLAYWRIGHT_CHANNEL=chromium make
+harness-validate-web`; the default channel remains installed Chrome. This does not
+verify native macOS UX.
