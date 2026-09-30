@@ -168,3 +168,26 @@ Repair validation: make harness-validate passed (07-startup-core.log); two fresh
 Linux make acceptance-v1 runs at 07-startup-acceptance-a/-b accepted with identical
 f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea fingerprint.
 Scoped diff and git diff --check inspected. Native rerun and manual checks remain.
+
+## Installed offline deadline investigation
+
+Startup preparation commit 6b9d413ef0cbb6a1913fef4eec69561871e37d17 is verified
+on main. Native run 36773168666 / Apple Silicon job 110084392270 passed the
+preliminary acceptance, native core/race, candidate archive/checksum, all 27 units
+and 16 installed-browser cases. Both fresh native acceptance gates accepted with
+equal fingerprints. Installed offline acceptance failed only route_vector with
+vector_time_budget at 1003 ms; no offline acceptance success is claimed. Artifact
+11125586899 retains the actual three reports, fingerprint and archive evidence.
+
+Use the host's available CPU count capped at four instead of fixing every native
+host to two inference threads. This preserves the model, pooling, dimensions and
+query deadline, avoids oversubscribing constrained hosts and uses available
+cores for bounded inference. Native environment evidence now includes CPU count
+and memory. Actual
+installed offline acceptance must be rerun, and manual checks remain pending.
+
+Local CPU repair validation passed: make harness-validate (07-cpu-core.log),
+sh -n scripts/verify-macos-first-run.sh and git diff --check. Two fresh Linux
+acceptance-v1 runs at /workspace/scratch/07-cpu-acceptance-a and -b accepted
+with equal fingerprints. Source/workflow/docs diff inspected; publish the scoped
+repair, then check its exact native job before recording offline acceptance.

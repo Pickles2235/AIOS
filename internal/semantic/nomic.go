@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -110,8 +111,10 @@ func (n *Nomic) EmbedContext(ctx context.Context, text string) ([]float64, error
 		return nil, err
 	}
 	// Avoid per-process Metal shader/warmup costs for short bounded queries.
-	// The pinned model and mean pooling stay unchanged; CPU execution uses two threads.
-	cmd := exec.CommandContext(ctx, n.runtime, "-m", n.model, "--gpu-layers", "0", "--no-warmup", "--threads", "2", "--pooling", "mean", "--embd-output-format", "array", "-p", text)
+	// Use available CPUs, capped at four, so constrained hosts avoid oversubscription.
+	// The pinned model, dimensions and mean pooling stay unchanged.
+	threads := min(runtime.NumCPU(), 4)
+	cmd := exec.CommandContext(ctx, n.runtime, "-m", n.model, "--gpu-layers", "0", "--no-warmup", "--threads", strconv.Itoa(threads), "--pooling", "mean", "--embd-output-format", "array", "-p", text)
 	b, err := cmd.CombinedOutput()
 	if err != nil {
 		if ctx.Err() != nil {

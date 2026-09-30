@@ -40,7 +40,7 @@ under macOS `sandbox-exec` with network access denied and must match the same
 fingerprint. The pinned Nomic model/helper are bundled in the binary; the native
 semantic test executes the helper and validates the model hash, 768 dimensions
 and owner-only directory/model/helper permissions. The helper uses CPU execution
-with two threads and no warmup to avoid per-process GPU startup costs. Native
+with the available CPU count capped at four threads and no warmup to avoid per-process GPU startup costs. Native
 runtime assets are prepared at MCP startup before accepting requests. Native
 embedding receives the caller deadline; budget exhaustion remains `unknown`
 rather than implying missing evidence or a lost projection.

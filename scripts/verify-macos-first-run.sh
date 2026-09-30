@@ -24,6 +24,7 @@ cd "$root"
 {
   sw_vers
   uname -sm
+  sysctl hw.ncpu hw.memsize
   git rev-parse HEAD
   go version
   node --version
