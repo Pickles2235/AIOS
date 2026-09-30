@@ -15,8 +15,8 @@ import (
 )
 
 func TestLocalIngestCitesCapturedCommitAndRetainsGenerationOnFailure(t *testing.T) {
-	source := t.TempDir()
-	data := t.TempDir()
+	source := canonicalTempDir(t)
+	data := canonicalTempDir(t)
 	t.Cleanup(func() {
 		_ = filepath.WalkDir(data, func(path string, d fs.DirEntry, err error) error {
 			if err == nil && d.IsDir() {
@@ -88,4 +88,15 @@ func TestLocalIngestCitesCapturedCommitAndRetainsGenerationOnFailure(t *testing.
 	if err != nil || after.ActiveCatalog == status.ActiveCatalog {
 		t.Fatal("committed local delta not activated")
 	}
+}
+
+// macOS temporary directories may be reached through /var aliases. Product
+// inputs require canonical paths; only these owned fixture paths are resolved.
+func canonicalTempDir(t *testing.T) string {
+	t.Helper()
+	path, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return path
 }

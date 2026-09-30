@@ -13,8 +13,8 @@ import (
 )
 
 func TestLocalSnapshotsArePinnedBoundedAndNonMutating(t *testing.T) {
-	source := t.TempDir()
-	data := t.TempDir()
+	source := canonicalTempDir(t)
+	data := canonicalTempDir(t)
 	t.Cleanup(func() {
 		_ = filepath.WalkDir(data, func(path string, d fs.DirEntry, err error) error {
 			if err == nil && d.IsDir() {
@@ -78,8 +78,8 @@ func TestLocalSnapshotsArePinnedBoundedAndNonMutating(t *testing.T) {
 }
 
 func TestConcurrentWorkspaceEditNeverPublishesMixedSnapshot(t *testing.T) {
-	source := t.TempDir()
-	data := t.TempDir()
+	source := canonicalTempDir(t)
+	data := canonicalTempDir(t)
 	run(t, source, "init", "-q", "--initial-branch=main")
 	for i := 0; i < 200; i++ {
 		if err := os.WriteFile(filepath.Join(source, fmt.Sprintf("f-%03d.txt", i)), []byte(strings.Repeat("original", 1024)), 0600); err != nil {
@@ -119,4 +119,15 @@ func TestConcurrentWorkspaceEditNeverPublishesMixedSnapshot(t *testing.T) {
 	if string(body) != "concurrent edit" {
 		t.Fatal("capture reverted concurrent source edit")
 	}
+}
+
+// macOS temporary directories may be reached through /var aliases. Product
+// inputs require canonical paths; only these owned fixture paths are resolved.
+func canonicalTempDir(t *testing.T) string {
+	t.Helper()
+	path, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return path
 }

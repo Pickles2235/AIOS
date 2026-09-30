@@ -12,7 +12,7 @@ import (
 )
 
 func TestInstanceLegacyPersistenceResetAndRebuild(t *testing.T) {
-	dir := t.TempDir()
+	dir := canonicalTempDir(t)
 	w, err := OpenWriter(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -58,12 +58,12 @@ func TestInstanceLegacyPersistenceResetAndRebuild(t *testing.T) {
 }
 func TestInstanceRejectsUnsafeSettings(t *testing.T) {
 	for _, v := range []InstanceSettings{{Name: "", SeedColour: "#123456"}, {Name: "ok", SeedColour: "red"}, {Name: "ok", SeedColour: "#123456", Logo: "https://example.test/logo.png"}, {Name: "ok", SeedColour: "#123456", Logo: "data:image/svg+xml;base64,PHN2Zz4="}, {Name: "ok", SeedColour: "#123456", Logo: "data:image/png;base64,YmFk"}} {
-		if _, err := SaveInstance(t.TempDir(), v); err == nil {
+		if _, err := SaveInstance(canonicalTempDir(t), v); err == nil {
 			t.Fatalf("accepted %#v", v)
 		}
 	}
-	dir := t.TempDir()
-	target := filepath.Join(t.TempDir(), "private")
+	dir := canonicalTempDir(t)
+	target := filepath.Join(canonicalTempDir(t), "private")
 	os.WriteFile(target, []byte("unchanged"), 0600)
 	os.Symlink(target, filepath.Join(dir, instanceFile))
 	if _, err := LoadInstance(dir); err == nil {
@@ -73,4 +73,15 @@ func TestInstanceRejectsUnsafeSettings(t *testing.T) {
 	if string(b) != "unchanged" {
 		t.Fatal("modified symlink target")
 	}
+}
+
+// macOS temporary directories may be reached through /var aliases. Product
+// inputs require canonical paths; only these owned fixture paths are resolved.
+func canonicalTempDir(t *testing.T) string {
+	t.Helper()
+	path, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return path
 }

@@ -1,6 +1,6 @@
 # 07-macos-first-run: Verify macOS Apple Silicon installation and first-run experience
 
-Status: pending. See the queue for authoritative status and dependencies.
+Status: in_progress. See the queue for authoritative status and dependencies.
 
 ## Baseline and resumption
 
@@ -40,3 +40,44 @@ Publish validated scoped commits directly to main with a normal fast-forward
 push, then verify origin/main contains them. Set completed and completion_commit
 in a follow-up bookkeeping commit only after that verification. Stop after this
 task. Publishing failures leave the task ready with exact recovery instructions.
+
+## Session assessment
+
+Task 06 and its bookkeeping are verified on origin/main. User requested all tasks,
+so proceed through this final task. Host is Linux x86_64; no interactive Apple
+Silicon session was provided. GitHub macos-15 arm64 runners are accessible for
+automated checks. Run 36760467766 failed because test temporary paths traversed
+macOS /var aliases; normalize owned fixture paths, retaining production symlink
+rejection. Extend native arm64 CI with core/race/browser gates, two fresh fixture
+acceptance runs, candidate archive/checksum/clean-install checks and artifacts.
+Native CI evidence cannot replace the explicit manual Mac first-run checklist.
+Windows baseline/native CI failures are outside this Mac task; do not claim its
+platform verified. Final status stays blocked if interactive verification cannot
+be completed, with full recovery instructions and no completion SHA.
+
+## Prepared native verification implementation
+
+Branch: codex/07-macos-first-run. Canonicalized owned Go/browser fixture paths
+for macOS aliases, without changing production path policy. Added JDK 21 to
+native CI, native arm64 release/checksum/installed-browser/dual-acceptance/offline
+archive verification, and uploaded operator evidence. The candidate version is
+1.0.0-harness, for test packaging only. No release/tag/signing claim was made.
+Added docs/how-to/verify-macos-first-run.md with exact native commands and the
+manual identity/logo/permissions/interrupt/retry/source-nonmutation checklist.
+
+Passed locally on Linux x86_64, Go 1.26.1/JDK21/Node24/Python3.12.14:
+- make harness-validate (queue/Python, Go tests/vet/race/build): 07-core.log.
+- PLAYWRIGHT_CHANNEL=chromium make harness-validate-web: 27 unit/16 browser tests
+  passed, 07-web.log. After adding the explicit stable-ID assertion, the four real
+  mirror/local browser cases at both viewports passed again: 07-browser-final.log.
+- sh -n scripts/verify-macos-first-run.sh passed; running it on Linux refused
+  native verification with exit 2, 07-native-refusal.log.
+- git diff --check passed; final scoped source/fixture/workflow/docs diff inspected.
+All local logs are under /workspace/scratch; private logs are not committed.
+
+Not yet run on the repaired revision: native core/race/browser/release/checksum,
+two native acceptance gates and installed offline archive acceptance. Publish
+this validated fixture/automation repair normally to main, then inspect its exact
+Apple Silicon job and record native results. No interactive Mac session is
+available; manual checklist and private-estate readiness remain unverified.
+This is an in-progress implementation publication, not task completion.
