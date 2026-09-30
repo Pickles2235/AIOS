@@ -142,9 +142,9 @@
       "dependencies": [
         "04-mirror-onboarding"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/plans/05-local-snapshots.md",
-      "completion_commit": null
+      "completion_commit": "f3bcc832fafd49eaea1f311d86a7b050496268e3"
     },
     {
       "id": "06-spotlight-querying",

@@ -1,6 +1,6 @@
 # 05-local-snapshots: Add direct indexing through immutable snapshots of local Git workspaces
 
-Status: ready. See the queue for authoritative status and dependencies.
+Status: completed. See the queue for authoritative status and dependencies.
 
 ## Baseline and resumption
 
@@ -83,3 +83,9 @@ Actual Linux checks:
   and -b with equal fingerprints:
   f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea.
 - git diff --check passed. No native macOS or private-estate claim.
+
+Implementation commit: f3bcc832fafd49eaea1f311d86a7b050496268e3.
+Verified on fetched origin/main after exact-object GitHub API publication with
+force=false. Completed status recorded in this follow-up bookkeeping commit.
+No remaining blocker for this task. User requested the whole queue; continue
+with the next eligible task after verifying this bookkeeping publication.
