@@ -6,7 +6,7 @@ The V1 command surface is deliberately small:
 | --- | --- | --- |
 | `catalog validate` | `--config` | Validate the explicit repository allowlist. |
 | `mirrors sync` | `--registry`, `--data-dir` | Clone/fetch the approved managed Git mirrors under agent-owned storage. |
-| `ingest --all` | `--config`, `--registry`, `--data-dir` | Stage all 25 approved mirrors and atomically activate the initial catalog. |
+| `ingest --all` | `--config`, `--registry`, `--data-dir` | Stage all approved mirrors (1–100) and atomically activate the initial catalog. |
 | `ingest --repo ID` | `--config`, `--registry`, `--data-dir` | Compile and activate one approved repository revision delta. |
 | `status` | `--data-dir` | Read source, generation, projection, and cache diagnostics. |
 | `projections rebuild` | `--data-dir`; optional `--kind` | Rebuild agent-owned projections from persisted IR only. |

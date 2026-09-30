@@ -109,11 +109,8 @@ func Validate(cfg Config) error {
 	if cfg.Version != 1 {
 		return fmt.Errorf("catalog version %d is unsupported: AIOS is repository-only V1; use version 1 sources", cfg.Version)
 	}
-	if len(cfg.Sources) > 0 && len(cfg.Sources) != 25 {
-		return fmt.Errorf("V1 catalog must declare exactly 25 repository sources, got %d", len(cfg.Sources))
-	}
-	if len(cfg.Sources) == 0 && len(cfg.Repositories) == 0 {
-		return fmt.Errorf("V1 catalog must declare exactly 25 repository sources")
+	if len(cfg.SourceRepositories()) == 0 {
+		return fmt.Errorf("V1 catalog must declare between 1 and %d repository sources", MaxRepositories)
 	}
 	for feature, enabled := range cfg.Features {
 		if enabled {

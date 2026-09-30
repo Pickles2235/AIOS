@@ -1,7 +1,7 @@
 # AIOS Repository Knowledge Engine
 
 This is a local-first, read-only repository knowledge engine. V1 compiles
-exactly 25 approved Git repository mirrors into canonical Knowledge IR.
+1–100 approved Git repository mirrors into canonical Knowledge IR.
 
 It compiles an approved repository catalog into deterministic source, symbol,
 relationship, claim, and evidence records. It exposes them through bounded

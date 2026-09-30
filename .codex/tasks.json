@@ -50,7 +50,7 @@
       "dependencies": [
         "01-query-planning-docs"
       ],
-      "status": "pending",
+      "status": "ready",
       "plan": ".codex/plans/02-variable-estate.md",
       "completion_commit": null
     },

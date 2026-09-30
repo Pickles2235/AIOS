@@ -2,6 +2,7 @@ package mirror
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,7 +25,7 @@ func TestValidateAndFingerprintAreDeterministic(t *testing.T) {
 	if Fingerprint(r) != Fingerprint(r) {
 		t.Fatal("unstable fingerprint")
 	}
-	r.Repositories = r.Repositories[:24]
+	r.Repositories = nil
 	if err := Validate(r); err == nil {
 		t.Fatal("accepted non-estate registry")
 	}
@@ -130,5 +131,17 @@ func run(t *testing.T, dir string, args ...string) {
 	t.Helper()
 	if b, e := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput(); e != nil {
 		t.Fatalf("git %v: %v: %s", args, e, b)
+	}
+}
+
+func TestVariableEstateBounds(t *testing.T) {
+	for _, n := range []int{0, 1, 3, 25, 100, 101} {
+		r := Registry{Version: 1}
+		for i := 0; i < n; i++ {
+			r.Repositories = append(r.Repositories, Repository{ID: fmt.Sprintf("repo-%03d", i), URL: "file:///tmp/fixture", Ref: "refs/heads/main"})
+		}
+		if err := Validate(r); (err == nil) != (n >= 1 && n <= 100) {
+			t.Fatalf("size %d: %v", n, err)
+		}
 	}
 }

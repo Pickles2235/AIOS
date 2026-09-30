@@ -1,8 +1,8 @@
 # Configure a catalog
 
-Catalogs are JSON objects with `version: 1`, exactly 25 repository sources,
+Catalogs are JSON objects with `version: 1`, 1–100 repository sources,
 and optional bounded limits. Unknown fields are rejected. The abbreviated
-example below shows one entry only; a valid production catalog has all 25.
+example below is a valid single-repository catalog. Catalog and registry IDs must match.
 
 ```json
 {
@@ -35,7 +35,7 @@ Select include sets carefully. Filename deny rules reduce accidental indexing of
 ## Managed mirror registry
 
 Repository addresses are managed separately from the source-policy catalog.
-Record the explicitly approved 25 IDs, remote addresses, full refs, patterns,
+Record the explicitly approved IDs (1–100), remote addresses, full refs, patterns,
 and ownership coordinates in a private inventory. Compile and verify it without
 discovering or indexing local checkouts:
 

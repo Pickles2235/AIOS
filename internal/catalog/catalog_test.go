@@ -40,7 +40,7 @@ func TestValidateCanonicalUniqueAndSymlink(t *testing.T) {
 }
 
 func TestValidateRequiresV1RepositorySourcesAndRejectsFutureScope(t *testing.T) {
-	if err := Validate(Config{Version: 1, Limits: Defaults()}); err == nil || !strings.Contains(err.Error(), "exactly 25") {
+	if err := Validate(Config{Version: 1, Limits: Defaults()}); err == nil || !strings.Contains(err.Error(), "between 1 and 100") {
 		t.Fatalf("missing V1 estate rejection: %v", err)
 	}
 	if err := Validate(Config{Version: 2, Limits: Defaults()}); err == nil || !strings.Contains(err.Error(), "repository-only V1") {
@@ -132,4 +132,17 @@ func canonicalTempDir(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return resolved
+}
+
+func TestVariableSourceEstate(t *testing.T) {
+	for _, n := range []int{1, 3, 25, MaxRepositories, MaxRepositories + 1} {
+		cfg := Config{Version: 1, Limits: Defaults()}
+		for i := 0; i < n; i++ {
+			cfg.Sources = append(cfg.Sources, Source{Kind: model.SourceKindRepository, ID: fmt.Sprintf("repo-%03d", i)})
+		}
+		err := Validate(cfg)
+		if (err == nil) != (n <= MaxRepositories) {
+			t.Fatalf("size %d: %v", n, err)
+		}
+	}
 }

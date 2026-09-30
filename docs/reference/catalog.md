@@ -1,7 +1,7 @@
 # Catalog format
 
 The top-level fields are `version`, `sources`, and optional `limits` and
-`vector`. V1 requires exactly 25 `repository` sources. Their approved Git
+`vector`. V1 requires 1–100 `repository` sources. Their approved Git
 addresses and refs live only in the separate agent-managed mirror registry;
 catalogs never contain checkout roots or remote addresses.
 

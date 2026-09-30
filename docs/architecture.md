@@ -1,8 +1,8 @@
 # V1 architecture
 
-V1 catalogs contain exactly 25 `repository` sources and source-selection
+V1 catalogs contain 1–100 `repository` sources and source-selection
 policy. A separate strict JSON mirror registry contains the
-approved 25 Git addresses and refs. External cron runs `mirrors sync`; AIOS
+matching approved Git addresses and refs. External cron runs `mirrors sync`; AIOS
 then compiles only a selected immutable Git archive materialized under its
 owner-only data directory. User checkouts are never compilation inputs.
 

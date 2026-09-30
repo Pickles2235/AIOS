@@ -20,7 +20,7 @@ previous directory until acceptance succeeds, then point the operator's stable
 launcher or symlink at the new binary. Rollback changes that pointer back; the
 source repositories are never part of installation or rollback.
 
-Validate the 25-source V1 catalog, synchronise its approved mirrors, then
+Validate the bounded 1–100-source V1 catalog, synchronise its approved mirrors, then
 ingest into a private data directory:
 
 ```sh

@@ -22,7 +22,7 @@ Indexing captures Git state before and after discovery/extraction and refuses to
 
 ## Mirror-backed ingestion
 
-For the managed 25-repository estate, use a V1 source-policy catalog
+For a managed estate of 1–100 repositories, use a V1 source-policy catalog
 (repository IDs and include/exclude rules, without checkout roots) and an
 approved JSON mirror registry. Cron owns synchronization; ingestion does not
 contact remotes:

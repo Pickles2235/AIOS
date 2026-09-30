@@ -15,6 +15,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/AdamNi-7080/AIOS/internal/catalog"
 )
 
 const RegistryVersion = 1
@@ -66,8 +68,8 @@ func Validate(r Registry) error {
 	if r.Version != RegistryVersion {
 		return fmt.Errorf("mirror registry version must be %d", RegistryVersion)
 	}
-	if len(r.Repositories) != 25 {
-		return fmt.Errorf("mirror registry must declare exactly 25 repositories, got %d", len(r.Repositories))
+	if len(r.Repositories) < 1 || len(r.Repositories) > catalog.MaxRepositories {
+		return fmt.Errorf("mirror registry must declare between 1 and %d repositories, got %d", catalog.MaxRepositories, len(r.Repositories))
 	}
 	seen := map[string]bool{}
 	for i, x := range r.Repositories {
