@@ -22,9 +22,9 @@
         "go test ./internal/planner ./internal/mcp ./cmd/aios"
       ],
       "dependencies": [],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/plans/01-query-planning-docs.md",
-      "completion_commit": null
+      "completion_commit": "dd3ec9f0a1858eaa0330d941e1bebf215a06a09d"
     },
     {
       "id": "02-variable-estate",
