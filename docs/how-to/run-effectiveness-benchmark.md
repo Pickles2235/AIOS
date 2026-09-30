@@ -1,0 +1,27 @@
+# Run V1 benchmarks
+
+Use a fresh private directory per fixture:
+
+```sh
+aios benchmark \
+  --fixture scripts/benchmark/fixtures/retrieval-v1.json \
+  --data-dir /private/benchmark/retrieval \
+  --output /private/benchmark/retrieval.json
+
+aios benchmark \
+  --fixture scripts/benchmark/fixtures/compiler-v1.json \
+  --data-dir /private/benchmark/compiler \
+  --output /private/benchmark/compiler.json
+```
+
+Reports include exact, lexical, structural, graph, hybrid, grep-baseline, and
+context-package results; Precision@1, Recall@5, MRR, nDCG, correctness,
+provenance, latency, index/update time, context size, and deterministic
+LLM-free answer rate. They also include result-state correctness for positive,
+supported-negative, and unknown cases; negative-evidence accuracy; coverage
+completeness; and unknown rate. Treat a `not_found` as valid only when its
+coverage basis is complete. Results prove only their checked-in gold cases.
+
+For release readiness, use the private 150-case real-estate gate described in
+[`../acceptance-handoff.md`](../acceptance-handoff.md). The ordinary benchmark
+command does not by itself establish 25-repository readiness.

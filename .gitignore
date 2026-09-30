@@ -1,0 +1,15 @@
+/bin/
+/data/
+/aios
+/web/node_modules/
+/.idea/
+*.db
+*.db-shm
+*.db-wal
+/.native-build/
+/acceptance-output/
+/config.aios.local.json
+/release/
+/internal/semantic/llama/
+/internal/semantic/nomic-embed-text-v1.5.f16.gguf
+/internal/semantic/native_model_release.go

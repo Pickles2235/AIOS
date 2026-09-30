@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aios.local/aios-v1-acceptance.schema.json",
+  "title": "AIOS V1 deterministic acceptance report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "fixture_version",
+    "timestamp",
+    "engine_revision",
+    "platform",
+    "commands",
+    "active_generation",
+    "repositories",
+    "cases",
+    "readiness",
+    "disposition",
+    "semantic_fingerprint"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "fixture_version": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "engine_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "platform": {"type": "object"},
+    "commands": {"type": "object", "minProperties": 1},
+    "active_generation": {"type": "string", "minLength": 1},
+    "repositories": {
+      "type": "object",
+      "minProperties": 25,
+      "maxProperties": 25,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["baseline", "active"],
+        "properties": {
+          "baseline": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "active": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "status", "expected", "actual", "diagnostics"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "status": {"enum": ["pass", "fail"]},
+          "expected": {"type": "object"},
+          "actual": {"type": "object"},
+          "diagnostics": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "readiness": {"type": "object"},
+    "disposition": {"enum": ["accepted", "not_accepted"]},
+    "semantic_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

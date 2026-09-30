@@ -1,0 +1,14 @@
+{
+  "repositories": [
+    {"id":"java", "path":"compiler/java", "revision":"java-compiler-r1"},
+    {"id":"typescript", "path":"compiler/typescript", "revision":"typescript-compiler-r1"}
+  ],
+  "cases": [
+    {"id":"java-definition", "query":"Worker", "query_class":"java_definition", "expected_repository":"java", "expected_path":"src/main/java/example/Worker.java"},
+    {"id":"java-call", "query":"run", "query_class":"java_caller", "expected_repository":"java", "expected_path":"src/main/java/example/Caller.java", "expected_predicate":"CALLS"},
+    {"id":"java-implementation", "query":"WorkerImpl", "query_class":"java_implementation", "expected_repository":"java", "expected_path":"src/main/java/example/WorkerImpl.java", "expected_predicate":"IMPLEMENTS"},
+    {"id":"typescript-definition", "query":"App", "query_class":"typescript_tsx_definition", "expected_repository":"typescript", "expected_path":"src/App.tsx"},
+    {"id":"typescript-import", "query":"target", "query_class":"typescript_alias_import", "expected_repository":"typescript", "expected_path":"src/util.ts", "expected_predicate":"IMPORTS"},
+    {"id":"typescript-call", "query":"target", "query_class":"typescript_caller", "expected_repository":"typescript", "expected_path":"src/util.ts", "expected_predicate":"CALLS"}
+  ]
+}

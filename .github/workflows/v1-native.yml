@@ -1,0 +1,84 @@
+name: V1 native gates
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: V1 release version, for example 1.0.0
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  native-core:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: macos-arm64
+          - runner: macos-15-intel
+            target: macos-amd64
+          - runner: ubuntu-24.04
+            target: linux-amd64
+          - runner: ubuntu-24.04-arm
+            target: linux-arm64
+          - runner: windows-2025
+            target: windows-amd64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: ${{ matrix.target == 'macos-arm64' }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Enable Windows CGO toolchain
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Add-Content $env:GITHUB_PATH 'C:\msys64\mingw64\bin'
+      - run: npm ci --prefix web
+      - run: go test ./...
+        env:
+          CGO_ENABLED: "1"
+      - run: go vet ./...
+        env:
+          CGO_ENABLED: "1"
+      - run: python -m unittest discover -s scripts -p 'test_*.py'
+      - run: npm test --prefix web
+      - name: Build embedded UI
+        run: npm run build --prefix web
+      - name: Build native binary
+        run: go build -trimpath -o bin/aios${{ runner.os == 'Windows' && '.exe' || '' }} ./cmd/aios
+        env:
+          CGO_ENABLED: "1"
+      - name: Run native deterministic acceptance
+        if: runner.os != 'Windows'
+        run: python3 scripts/v1_acceptance.py --binary "$PWD/bin/aios" --output-dir "$RUNNER_TEMP/acceptance-v1"
+      - name: Run Windows deterministic acceptance
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: python scripts/v1_acceptance.py --binary "$PWD/bin/aios.exe" --output-dir "$env:RUNNER_TEMP/acceptance-v1"
+      - name: Package Unix release
+        if: github.event_name == 'workflow_dispatch' && inputs.release_version != '' && runner.os != 'Windows'
+        run: ./scripts/build-v1-release.sh --version '${{ inputs.release_version }}' --output-dir release
+      - name: Package Windows release
+        if: github.event_name == 'workflow_dispatch' && inputs.release_version != '' && runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/build-v1-release.ps1 -Version '${{ inputs.release_version }}' -OutputDir release
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch' && inputs.release_version != ''
+        with:
+          name: aios-${{ inputs.release_version }}-${{ matrix.target }}
+          path: release/*
+          if-no-files-found: error

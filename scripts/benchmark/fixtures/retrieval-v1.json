@@ -1,0 +1,25 @@
+{
+  "repositories": [
+    {"id": "identity", "path": "estate/identity", "revision": "fixture-identity-r1"},
+    {"id": "settings", "path": "estate/settings", "revision": "fixture-settings-r1"},
+    {"id": "gateway", "path": "estate/gateway", "revision": "fixture-gateway-r1"},
+    {"id": "messaging", "path": "estate/messaging", "revision": "fixture-messaging-r2"},
+    {"id": "ui", "path": "estate/ui", "revision": "fixture-ui-r1"}
+  ],
+  "cases": [
+    {"id": "symbol", "query": "UserDirectory", "query_class": "exact_identifier", "expected_repository": "identity", "expected_path": "UserDirectory.java"},
+    {"id": "configuration", "query": "PING_ONE_MFA_ENV_ID", "query_class": "configuration_name", "expected_repository": "settings", "expected_path": "application.yml"},
+    {"id": "endpoint", "query": "/api/v1/customers", "query_class": "route", "expected_repository": "gateway", "expected_path": "CustomerController.java", "expected_predicate": "DECLARES_ENDPOINT"},
+    {"id": "trace-event", "query": "customer.changed", "query_class": "trace", "expected_repository": "messaging", "expected_path": "CustomerEvents.java", "expected_predicate": "PRODUCES_TOPIC"},
+    {"id": "explain-cause", "query": "enabled", "query_class": "explain_cause", "expected_repository": "messaging", "expected_path": "CustomerEvents.java", "expected_predicate": "HAS_LOCAL_GUARD"},
+    {"id": "locate-change", "query": "publishCustomerChanged", "query_class": "locate_change", "expected_repository": "messaging", "expected_path": "CustomerEvents.java"},
+    {"id": "dynamic-coverage", "query": "publishDynamic", "query_class": "coverage_gap", "expected_repository": "messaging", "expected_path": "CustomerEvents.java", "expected_predicate": "COVERAGE_GAP"},
+    {"id": "cross-event-trace", "query": "customer.changed", "query_class": "cross_repository_event_trace", "expected_repository": "messaging", "expected_path": "CustomerEvents.java", "expected_predicate": "PRODUCES_TOPIC"},
+    {"id": "cross-http-trace", "query": "POST /api/v1/customers", "query_class": "cross_repository_http_trace", "expected_repository": "ui", "expected_path": "http-client.ts", "expected_predicate": "INVOKES_API"},
+    {"id": "cross-impact", "query": "/api/v1/customers", "query_class": "cross_repository_impact", "expected_repository": "gateway", "expected_path": "CustomerController.java", "expected_predicate": "DECLARES_EFFECTIVE_ENDPOINT"},
+    {"id": "cross-ambiguity", "query": "customer", "query_class": "cross_repository_ambiguity", "expected_repository": "gateway", "expected_path": "CustomerController.java"},
+    {"id": "cross-negative", "query": "publishDynamic", "query_class": "cross_repository_negative_link", "expected_repository": "messaging", "expected_path": "CustomerEvents.java", "expected_predicate": "COVERAGE_GAP"},
+    {"id": "supported-negative", "query": "__absence_fixture_token__", "query_class": "supported_negative", "expected_state": "not_found"},
+    {"id": "unknown-structural", "query": "__absence_fixture_event__", "query_class": "event_trace_unknown", "expected_state": "unknown"}
+  ]
+}
