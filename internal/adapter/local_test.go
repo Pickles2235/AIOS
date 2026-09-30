@@ -38,6 +38,14 @@ func TestLocalSnapshotsArePinnedBoundedAndNonMutating(t *testing.T) {
 	if err != nil || string(body) != "one" {
 		t.Fatalf("snapshot: %q %v", body, err)
 	}
+	rootInfo, err := os.Stat(first.Root)
+	if err != nil || rootInfo.Mode().Perm() != 0500 {
+		t.Fatal("published snapshot root is not sealed")
+	}
+	fileInfo, err := os.Stat(filepath.Join(first.Root, "a.txt"))
+	if err != nil || fileInfo.Mode().Perm() != 0400 {
+		t.Fatal("published snapshot file is not sealed")
+	}
 	again, err := CaptureLocal(context.Background(), entry, data, catalog.Defaults())
 	if err != nil || again.Root != first.Root {
 		t.Fatalf("snapshot reuse: %#v %v", again, err)

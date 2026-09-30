@@ -47,10 +47,10 @@ test("Spotlight keyboard, truthful result states, cloud boundaries and stale evi
   return r.fulfill({json:{status:["found","truncated"].includes(state)?"found":state==="not_found"?"not_found":"unknown",entities:["found","truncated"].includes(state)?[entity]:[],trace:[{kind,detail:kind}],truncated:state==="truncated",coverage:{complete:!["unknown","unavailable"].includes(state),generations:["g"],repositories:["repo"]},applied_limits:{results:20}}});
  });
  await page.goto("/#token=test");await expect(page.getByLabel("Knowledge cloud",{exact:true})).toContainText("generation g · 1 nodes · 0 evidence-backed edges");
- const opener=page.getByRole("button",{name:"Open Spotlight"});await opener.focus();await page.keyboard.press("Control+k");
+ const opener=page.getByRole("button",{name:"Open Spotlight"});await opener.focus();await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");
  const dialog=page.getByRole("dialog"),input=page.getByRole("combobox",{name:"Spotlight query"});await expect(input).toBeFocused();
  await page.keyboard.press("Escape");await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();
- await page.keyboard.press("Control+k");await input.fill("Publish");await input.press("Enter");await expect(page.getByRole("dialog").getByRole("option")).toContainText("Publish");await input.press("ArrowDown");await input.press("Enter");await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();await expect(page.getByLabel("Evidence inspector")).toContainText("Captured commit: commit · SHA256: hash");
+ await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");await input.fill("Publish");await input.press("Enter");await expect(page.getByRole("dialog").getByRole("option")).toContainText("Publish");await input.press("ArrowDown");await input.press("Enter");await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();await expect(page.getByLabel("Evidence inspector")).toContainText("Captured commit: commit · SHA256: hash");
  for(const [next,feedback] of [["empty","Enter a query"],["unsupported","Unsupported query:"],["unavailable","Search projection unavailable or stale"],["unknown","Unknown: coverage is incomplete"],["not_found","Not found:"],["truncated","Found bounded results"]]) {
   state=next;await opener.click();await input.fill(next==="empty"?"":next);await dialog.getByRole("button",{name:"Search captured evidence"}).click();await expect(dialog.getByRole("status")).toContainText(feedback);await page.keyboard.press("Escape");
  }

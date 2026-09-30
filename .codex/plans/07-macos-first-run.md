@@ -81,3 +81,27 @@ this validated fixture/automation repair normally to main, then inspect its exac
 Apple Silicon job and record native results. No interactive Mac session is
 available; manual checklist and private-estate readiness remain unverified.
 This is an in-progress implementation publication, not task completion.
+
+## Native failure and repair
+
+Published preparation commit e3c9f1882b3cc8e15c277a101e15f7c56efbb16a was verified
+on fetched origin/main. Native run 36765310784, Apple Silicon job 110057869504,
+failed local snapshot/app tests on directory rename permission; canonical fixture
+normalization succeeded and the pinned native Nomic test passed (38.979 seconds).
+Intel macOS reproduced the same failure. No downstream release/browser/acceptance
+step ran, and none is claimed as passed.
+
+Darwin requires writable permission on the source directory during rename. The
+repair reopens only the owned staging root for publication, renames it, then
+seals the final root to 0500 before returning it to any compiler. Nested files
+stay 0400 and directories 0500. Sealing failures clean up the renamed owned
+staging directory; no source path is touched or generation activated. Added
+explicit root/file sealing assertions. Native browser checks now press Command-K
+on Darwin (Ctrl-K on Linux). New JDK setup uses supported setup-java@v5.
+
+Repair validation on Linux: make harness-validate passed (07-core-repair.log),
+PLAYWRIGHT_CHANNEL=chromium make harness-validate-web passed 27 unit/16 browser
+checks (07-web-repair.log), two fresh make acceptance-v1 runs at
+/workspace/scratch/07-acceptance-a and -b accepted with equal fingerprint
+f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea.
+Scoped diff and git diff --check inspected. Native rerun remains required.

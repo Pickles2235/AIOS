@@ -292,7 +292,17 @@ func CaptureLocal(ctx context.Context, entry LocalRepository, dataDir string, li
 	} else if !os.IsNotExist(e) {
 		return Discovery{}, e
 	}
+	// Darwin requires write permission on a directory being renamed. Only the
+	// owned staging root is writable during publication; no compiler receives
+	// its path until the final root is sealed again. Files remain read-only.
+	if err = os.Chmod(temp, 0700); err != nil {
+		return Discovery{}, err
+	}
 	if err = os.Rename(temp, final); err != nil {
+		return Discovery{}, err
+	}
+	temp = final // cleanup the renamed owned directory if sealing fails
+	if err = os.Chmod(final, 0500); err != nil {
 		return Discovery{}, err
 	}
 	published = true
