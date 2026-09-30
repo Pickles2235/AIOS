@@ -425,6 +425,15 @@ func NewV1(cfg catalog.Config, db *store.Store) *mcp.Server {
 }
 func NewV1WithCache(cfg catalog.Config, db *store.Store, cache *cachepkg.Store) *mcp.Server {
 	s := &v1Service{cfg: cfg, db: db, cache: cache, plannerMetrics: map[string]int{}, embedder: vectorpkg.NewBundled(filepath.Dir(db.Path()))}
+	// Verify/materialize owned runtime assets before accepting requests. They
+	// are startup work, not part of an individual retrieval time budget.
+	if cfg.Vector.Enabled {
+		if preparer, ok := s.embedder.(interface{ Prepare(context.Context) error }); ok {
+			if err := preparer.Prepare(context.Background()); err != nil {
+				s.embedder = nil
+			}
+		}
+	}
 	v := mcp.NewServer(&mcp.Implementation{Name: "aios", Version: "1.0.0"}, nil)
 	mcp.AddTool(v, tool("kb.resolve", "Resolve canonical entities."), s.resolve)
 	mcp.AddTool(v, tool("kb.search", "Search canonical source evidence."), s.search)

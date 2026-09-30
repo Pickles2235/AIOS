@@ -69,6 +69,13 @@ func materialize(path string, data []byte, mode os.FileMode) error {
 		h := sha256.Sum256(b)
 		want := sha256.Sum256(data)
 		if h == want {
+			info, err := os.Stat(path)
+			if err != nil {
+				return err
+			}
+			if info.Mode().Perm() == mode {
+				return nil
+			}
 			return os.Chmod(path, mode)
 		}
 	}
@@ -85,17 +92,22 @@ func (n *Nomic) Embed(text string) ([]float64, error) {
 	return n.EmbedContext(context.Background(), text)
 }
 
-// EmbedContext keeps the bundled helper within the caller's query/build budget.
-func (n *Nomic) EmbedContext(ctx context.Context, text string) ([]float64, error) {
+// Prepare verifies/materializes bundled assets once during owned runtime setup.
+func (n *Nomic) Prepare(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return err
 	}
 	n.prepare()
 	if err := ctx.Err(); err != nil {
-		return nil, err
+		return err
 	}
-	if n.err != nil {
-		return nil, n.err
+	return n.err
+}
+
+// EmbedContext keeps the bundled helper within the caller's query/build budget.
+func (n *Nomic) EmbedContext(ctx context.Context, text string) ([]float64, error) {
+	if err := n.Prepare(ctx); err != nil {
+		return nil, err
 	}
 	// Avoid per-process Metal shader/warmup costs for short bounded queries.
 	// The pinned model and mean pooling stay unchanged; CPU execution uses two threads.

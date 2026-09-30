@@ -138,3 +138,33 @@ runs at /workspace/scratch/07-vector-acceptance-a and -b accepted with the same
 f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea fingerprint.
 Native model execution and performance remain unverified on the repaired revision
 until its exact Apple Silicon CI job completes. Manual observations still pending.
+
+## Startup asset preparation repair
+
+Commit 7049dcb73f2d3c83dd4662bb54b3ed92cf83acbc is verified on main. Native run
+36769552202 / Apple Silicon job 110072170307 passed core/vet/Python/native build,
+then native acceptance failed route_vector with unknown/vector_time_budget at
+1626 ms. Independent native verification passed make harness-validate (including
+race), candidate archive/checksum and all 27 units/16 installed-binary browser
+cases, then acceptance-a failed the same vector budget at 1391 ms. Acceptance-b
+and installed offline acceptance therefore did not run. This is partial native
+evidence, not accepted native release verification.
+
+Artifact 11122614444 (macos-first-run-evidence) was downloaded and inspected.
+Actual host: macOS 15.7.9 build 24G830, Darwin arm64; Go1.25.0, Node22.23.2,
+Python3.14.7, Temurin21.0.12.1. Candidate archive SHA256:
+9888f508a48ee17a7cd8b48a5233af77f67bd8691cba2990f4bfd3ceeef23154.
+Reports and environment/checksum/build metadata are retained outside the repo at
+/workspace/scratch/07-native-7049-evidence. No logs or tokens were committed.
+
+Prepare/verify owned model and helper assets during MCP startup, before accepting
+requests. Individual retrievals retain the same deadline and still terminate
+native inference on exhaustion. Reusing already-correct asset modes avoids
+unnecessary cached-executable metadata changes. Optional runtime setup failures
+leave canonical retrieval available. No inference or source query is hidden in
+startup, and no time budget or native acceptance expectation was changed.
+
+Repair validation: make harness-validate passed (07-startup-core.log); two fresh
+Linux make acceptance-v1 runs at 07-startup-acceptance-a/-b accepted with identical
+f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea fingerprint.
+Scoped diff and git diff --check inspected. Native rerun and manual checks remain.
