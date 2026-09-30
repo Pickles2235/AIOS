@@ -50,44 +50,71 @@ type Status struct {
 	Projections   []store.ProjectionStatus `json:"projections,omitempty"`
 }
 type RepositoryStatus struct {
-	ID, Generation, Revision, ContentHash string
-	Active                                bool `json:"active"`
+	ID          string `json:"id"`
+	Generation  string `json:"generation"`
+	Revision    string `json:"revision"`
+	ContentHash string `json:"content_hash"`
+	Active      bool   `json:"active"`
 }
 type Span = model.Span
 type Entity struct {
-	Handle, Kind, Label, Identity, Extractor, Repository, Path, Generation, Evidence string
-	Confidence                                                                       float64 `json:"confidence"`
-	EvidenceCount                                                                    int     `json:"evidence_count"`
-	Span                                                                             Span    `json:"span"`
+	Handle        string  `json:"handle"`
+	Kind          string  `json:"kind"`
+	Label         string  `json:"label"`
+	Identity      string  `json:"identity"`
+	Extractor     string  `json:"extractor"`
+	Repository    string  `json:"repository"`
+	Path          string  `json:"path"`
+	Generation    string  `json:"generation"`
+	Evidence      string  `json:"evidence"`
+	Confidence    float64 `json:"confidence"`
+	EvidenceCount int     `json:"evidence_count"`
+	Span          Span    `json:"span"`
 }
 type Claim struct {
-	Handle, Subject, Predicate, Object, Evidence, Derivation, Extractor string
-	Confidence                                                          float64 `json:"confidence"`
-	Generation                                                          string  `json:"generation"`
+	Handle     string  `json:"handle"`
+	Subject    string  `json:"subject"`
+	Predicate  string  `json:"predicate"`
+	Object     string  `json:"object"`
+	Evidence   string  `json:"evidence"`
+	Derivation string  `json:"derivation"`
+	Extractor  string  `json:"extractor"`
+	Confidence float64 `json:"confidence"`
+	Generation string  `json:"generation"`
 }
 type Projection struct {
-	Repository, Generation string
-	Nodes                  []Entity       `json:"nodes"`
-	Edges                  []Claim        `json:"edges"`
-	Truncated              bool           `json:"truncated"`
-	NextCursor             string         `json:"next_cursor,omitempty"`
-	AppliedLimits          map[string]int `json:"applied_limits"`
+	Repository    string         `json:"repository"`
+	Generation    string         `json:"generation"`
+	Nodes         []Entity       `json:"nodes"`
+	Edges         []Claim        `json:"edges"`
+	Truncated     bool           `json:"truncated"`
+	NextCursor    string         `json:"next_cursor,omitempty"`
+	AppliedLimits map[string]int `json:"applied_limits"`
 }
 type Excerpt struct {
-	Evidence, Source, Repository, Path, Revision, Generation string
-	Span                                                     Span     `json:"span"`
-	Lines                                                    []string `json:"lines"`
-	StartLine, EndLine                                       int
-	Truncated                                                bool `json:"truncated"`
+	Evidence   string   `json:"evidence"`
+	Source     string   `json:"source"`
+	Repository string   `json:"repository"`
+	Path       string   `json:"path"`
+	Revision   string   `json:"revision"`
+	Generation string   `json:"generation"`
+	Span       Span     `json:"span"`
+	Lines      []string `json:"lines"`
+	StartLine  int      `json:"start_line"`
+	EndLine    int      `json:"end_line"`
+	Truncated  bool     `json:"truncated"`
 }
 type Query struct {
-	Text, Repository  string
-	Limit             int
-	MinimumConfidence float64
+	Text              string  `json:"text"`
+	Repository        string  `json:"repository"`
+	Limit             int     `json:"limit"`
+	MinimumConfidence float64 `json:"minimum_confidence"`
 }
 type TraceEvent struct {
-	Kind, Detail, Handle string
-	Rank                 int `json:"rank,omitempty"`
+	Kind   string `json:"kind"`
+	Detail string `json:"detail"`
+	Handle string `json:"handle"`
+	Rank   int    `json:"rank,omitempty"`
 }
 type QueryResult struct {
 	Status        string         `json:"status"`
@@ -102,7 +129,7 @@ func (s *Service) Status(ctx context.Context) (Status, error) {
 	if err != nil {
 		return Status{}, err
 	}
-	out := Status{ActiveCatalog: d.ActiveCatalog, Projection: "ready", Projections: d.Projections}
+	out := Status{ActiveCatalog: d.ActiveCatalog, Projection: "ready", Projections: d.Projections, Repositories: []RepositoryStatus{}}
 	for _, configured := range s.cfg.SourceRepositories() {
 		r := RepositoryStatus{ID: configured.ID}
 		g, e := s.db.ActiveGeneration(ctx, configured.ID)
@@ -186,7 +213,7 @@ func (s *Service) Projection(ctx context.Context, repo, cursor string, limit int
 	}
 	g, e := s.db.ActiveGeneration(ctx, repo)
 	if e != nil {
-		return Projection{Repository: repo, AppliedLimits: map[string]int{"nodes": limit, "edges": limit}}, nil
+		return Projection{Nodes: []Entity{}, Edges: []Claim{}, Repository: repo, AppliedLimits: map[string]int{"nodes": limit, "edges": limit}}, nil
 	}
 	if e = s.db.RequireProjection(ctx, "ui"); e != nil {
 		return Projection{}, fmt.Errorf("knowledge is safe; projection is unavailable: %w", e)
@@ -197,7 +224,7 @@ func (s *Service) Projection(ctx context.Context, repo, cursor string, limit int
 			return Projection{}, fmt.Errorf("invalid cursor")
 		}
 	}
-	r := Projection{Repository: repo, Generation: g.ID, AppliedLimits: map[string]int{"nodes": limit, "edges": limit}}
+	r := Projection{Nodes: []Entity{}, Edges: []Claim{}, Repository: repo, Generation: g.ID, AppliedLimits: map[string]int{"nodes": limit, "edges": limit}}
 	rows, e := s.db.QueryCanonical(ctx, `SELECT p.entity_id FROM projection_ui_nodes p JOIN active_projection_builds a ON a.projection_build_id=p.projection_build_id JOIN entities e ON e.entity_id=p.entity_id WHERE a.projection_kind='ui' AND p.generation_id=? ORDER BY e.kind,e.label,e.path,e.entity_id LIMIT ? OFFSET ?`, g.ID, limit+1, off)
 	if e != nil {
 		return r, e
@@ -349,7 +376,7 @@ func (s *Service) Excerpt(ctx context.Context, evidence string, before, after, m
 // same active-generation candidates and stable ordering as store consumers.
 func (s *Service) Query(ctx context.Context, in Query) (QueryResult, error) {
 	if strings.TrimSpace(in.Text) == "" {
-		return QueryResult{Status: "unknown", Trace: []TraceEvent{{Kind: "empty_query", Detail: "query is empty"}}}, nil
+		return QueryResult{Entities: []Entity{}, Status: "unknown", Trace: []TraceEvent{{Kind: "empty_query", Detail: "query is empty"}}}, nil
 	}
 	if in.Limit == 0 {
 		in.Limit = 20
@@ -362,7 +389,7 @@ func (s *Service) Query(ctx context.Context, in Query) (QueryResult, error) {
 	}
 	if in.Repository != "" {
 		if _, e := s.db.ActiveGeneration(ctx, in.Repository); e != nil {
-			return QueryResult{Status: "unknown", Trace: []TraceEvent{{Kind: "no_active_generation", Detail: in.Repository}}, AppliedLimits: map[string]int{"results": in.Limit}}, nil
+			return QueryResult{Entities: []Entity{}, Status: "unknown", Trace: []TraceEvent{{Kind: "no_active_generation", Detail: in.Repository}}, AppliedLimits: map[string]int{"results": in.Limit}}, nil
 		}
 	}
 	filter := store.QueryFilter{Repository: in.Repository, MinimumConfidence: in.MinimumConfidence}
@@ -387,7 +414,7 @@ func (s *Service) Query(ctx context.Context, in Query) (QueryResult, error) {
 		}
 		return a.Evidence.ID < b.Evidence.ID
 	})
-	out := QueryResult{Status: "found", AppliedLimits: map[string]int{"results": in.Limit}, Trace: []TraceEvent{{Kind: "deterministic_planner", Detail: "exact identity then lexical fallback"}}}
+	out := QueryResult{Entities: []Entity{}, Status: "found", AppliedLimits: map[string]int{"results": in.Limit}, Trace: []TraceEvent{{Kind: "deterministic_planner", Detail: "exact identity then lexical fallback"}}}
 	seen := map[string]bool{}
 	for _, c := range candidates {
 		if seen[c.Entity.ID] {

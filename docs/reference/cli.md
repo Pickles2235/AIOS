@@ -13,7 +13,7 @@ The V1 command surface is deliberately small:
 | `doctor` | `--config`; optional `--data-dir` | Validate local prerequisites and paths. |
 | `benchmark` | `--fixture`, `--data-dir`; optional `--output` | Run deterministic retrieval quality measurements. |
 | `serve` | `--config`, `--data-dir` | Serve bounded read-only `kb.*` MCP over stdio. |
-| `ui serve` | `--config`, `--data-dir` | Serve the read-only browser projection on loopback. |
+| `ui serve` | `--data-dir`; optional `--config` | Serve the read-only browser projection on loopback. |
 
 There are no mutation, execution, generation, or external-service commands.
 `--all` and `--repo` are mutually exclusive. Failed bootstrap staging or

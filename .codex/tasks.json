@@ -111,7 +111,7 @@
       "dependencies": [
         "03-knowledge-instance"
       ],
-      "status": "pending",
+      "status": "ready",
       "plan": ".codex/plans/04-mirror-onboarding.md",
       "completion_commit": null
     },

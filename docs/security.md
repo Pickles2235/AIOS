@@ -25,3 +25,9 @@
 Filename rules cannot identify every sensitive value inside an innocently named source file. Catalog owners must select roots and include patterns that contain source suitable for local indexing. SQLite contains full text for included files and must be protected as source code. The current local product has no at-rest encryption or multi-user authorization. It is intended for a single trusted local user.
 
 AST extractors parse untrusted text in-process through pinned CGO grammars. File, total-byte, result, depth, and query limits bound common resource abuse; they do not replace OS-level process isolation for hostile repositories.
+
+Browser instance/setup mutations are authenticated, same-origin and CSRF-protected.
+They accept bounded typed values and write fixed owned metadata/snapshot paths only.
+Mirror URL validation rejects credentials and arbitrary Git remote helper schemes.
+An existing mirror cannot silently change its approved remote; use a new source ID.
+Setup cancellation and restart preserve canonical active generations for retry.

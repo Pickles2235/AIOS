@@ -28,10 +28,12 @@ It never stores query text, source bodies, credentials, sessions, or factual
 responses. A hit is always rehydrated from active IR; mismatch rejects the
 entry and cache failure falls back to canonical retrieval.
 
-Consumers are read-only. MCP uses bounded newline-delimited JSON-RPC on stdio
+Knowledge consumers are read-only. MCP uses bounded newline-delimited JSON-RPC on stdio
 and registers only `kb.*` operations. The browser API binds an ephemeral IPv4
 loopback port, exchanges a one-use URL-fragment capability for an HttpOnly
 same-site session, and requires same-origin CSRF tokens for POST queries.
+Authenticated browser operator forms also save instance metadata and approved
+mirror setup under owned data. They never add MCP mutations or source writes.
 
 `internal/planner` supplies deterministic retrieval query planning for
 `kb.query`. Fixed intents or surfaced rule-based text classification select

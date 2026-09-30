@@ -31,3 +31,13 @@ Remote URLs and SVG are rejected. An accessible initial represents a missing log
 Owner-only `instance.json` stores presentation metadata and a random stable ID,
 independent of canonical IR and projections. Existing data receives Homefold defaults
 on first UI launch; renames, restarts, ingestion, resets and rebuilds retain the ID.
+
+For first run, launch `aios ui serve --data-dir /absolute/owned-data` without
+`--config`. The secure browser setup accepts approved repository IDs, HTTPS/SSH
+Git URLs (no embedded credentials), or absolute local remotes, plus full Git refs.
+Setup validates a bounded estate, syncs mirrors, and atomically ingests snapshots.
+Stage feedback comes from actual work; errors allow explicit retry, and cancellation
+or restart preserves the last active generation. An unfinished job is marked
+interrupted on restart. Configuration is owner-only `setup.json`; temporary compiler
+inputs and snapshots stay below the data directory. All setup mutations require
+the browser session, matching Origin and CSRF token. MCP remains read-only.

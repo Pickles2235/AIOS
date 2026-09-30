@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -77,7 +78,7 @@ func Validate(r Registry) error {
 			return fmt.Errorf("repositories[%d].id is invalid or duplicated", i)
 		}
 		seen[x.ID] = true
-		if strings.TrimSpace(x.URL) == "" || strings.ContainsAny(x.URL, "\n\r") {
+		if !validURL(x.URL) {
 			return fmt.Errorf("repository %q has an invalid URL", x.ID)
 		}
 		if !strings.HasPrefix(x.Ref, "refs/") || strings.ContainsAny(x.Ref, " \t\n\r") {
@@ -145,8 +146,14 @@ func Sync(ctx context.Context, r Registry, dataDir string) ([]Synced, error) {
 			}
 		} else if e != nil {
 			return nil, e
-		} else if _, e = git(ctx, path, "fetch", "--prune", "origin"); e != nil {
-			return nil, fmt.Errorf("fetch %s: %w", x.ID, e)
+		} else {
+			remote, e := git(ctx, path, "remote", "get-url", "origin")
+			if e != nil || strings.TrimSpace(remote) != x.URL {
+				return nil, fmt.Errorf("approved remote for %s differs from the owned mirror; use a new repository ID", x.ID)
+			}
+			if _, e = git(ctx, path, "fetch", "--prune", "origin"); e != nil {
+				return nil, fmt.Errorf("fetch %s: %w", x.ID, e)
+			}
 		}
 		rev, e := git(ctx, path, "rev-parse", "--verify", x.Ref+"^{commit}")
 		if e != nil {
@@ -164,9 +171,42 @@ func git(ctx context.Context, dir string, args ...string) (string, error) {
 	}
 	cmd := exec.CommandContext(ctx, "git", append(base, args...)...)
 	cmd.Env = append([]string{"GIT_ASKPASS=/usr/bin/false", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_NOSYSTEM=1", "GIT_TERMINAL_PROMPT=0", "LC_ALL=C"}, "PATH="+os.Getenv("PATH"))
+	for _, key := range []string{"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy", "SSL_CERT_FILE", "SSL_CERT_DIR", "GIT_SSL_CAINFO", "SSH_AUTH_SOCK"} {
+		if value, ok := os.LookupEnv(key); ok {
+			cmd.Env = append(cmd.Env, key+"="+value)
+		}
+	}
 	b, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("git %v: %w: %s", args, err, strings.TrimSpace(string(b)))
 	}
 	return string(b), nil
+}
+
+func validURL(value string) bool {
+	if value == "" || len(value) > 4096 || strings.ContainsAny(value, "\n\r\x00") {
+		return false
+	}
+	if filepath.IsAbs(value) {
+		return filepath.Clean(value) == value
+	}
+	u, err := url.Parse(value)
+	if err != nil {
+		return false
+	}
+	if u.Scheme == "file" {
+		return u.Host == "" && filepath.IsAbs(u.Path) && filepath.Clean(u.Path) == u.Path && u.RawQuery == "" && u.Fragment == ""
+	}
+	if u.Scheme != "https" && u.Scheme != "ssh" {
+		return false
+	}
+	if u.Hostname() == "" || u.Path == "" || u.RawQuery != "" || u.Fragment != "" {
+		return false
+	}
+	if u.User != nil {
+		if _, password := u.User.Password(); password || u.Scheme != "ssh" {
+			return false
+		}
+	}
+	return true
 }

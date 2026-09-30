@@ -31,6 +31,9 @@ type Server struct {
 	read                              *knowledge.Service
 	mu                                sync.Mutex
 	dataDir                           string
+	db                                *store.Store
+	setup                             Setup
+	jobCancel                         context.CancelFunc
 }
 
 func token() string {
@@ -58,7 +61,12 @@ func New(cfg catalog.Config, db *store.Store, listener net.Listener) (*Server, e
 		_ = listener.Close()
 		return nil, e
 	}
-	return &Server{dataDir: filepath.Dir(db.Path()), listener: listener, origin: "http://" + listener.Addr().String(), capability: token(), read: knowledge.New(cfg, db)}, nil
+	s := &Server{db: db, dataDir: filepath.Dir(db.Path()), listener: listener, origin: "http://" + listener.Addr().String(), capability: token(), read: knowledge.New(cfg, db)}
+	if e = s.restoreSetup(cfg); e != nil {
+		_ = listener.Close()
+		return nil, e
+	}
+	return s, nil
 }
 func (s *Server) URL() string { return s.origin + "/#token=" + s.capability }
 func (s *Server) authorised(r *http.Request, csrf bool) bool {
@@ -129,6 +137,9 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "aios_kb_session", Value: s.session, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})
 		jsonBody(w, map[string]string{"csrf_token": s.csrf})
 		return
+	case "/api/v1/onboarding", "/api/v1/onboarding/configure", "/api/v1/onboarding/start", "/api/v1/onboarding/cancel":
+		s.setupAPI(w, r)
+		return
 	case "/api/v1/instance", "/api/v1/instance/logo":
 		s.instanceAPI(w, r)
 		return
@@ -137,7 +148,7 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 			fail(w, 403, "authorised same-origin session required")
 			return
 		}
-		v, e := s.read.Status(r.Context())
+		v, e := s.readService().Status(r.Context())
 		if e != nil {
 			fail(w, 500, "knowledge status unavailable")
 			return
@@ -154,7 +165,7 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, "repo is required")
 			return
 		}
-		v, e := s.read.Projection(r.Context(), repo, r.URL.Query().Get("cursor"), 20)
+		v, e := s.readService().Projection(r.Context(), repo, r.URL.Query().Get("cursor"), 20)
 		if e != nil {
 			fail(w, 400, e.Error())
 			return
@@ -179,7 +190,7 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, "invalid request")
 			return
 		}
-		v, e := s.read.Entity(r.Context(), in.Handle)
+		v, e := s.readService().Entity(r.Context(), in.Handle)
 		if e != nil {
 			fail(w, 409, e.Error())
 			return
@@ -195,7 +206,7 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, "invalid request")
 			return
 		}
-		v, tr, e := s.read.Neighbors(r.Context(), in.Handle, in.Types, in.Limit)
+		v, tr, e := s.readService().Neighbors(r.Context(), in.Handle, in.Types, in.Limit)
 		if e != nil {
 			fail(w, 409, e.Error())
 			return
@@ -203,14 +214,16 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 		jsonBody(w, map[string]any{"claims": v, "truncated": tr})
 	case "/api/v1/evidence":
 		var in struct {
-			Evidence                string `json:"evidence"`
-			Before, After, MaxLines int
+			Evidence string `json:"evidence"`
+			Before   int    `json:"before"`
+			After    int    `json:"after"`
+			MaxLines int    `json:"max_lines"`
 		}
 		if decode(r, &in) != nil {
 			fail(w, 400, "invalid request")
 			return
 		}
-		v, e := s.read.Excerpt(r.Context(), in.Evidence, in.Before, in.After, in.MaxLines)
+		v, e := s.readService().Excerpt(r.Context(), in.Evidence, in.Before, in.After, in.MaxLines)
 		if e != nil {
 			fail(w, 409, e.Error())
 			return
@@ -222,7 +235,7 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, "invalid request")
 			return
 		}
-		v, e := s.read.Query(r.Context(), in)
+		v, e := s.readService().Query(r.Context(), in)
 		if e != nil {
 			fail(w, 400, e.Error())
 			return
@@ -257,7 +270,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		http.FileServer(http.FS(sub)).ServeHTTP(w, r.WithContext(ctx))
 	})
 	server := &http.Server{Handler: h}
-	go func() { <-ctx.Done(); _ = server.Close() }()
+	go func() { <-ctx.Done(); s.cancelJob(); _ = server.Close() }()
 	e = server.Serve(s.listener)
 	if e == http.ErrServerClosed {
 		return nil

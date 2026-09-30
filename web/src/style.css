@@ -48,3 +48,13 @@
     width: calc(100% - 1.5rem);
   }
 }
+#root > main { height: 100dvh; overflow: auto; padding: 1.5rem; background: #f6f7fb; color: #202638; }
+#root > main header, .instance-brand { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+#root > main form { display: grid; gap: .75rem; max-width: 60rem; }
+#root > main label { display: grid; gap: .3rem; }
+#root > main input { padding: .55rem; border: 1px solid #677087; border-radius: .3rem; }
+#root > main button { padding: .5rem .8rem; border: 1px solid #677087; border-radius: .4rem; background: white; color: #202638; cursor: pointer; }
+#root > main button:disabled { cursor: wait; opacity: .65; }
+#root > main :focus-visible { outline-color: #3349ac; }
+#root > main fieldset { display: grid; gap: .75rem; border: 1px solid #9da5b8; border-radius: .6rem; padding: 1rem; }
+#root > main pre { white-space: pre-wrap; overflow-wrap: anywhere; }

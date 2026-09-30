@@ -283,11 +283,22 @@ func run(ctx context.Context, args []string) error {
 		if err := fs.Parse(args[2:]); err != nil {
 			return err
 		}
-		if *config == "" || *data == "" {
-			return fmt.Errorf("--config and --data-dir are required")
+		if *data == "" {
+			return fmt.Errorf("--data-dir is required")
 		}
-		cfg, err := catalog.Load(*config)
+		cfg := catalog.Config{Version: 1, Limits: catalog.Defaults()}
+		var err error
+		if *config != "" {
+			cfg, err = catalog.Load(*config)
+			if err != nil {
+				return err
+			}
+		}
+		writer, err := store.OpenWriter(*data)
 		if err != nil {
+			return err
+		}
+		if err = writer.Close(); err != nil {
 			return err
 		}
 		db, err := store.OpenReadOnly(*data)

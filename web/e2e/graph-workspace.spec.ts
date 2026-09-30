@@ -1,6 +1,6 @@
 import {expect, test} from "@playwright/test";
 
-test.beforeEach(async({page})=>{await page.route("**/api/v1/instance",route=>route.fulfill({json:{id:"instance",name:"Homefold",seed_colour:"#5865f2"}}))});
+test.beforeEach(async({page})=>{await page.route("**/api/v1/onboarding",route=>route.fulfill({json:{state:"unconfigured",completed_repositories:0}}));await page.route("**/api/v1/instance",route=>route.fulfill({json:{id:"instance",name:"Homefold",seed_colour:"#5865f2"}}))});
 
 test("renders only canonical generation data and supports keyboard selection", async ({page}) => {
   await page.route("**/api/v1/session", route => route.fulfill({json:{csrf_token:"csrf"}}));
@@ -20,4 +20,14 @@ test("saves and displays instance branding in the live entry point",async({page}
  await page.route("**/api/v1/session",r=>r.fulfill({json:{csrf_token:"csrf"}}));
  await page.route("**/api/v1/status",r=>r.fulfill({json:{projection_state:"no_active_generation",repositories:[]}}));
  await page.goto("/#token=test");await page.getByRole("button",{name:"Edit instance"}).click();await page.getByLabel("Instance name").fill("Research");await page.getByRole("button",{name:"Save instance"}).click();await expect(page.getByLabel("Knowledge instance")).toContainText("Research");expect(instance.id).toBe("stable");
+});
+
+test("first-run mirror setup reports real stages and reaches knowledge",async({page})=>{
+ let state="unconfigured",ready=false;
+ await page.route("**/api/v1/session",r=>r.fulfill({json:{csrf_token:"csrf"}}));
+ await page.route("**/api/v1/status",r=>r.fulfill({json:{projection_state:ready?"ready":"no_active_generation",repositories:[]}}));
+ await page.route("**/api/v1/onboarding/configure",r=>{expect(r.request().headers()["x-csrf-token"]).toBe("csrf");return r.fulfill({json:{state:"configured"}})});
+ await page.route("**/api/v1/onboarding/start",r=>{state="ingesting";return r.fulfill({status:202,json:{state,completed_repositories:1}})});
+ await page.route("**/api/v1/onboarding",r=>{if(state==="ingesting"){state="ready";ready=true}return r.fulfill({json:{state,completed_repositories:ready?1:0}})});
+ await page.goto("/#token=test");await page.getByLabel("id 1",{exact:true}).fill("repo");await page.getByLabel("url 1",{exact:true}).fill("https://github.com/example/approved.git");await page.getByRole("button",{name:"Sync and index"}).click();await expect(page.getByText("1 mirrors synchronized. Compiling snapshots…")).toBeVisible();await expect(page.getByRole("heading",{name:"Knowledge map"})).toBeVisible();
 });
