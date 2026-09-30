@@ -1,6 +1,6 @@
 # 03-knowledge-instance: Persist a named knowledge instance with stable identity, optional logo and seed colour
 
-Status: ready. See the queue for authoritative status and dependencies.
+Status: completed. See the queue for authoritative status and dependencies.
 
 ## Baseline and resumption
 
@@ -74,3 +74,9 @@ Actual Linux validation:
 - Initial persistence test lacked an active catalog for the rebuild; fixed its
   fixture to publish a canonical generation, then all checks passed.
 - git diff --check passed. No native macOS or private-corpus claim.
+
+Implementation commit: 962a3f093e1ae9c8b0a6d8276e452a40d96ef298.
+Verified on fetched origin/main after exact-object GitHub API publication with
+force=false. Completed status recorded in this follow-up bookkeeping commit.
+No remaining blocker for this task. User requested the whole queue; continue
+with the next eligible task after verifying this bookkeeping publication.

@@ -80,9 +80,9 @@
       "dependencies": [
         "02-variable-estate"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/plans/03-knowledge-instance.md",
-      "completion_commit": null
+      "completion_commit": "962a3f093e1ae9c8b0a6d8276e452a40d96ef298"
     },
     {
       "id": "04-mirror-onboarding",
