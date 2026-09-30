@@ -1,6 +1,10 @@
 .PHONY: help fmt vet test race build verify web-build web-test web-e2e acceptance-v1 estate-acceptance-v1 release
 
 help:
+	@echo "make harness-setup Install repository development dependencies"
+	@echo "make harness-test Validate queue and run offline launcher regression tests"
+	@echo "make harness-validate Run core development and contract checks"
+	@echo "make harness-validate-web Run UI unit, build, and browser checks"
 	@echo "make fmt     Format Go source"
 	@echo "make vet     Run go vet"
 	@echo "make test    Run unit and integration tests"
@@ -52,3 +56,20 @@ release:
 	./scripts/build-v1-release.sh --version "$(VERSION)" --output-dir "$(OUTPUT_DIR)"
 
 verify: fmt vet test race build web-build web-test web-e2e
+
+.PHONY: harness-setup harness-test harness-validate harness-validate-web
+harness-setup:
+	sh scripts/codex_setup.sh
+
+harness-test:
+	python3 scripts/codex_harness.py check
+	python3 -m unittest discover -s scripts -p 'test_codex_harness.py'
+
+harness-validate: harness-test
+	python3 -m unittest discover -s scripts -p 'test_*.py'
+	go vet ./...
+	go test ./...
+	go test -race ./...
+	$(MAKE) build
+
+harness-validate-web: web-test web-build web-e2e

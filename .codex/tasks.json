@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "id": "01-query-planning-docs",
+      "title": "Clarify deterministic query planning versus agent/task planning",
+      "scope": [
+        "Align README and architecture/reference explanations with internal/planner bounded query algebra and kb.query.",
+        "Describe the exclusion of LLM reasoning and agent/task execution precisely."
+      ],
+      "non_goals": [
+        "No query behavior, protocol, feature flag, or disabled-capability changes.",
+        "No agent runtime or documentation redesign."
+      ],
+      "acceptance": [
+        "A reader can distinguish deterministic retrieval planning from excluded agent/task planning.",
+        "Every planning claim agrees with current CLI, MCP, planner tests, and product boundary."
+      ],
+      "checks": [
+        "make harness-test",
+        "python3 -m unittest discover -s scripts -p 'test_*.py'",
+        "go test ./internal/planner ./internal/mcp ./cmd/aios"
+      ],
+      "dependencies": [],
+      "status": "pending",
+      "plan": ".codex/plans/01-query-planning-docs.md",
+      "merge_commit": null
+    },
+    {
+      "id": "02-variable-estate",
+      "title": "Replace exactly-25 product restriction with a bounded variable estate",
+      "scope": [
+        "Use a documented finite estate bound in catalog and mirror validation, with matching IDs and atomic bootstrap.",
+        "Update product docs and validation tests; retain the exactly-25 hermetic and private-estate acceptance benchmarks."
+      ],
+      "non_goals": [
+        "No unbounded catalogs, connector sources, onboarding UI, or benchmark dilution.",
+        "No incidental module-path rename."
+      ],
+      "acceptance": [
+        "Valid estates of 1, several, 25, and the documented maximum pass matching catalog/registry validation.",
+        "Zero, over-limit, duplicate IDs, unknown entries, and catalog/registry mismatches fail clearly.",
+        "The 25-repository benchmark still uses 25 and both hermetic runs have equal fingerprints."
+      ],
+      "checks": [
+        "make harness-validate",
+        "go test ./internal/catalog ./internal/mirror ./internal/app ./cmd/aios",
+        "Two fresh make acceptance-v1 runs; compare semantic_fingerprint"
+      ],
+      "dependencies": [
+        "01-query-planning-docs"
+      ],
+      "status": "pending",
+      "plan": ".codex/plans/02-variable-estate.md",
+      "merge_commit": null
+    },
+    {
+      "id": "03-knowledge-instance",
+      "title": "Persist a named knowledge instance with stable identity, optional logo and seed colour",
+      "scope": [
+        "Persist validated instance metadata in owned durable state and expose it to the authenticated browser.",
+        "Retain identity across renaming, restarts, incremental ingest, and projection rebuilds; define migration defaults for existing data."
+      ],
+      "non_goals": [
+        "No accounts, remote asset fetching, cloud sync, or changes to repository/entity identity.",
+        "No MCP mutations or executable/uploaded SVG content."
+      ],
+      "acceptance": [
+        "A restart and projection rebuild preserve instance ID, name, optional logo, and seed colour.",
+        "Legacy data opens with safe migration/defaults; renaming never changes stable ID.",
+        "Malformed/oversized assets and colours are rejected; missing logo has an accessible fallback.",
+        "Authenticated UI displays saved values; canonical evidence remains independent of presentation metadata."
+      ],
+      "checks": [
+        "make harness-validate",
+        "make harness-validate-web",
+        "go test ./internal/store ./internal/webui ./cmd/aios",
+        "Persistence/restart and legacy-data migration integration checks"
+      ],
+      "dependencies": [
+        "02-variable-estate"
+      ],
+      "status": "pending",
+      "plan": ".codex/plans/03-knowledge-instance.md",
+      "merge_commit": null
+    },
+    {
+      "id": "04-mirror-onboarding",
+      "title": "Add first-run onboarding for mirrored repositories",
+      "scope": [
+        "Wire a first-run flow into the live UI for configuring an approved bounded mirror estate and compiling immutable mirror snapshots.",
+        "Show truthful validation, sync, ingestion, progress, errors, and retry states using owned data."
+      ],
+      "non_goals": [
+        "No direct local workspace indexing yet, credential collection, external connectors, or arbitrary command execution.",
+        "No write-capable MCP operations or bypassing browser security."
+      ],
+      "acceptance": [
+        "A fresh instance can configure mirrors, sync and atomically bootstrap an approved estate, then reach evidence-backed querying.",
+        "Invalid/unsupported repositories fail visibly; interruption retains the last active generation and retry is safe.",
+        "Authenticated same-origin CSRF protection applies to every setup mutation; inputs cannot select arbitrary writable paths.",
+        "Source remotes/checkouts remain unchanged; browser flow is exercised through main.tsx and backend integration."
+      ],
+      "checks": [
+        "make harness-validate",
+        "make harness-validate-web",
+        "go test ./internal/webui ./internal/app ./internal/mirror ./cmd/aios",
+        "Two fresh make acceptance-v1 runs; compare semantic_fingerprint",
+        "Authenticated first-run integration/E2E with fixture remotes"
+      ],
+      "dependencies": [
+        "03-knowledge-instance"
+      ],
+      "status": "pending",
+      "plan": ".codex/plans/04-mirror-onboarding.md",
+      "merge_commit": null
+    },
+    {
+      "id": "05-local-snapshots",
+      "title": "Add direct indexing through immutable snapshots of local Git workspaces",
+      "scope": [
+        "Add an explicit approved local Git source route that captures immutable owned snapshots before compilation.",
+        "Define and document clean/dirty/untracked behavior, stable source identity, revision provenance, and failure/retry semantics."
+      ],
+      "non_goals": [
+        "No indexing from mutable live roots, source writes, git reset/checkout/stash, filesystem watcher authority, or arbitrary non-Git folders.",
+        "No executing source hooks/build scripts, LLM reasoning, or connector adapters."
+      ],
+      "acceptance": [
+        "Supported clean local workspaces index through immutable owned snapshots with commit and file-hash provenance.",
+        "Source status, tracked bytes, untracked bytes and permissions remain identical before/after success and failure.",
+        "Concurrent edits cannot publish mixed-source evidence; unsafe paths/symlinks and unsupported states fail explicitly.",
+        "Mirror ingestion and generation activation semantics remain intact; query results cite the captured source generation."
+      ],
+      "checks": [
+        "make harness-validate",
+        "go test ./internal/adapter ./internal/discover ./internal/provenance ./internal/mirror ./internal/app ./internal/store ./cmd/aios",
+        "make harness-validate-web if onboarding changes",
+        "Two fresh make acceptance-v1 runs; compare semantic_fingerprint",
+        "Source non-mutation and concurrent-edit snapshot integration tests"
+      ],
+      "dependencies": [
+        "04-mirror-onboarding"
+      ],
+      "status": "pending",
+      "plan": ".codex/plans/05-local-snapshots.md",
+      "merge_commit": null
+    },
+    {
+      "id": "06-spotlight-querying",
+      "title": "Complete Spotlight-first querying and truthful knowledge-cloud feedback",
+      "scope": [
+        "Wire Spotlight-style keyboard-first querying and instance knowledge-cloud UI into the live authenticated entry point.",
+        "Display canonical evidence, active generations, coverage, bounded/truncated states, and truthful found/not_found/unknown feedback."
+      ],
+      "non_goals": [
+        "No fabricated graph nodes, simulated indexing progress, vector-as-evidence, LLM chat/recommendations, or query API scope expansion.",
+        "No removing simpler accessible evidence navigation."
+      ],
+      "acceptance": [
+        "Keyboard open/close, focus restoration, query submission, result selection and evidence navigation work in live main.tsx.",
+        "Empty, unsupported, stale, unavailable, unknown, not_found and truncated results have distinct truthful feedback.",
+        "Cloud nodes/edges and counts derive from active projection/evidence responses and show generation boundaries.",
+        "Browser security, bounded deterministic retrieval and accessibility survive UI integration."
+      ],
+      "checks": [
+        "make harness-validate",
+        "make harness-validate-web",
+        "go test ./internal/planner ./internal/knowledge ./internal/mcp ./internal/webui",
+        "Two fresh make acceptance-v1 runs; compare semantic_fingerprint",
+        "Live authenticated UI E2E for keyboard focus and evidence/result-state cases"
+      ],
+      "dependencies": [
+        "05-local-snapshots"
+      ],
+      "status": "pending",
+      "plan": ".codex/plans/06-spotlight-querying.md",
+      "merge_commit": null
+    },
+    {
+      "id": "07-macos-first-run",
+      "title": "Verify macOS Apple Silicon installation and first-run experience",
+      "scope": [
+        "Run native arm64 release/install/checksum and first-run mirrored/local onboarding, Spotlight queries, and evidence checks.",
+        "Verify pinned bundled Nomic runtime, permissions, interrupted setup/retry, restart identity, and document reproducible operator evidence."
+      ],
+      "non_goals": [
+        "No claiming cross-compilation or Linux fixture success proves macOS UX.",
+        "No signing/notarization promises, new hosted services, or real-estate readiness without the private corpus."
+      ],
+      "acceptance": [
+        "On actual macOS arm64, a clean install verifies checksums, launches securely, and completes first-run ingestion and evidence querying.",
+        "Brand identity persists through restart; local snapshots leave sources unchanged; bundled embeddings work without runtime downloads.",
+        "Two native acceptance runs are accepted with matching fingerprints; failures and remediation are documented.",
+        "If native hardware is unavailable, task remains blocked with an exact native checklist and handoff, never marked verified."
+      ],
+      "checks": [
+        "make harness-test",
+        "make harness-validate on native macOS arm64",
+        "make harness-validate-web on native macOS arm64",
+        "make release VERSION=<reviewed-version> OUTPUT_DIR=<owned-directory>; verify archive checksum",
+        "Two native make acceptance-v1 runs; compare semantic_fingerprint",
+        "Manual clean-install/first-run/restart and source-nonmutation checklist on actual Apple Silicon"
+      ],
+      "dependencies": [
+        "06-spotlight-querying"
+      ],
+      "status": "pending",
+      "plan": ".codex/plans/07-macos-first-run.md",
+      "merge_commit": null
+    }
+  ]
+}

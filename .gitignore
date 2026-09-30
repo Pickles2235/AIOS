@@ -13,3 +13,6 @@
 /internal/semantic/llama/
 /internal/semantic/nomic-embed-text-v1.5.f16.gguf
 /internal/semantic/native_model_release.go
+__pycache__/
+/web/test-results/
+/web/playwright-report/

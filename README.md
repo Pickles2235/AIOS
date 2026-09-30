@@ -58,3 +58,9 @@ canonical evidence chain.
 V1 is deterministic repository knowledge only. Connected capability inputs,
 bundled LLM reasoning, planning, execution, subagents, and autonomous reasoning
 are outside this release.
+
+## Development harness
+
+See [the repository-local Codex harness](.codex/README.md) for repeatable setup,
+validation, a dependency-ordered product task queue, persistent plans, and an
+optional one-task CLI launcher. Start with `make harness-test`.
