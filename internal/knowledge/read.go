@@ -8,12 +8,15 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/model"
+	"github.com/AdamNi-7080/AIOS/internal/planner"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
 
@@ -119,11 +122,12 @@ type TraceEvent struct {
 	Rank   int    `json:"rank,omitempty"`
 }
 type QueryResult struct {
-	Status        string         `json:"status"`
-	Entities      []Entity       `json:"entities"`
-	Trace         []TraceEvent   `json:"trace"`
-	Truncated     bool           `json:"truncated"`
-	AppliedLimits map[string]int `json:"applied_limits"`
+	Coverage      *store.CoverageBasis `json:"coverage,omitempty"`
+	Status        string               `json:"status"`
+	Entities      []Entity             `json:"entities"`
+	Trace         []TraceEvent         `json:"trace"`
+	Truncated     bool                 `json:"truncated"`
+	AppliedLimits map[string]int       `json:"applied_limits"`
 }
 
 func (s *Service) Status(ctx context.Context) (Status, error) {
@@ -222,9 +226,11 @@ func (s *Service) Projection(ctx context.Context, repo, cursor string, limit int
 	}
 	off := 0
 	if cursor != "" {
-		if _, e := fmt.Sscanf(cursor, "%d", &off); e != nil || off < 0 {
-			return Projection{}, fmt.Errorf("invalid cursor")
+		continuation, ok := planner.DecodeContinuation(cursor, g.ID, "ui_projection/"+repo)
+		if !ok {
+			return Projection{}, fmt.Errorf("projection cursor is stale or invalid")
 		}
+		off = continuation.Offset
 	}
 	r := Projection{Nodes: []Entity{}, Edges: []Claim{}, Repository: repo, Generation: g.ID, AppliedLimits: map[string]int{"nodes": limit, "edges": limit}}
 	rows, e := s.db.QueryCanonical(ctx, `SELECT p.entity_id FROM projection_ui_nodes p JOIN active_projection_builds a ON a.projection_build_id=p.projection_build_id JOIN entities e ON e.entity_id=p.entity_id WHERE a.projection_kind='ui' AND p.generation_id=? ORDER BY e.kind,e.label,e.path,e.entity_id LIMIT ? OFFSET ?`, g.ID, limit+1, off)
@@ -255,7 +261,7 @@ func (s *Service) Projection(ctx context.Context, repo, cursor string, limit int
 	if len(r.Nodes) > limit {
 		r.Nodes = r.Nodes[:limit]
 		r.Truncated = true
-		r.NextCursor = fmt.Sprintf("%d", off+limit)
+		r.NextCursor = planner.EncodeContinuation(planner.Continuation{Generation: g.ID, Family: "ui_projection/" + repo, Offset: off + limit})
 	}
 	ids := map[string]bool{}
 	for _, x := range r.Nodes {
@@ -377,7 +383,18 @@ func (s *Service) Excerpt(ctx context.Context, evidence string, before, after, m
 
 // Query is a bounded canonical lexical/structural read. The UI receives the
 // same active-generation candidates and stable ordering as store consumers.
-func (s *Service) Query(ctx context.Context, in Query) (QueryResult, error) {
+func (s *Service) Query(ctx context.Context, in Query) (result QueryResult, retErr error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	defer func() {
+		if errors.Is(retErr, context.DeadlineExceeded) || ctx.Err() != nil {
+			result = QueryResult{Status: "unknown", Entities: []Entity{}, Trace: []TraceEvent{{Kind: "budget_exhausted", Detail: "query time budget exhausted"}}, AppliedLimits: map[string]int{"time_ms": 1000}}
+			retErr = nil
+		}
+	}()
+	if len(in.Text) > 256 || len(in.Repository) > 63 || in.MinimumConfidence < 0 || in.MinimumConfidence > 1 {
+		return QueryResult{Status: "unknown", Entities: []Entity{}, Trace: []TraceEvent{{Kind: "unsupported_query", Detail: "query exceeds supported input bounds"}}}, nil
+	}
 	if strings.TrimSpace(in.Text) == "" {
 		return QueryResult{Entities: []Entity{}, Status: "unknown", Trace: []TraceEvent{{Kind: "empty_query", Detail: "query is empty"}}}, nil
 	}
@@ -387,8 +404,25 @@ func (s *Service) Query(ctx context.Context, in Query) (QueryResult, error) {
 	if in.Limit < 1 || in.Limit > 100 {
 		return QueryResult{}, fmt.Errorf("limit must be between 1 and 100")
 	}
-	if _, e := s.Status(ctx); e != nil {
+	status, e := s.Status(ctx)
+	if e != nil {
 		return QueryResult{}, e
+	}
+	if status.Projection == "no_active_generation" {
+		return QueryResult{Status: "unknown", Entities: []Entity{}, Trace: []TraceEvent{{Kind: "no_active_generation", Detail: "index approved sources first"}}}, nil
+	}
+	basis, e := s.db.Coverage(ctx, in.Repository, "lexical", nil)
+	if e != nil {
+		return QueryResult{}, e
+	}
+	for _, repo := range status.Repositories {
+		if !repo.Active && (in.Repository == "" || in.Repository == repo.ID) {
+			basis.Complete = false
+			basis.Uncertainty = append(basis.Uncertainty, "repository_not_indexed:"+repo.ID)
+		}
+	}
+	if e = s.db.RequireProjection(ctx, "lookup"); e != nil {
+		return QueryResult{Status: "unknown", Entities: []Entity{}, Coverage: &basis, Trace: []TraceEvent{{Kind: "projection_unavailable", Detail: "lookup projection is stale or unavailable"}}}, nil
 	}
 	if in.Repository != "" {
 		if _, e := s.db.ActiveGeneration(ctx, in.Repository); e != nil {
@@ -405,6 +439,9 @@ func (s *Service) Query(ctx context.Context, in Query) (QueryResult, error) {
 		identities[c.Entity.ID] = true
 	}
 	if len(identities) != 1 {
+		if e = s.db.RequireProjection(ctx, "lexical"); e != nil {
+			return QueryResult{Status: "unknown", Entities: []Entity{}, Coverage: &basis, Trace: []TraceEvent{{Kind: "projection_unavailable", Detail: "lexical projection is stale or unavailable"}}}, nil
+		}
 		candidates, e = s.db.LexicalCandidates(ctx, in.Text, filter)
 		if e != nil {
 			return QueryResult{}, e
@@ -417,7 +454,12 @@ func (s *Service) Query(ctx context.Context, in Query) (QueryResult, error) {
 		}
 		return a.Evidence.ID < b.Evidence.ID
 	})
-	out := QueryResult{Entities: []Entity{}, Status: "found", AppliedLimits: map[string]int{"results": in.Limit}, Trace: []TraceEvent{{Kind: "deterministic_planner", Detail: "exact identity then lexical fallback"}}}
+	out := QueryResult{Coverage: &basis, Entities: []Entity{}, Status: "found", AppliedLimits: map[string]int{"results": in.Limit, "candidates": 500, "time_ms": 1000}, Trace: []TraceEvent{{Kind: "deterministic_planner", Detail: "exact identity then lexical fallback"}}}
+	if len(candidates) > 500 {
+		candidates = candidates[:500]
+		out.Truncated = true
+		out.Trace = append(out.Trace, TraceEvent{Kind: "budget_exhausted", Detail: "candidate budget bounded retrieval"})
+	}
 	seen := map[string]bool{}
 	for _, c := range candidates {
 		if seen[c.Entity.ID] {
@@ -431,13 +473,18 @@ func (s *Service) Query(ctx context.Context, in Query) (QueryResult, error) {
 		out.Entities = append(out.Entities, x)
 		out.Trace = append(out.Trace, TraceEvent{Kind: "rank", Detail: c.MatchType, Handle: x.Handle, Rank: len(out.Entities)})
 		if len(out.Entities) == in.Limit {
-			out.Truncated = len(candidates) > len(out.Entities)
+			out.Truncated = out.Truncated || len(candidates) > len(out.Entities)
 			break
 		}
 	}
 	if len(out.Entities) == 0 {
-		out.Status = "not_found"
-		out.Trace = append(out.Trace, TraceEvent{Kind: "not_found", Detail: "active scope fully searched"})
+		if basis.Complete && !out.Truncated {
+			out.Status = "not_found"
+			out.Trace = append(out.Trace, TraceEvent{Kind: "not_found", Detail: "complete applicable active coverage searched"})
+		} else {
+			out.Status = "unknown"
+			out.Trace = append(out.Trace, TraceEvent{Kind: "coverage_incomplete", Detail: "coverage cannot support absence"})
+		}
 	}
 	return out, nil
 }

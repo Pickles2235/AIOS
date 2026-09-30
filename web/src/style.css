@@ -58,3 +58,17 @@
 #root > main :focus-visible { outline-color: #3349ac; }
 #root > main fieldset { display: grid; gap: .75rem; border: 1px solid #9da5b8; border-radius: .6rem; padding: 1rem; }
 #root > main pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.knowledge-workspace { display: grid; grid-template-columns: minmax(0, 2fr) minmax(20rem, 1fr); gap: 2rem; margin-top: 1rem; }
+.knowledge-workspace > *, .knowledge-workspace aside { min-width: 0; overflow-wrap: anywhere; }
+.knowledge-workspace aside { background: white; padding: 1rem; border-radius: .6rem; align-self: start; }
+[aria-label="Knowledge cloud"] svg { width: 100%; max-height: 34rem; background: white; border-radius: .6rem; }
+.cloud-edge { stroke: #9da5b8; stroke-width: 1.5; }
+[aria-label="Knowledge cloud"] text { font-size: 12px; fill: #202638; }
+[aria-label="Knowledge cloud"] g { cursor: pointer; }
+#root > main dialog { width: min(42rem, calc(100vw - 2rem)); max-height: 85dvh; overflow: auto; border: 1px solid #677087; border-radius: .7rem; padding: 1.3rem; color: #202638; }
+#root > main dialog::backdrop { background: #11182799; }
+#root > main dialog ul { padding: 0; list-style: none; }
+#root > main dialog [role="option"] { padding: .5rem; border-radius: .4rem; }
+#root > main dialog [role="option"][aria-selected="true"] { background: #e6e9fb; }
+#root > main dialog small { display: block; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .knowledge-workspace { grid-template-columns: 1fr; } }

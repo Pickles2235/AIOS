@@ -173,7 +173,7 @@
       "dependencies": [
         "05-local-snapshots"
       ],
-      "status": "pending",
+      "status": "ready",
       "plan": ".codex/plans/06-spotlight-querying.md",
       "completion_commit": null
     },

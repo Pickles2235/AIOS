@@ -72,7 +72,8 @@ func (s *Server) URL() string { return s.origin + "/#token=" + s.capability }
 func (s *Server) authorised(r *http.Request, csrf bool) bool {
 	// Browsers omit Origin on ordinary same-origin GETs. Only state-changing
 	// request shapes require Origin plus CSRF; every route remains session bound.
-	if csrf && r.Header.Get("Origin") != s.origin {
+	origin := r.Header.Get("Origin")
+	if (origin != "" && origin != s.origin) || (csrf && origin == "") {
 		return false
 	}
 	s.mu.Lock()
@@ -114,6 +115,18 @@ func decode(r *http.Request, v any) error {
 func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/api/v1/session":
+		if r.Method == http.MethodGet {
+			if !s.authorised(r, false) {
+				fail(w, 403, "session expired")
+				return
+			}
+			s.mu.Lock()
+			v := s.csrf
+			s.mu.Unlock()
+			w.Header().Set("Cache-Control", "no-store")
+			jsonBody(w, map[string]string{"csrf_token": v})
+			return
+		}
 		if r.Method != http.MethodPost || r.Header.Get("Origin") != s.origin {
 			fail(w, http.StatusForbidden, "same-origin session required")
 			return

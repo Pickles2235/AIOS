@@ -2,6 +2,7 @@ package knowledge
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -51,5 +52,86 @@ func TestStaleHandleIsRejected(t *testing.T) {
 	}
 	if _, err = s.Entity(context.Background(), Encode("e", "missing", "id")); err == nil {
 		t.Fatal("accepted stale handle")
+	}
+}
+
+func TestQueryAbsenceRequiresCompleteCoverage(t *testing.T) {
+	db, s := fixture(t)
+	defer db.Close()
+	ctx := context.Background()
+	r, err := s.Query(ctx, Query{Text: "missing_symbol"})
+	if err != nil || r.Status != "not_found" || r.Coverage == nil || !r.Coverage.Complete {
+		t.Fatalf("complete absence: %#v %v", r, err)
+	}
+	if _, err = db.DB().ExecContext(ctx, `UPDATE coverage_runs SET status='incomplete'`); err != nil {
+		t.Fatal(err)
+	}
+	r, err = s.Query(ctx, Query{Text: "missing_symbol"})
+	if err != nil || r.Status != "unknown" || r.Coverage == nil || r.Coverage.Complete {
+		t.Fatalf("incomplete absence: %#v %v", r, err)
+	}
+	r, err = s.Query(ctx, Query{Text: "Publish"})
+	if err != nil || r.Status != "found" || len(r.Entities) == 0 || r.Coverage.Complete {
+		t.Fatalf("positive evidence with gaps: %#v %v", r, err)
+	}
+}
+
+func TestQueryUnavailableEmptyUnsupportedAndBudget(t *testing.T) {
+	db, s := fixture(t)
+	defer db.Close()
+	for _, tc := range []struct {
+		query Query
+		kind  string
+	}{
+		{Query{}, "empty_query"},
+		{Query{Text: strings.Repeat("a", 257)}, "unsupported_query"},
+		{Query{Text: "Publish", MinimumConfidence: 2}, "unsupported_query"},
+	} {
+		r, err := s.Query(context.Background(), tc.query)
+		if err != nil || r.Status != "unknown" || len(r.Trace) != 1 || r.Trace[0].Kind != tc.kind {
+			t.Fatalf("%s: %#v %v", tc.kind, r, err)
+		}
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	r, err := s.Query(ctx, Query{Text: "Publish"})
+	if err != nil || r.Status != "unknown" || r.Trace[0].Kind != "budget_exhausted" {
+		t.Fatalf("budget: %#v %v", r, err)
+	}
+	if _, err = db.DB().ExecContext(context.Background(), `DELETE FROM active_projection_builds WHERE projection_kind='lexical'`); err != nil {
+		t.Fatal(err)
+	}
+	r, err = s.Query(context.Background(), Query{Text: "missing_symbol"})
+	if err != nil || r.Status != "unknown" || r.Trace[0].Kind != "projection_unavailable" {
+		t.Fatalf("outage: %#v %v", r, err)
+	}
+	// An exact positive still has canonical evidence when lexical projection is absent.
+	r, err = s.Query(context.Background(), Query{Text: "Event"})
+	if err != nil || r.Status != "found" || r.Coverage.Complete {
+		t.Fatalf("exact: %#v %v", r, err)
+	}
+}
+
+func TestProjectionCursorRejectsChangedGeneration(t *testing.T) {
+	db, s := fixture(t)
+	defer db.Close()
+	ctx := context.Background()
+	p, err := s.Projection(ctx, "repo", "", 1)
+	if err != nil || p.NextCursor == "" {
+		t.Fatalf("cursor: %#v %v", p, err)
+	}
+	if _, err = s.Projection(ctx, "repo", p.NextCursor, 1); err != nil {
+		t.Fatal(err)
+	}
+	f := model.File{RepoID: "repo", Path: "src/b.go", SHA256: "two", Size: 14, Language: "go", Classification: "source", Content: "func Next() {}"}
+	g, err := db.StageGeneration(ctx, model.Snapshot{RepoID: "repo", Root: "/repo", Git: model.GitState{Commit: "two"}, ContentHash: "two", FileCount: 1, TotalBytes: f.Size, IndexedAt: time.Now(), ExtractorVersions: model.ExtractorVersion}, []model.File{f}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = db.ActivateGeneration(ctx, g.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = s.Projection(ctx, "repo", p.NextCursor, 1); err == nil {
+		t.Fatal("accepted cursor from previous generation")
 	}
 }

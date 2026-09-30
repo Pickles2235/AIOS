@@ -85,3 +85,35 @@ func TestSessionRejectsOversizedTrailingAndUnknownJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestSessionRefreshRequiresExistingSameOriginCookie(t *testing.T) {
+	s := server(t)
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/session", strings.NewReader(`{"token":"`+s.capability+`"}`))
+	r.Header.Set("Origin", s.origin)
+	w := httptest.NewRecorder()
+	s.api(w, r)
+	cookie := w.Result().Cookies()[0]
+	for _, tc := range []struct {
+		cookie bool
+		origin string
+		want   int
+	}{
+		{false, "", 403}, {true, "https://foreign.example", 403}, {true, "", 200}, {true, s.origin, 200},
+	} {
+		r = httptest.NewRequest(http.MethodGet, "/api/v1/session", nil)
+		if tc.cookie {
+			r.AddCookie(cookie)
+		}
+		if tc.origin != "" {
+			r.Header.Set("Origin", tc.origin)
+		}
+		w = httptest.NewRecorder()
+		s.api(w, r)
+		if w.Code != tc.want {
+			t.Fatalf("%#v: %d %s", tc, w.Code, w.Body.String())
+		}
+		if tc.want == 200 && (w.Header().Get("Cache-Control") != "no-store" || !strings.Contains(w.Body.String(), s.csrf)) {
+			t.Fatal("unsafe session refresh")
+		}
+	}
+}
