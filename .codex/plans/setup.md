@@ -87,9 +87,25 @@ provided. These are explicit limitations, not passing results.
 
 ## Handoff
 
-Final diff inspected; publish a draft PR, without merge or force-push. Publication
-URL and implementation commit will be recorded here after publication. After
-review/merge, use a clean checkout and fetch origin/main before the first task:
+Final diff inspected. Implementation commit: `ca5eb00` on
+`codex/development-harness`. Publishing is blocked: both normal git push and
+push with the configured gh credential helper received HTTP 403, permission
+denied to Pickles2235. Repository metadata reports admin/push rights for the
+account, but the connected GitHub create-tree API also returned HTTP 403:
+`Resource not accessible by integration` (FORBIDDEN). No remote task branch or
+draft PR was created. No credentials were replaced and no merge/force-push ran.
+
+A prepared PR body is in `.codex/harness-pr.md`. Resume publishing with a
+GitHub connection authorized to write Git objects and this workflow file:
+
+```sh
+git push -u origin codex/development-harness
+gh pr create --repo Pickles2235/AIOS --base main --head codex/development-harness \
+  --draft --title "Add repository-local Codex development harness" \
+  --body-file .codex/harness-pr.md
+```
+
+After review/merge, use a clean checkout and fetch origin/main before the first task:
 
 ```sh
 python3 scripts/codex_harness.py run 01-query-planning-docs
