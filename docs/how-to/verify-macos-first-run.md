@@ -38,7 +38,11 @@ Two fresh `make acceptance-v1` runs must report `accepted` and equal
 `semantic_fingerprint` values. An additional installed-binary acceptance runs
 under macOS `sandbox-exec` with network access denied and must match the same
 fingerprint. The pinned Nomic model/helper are bundled in the binary; the native
-semantic test executes the helper and validates the model hash and 768 dimensions.
+semantic test executes the helper and validates the model hash, 768 dimensions
+and owner-only directory/model/helper permissions. The helper uses CPU execution
+with two threads and no warmup to avoid per-process GPU startup costs. Native
+embedding receives the caller deadline; budget exhaustion remains `unknown`
+rather than implying missing evidence or a lost projection.
 If sandbox execution is unavailable, record the exact failure and arrange an
 actual offline run before claiming no-download installation verified.
 

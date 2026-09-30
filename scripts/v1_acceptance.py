@@ -164,7 +164,7 @@ def validate_report(report: dict[str, Any]) -> None:
 def query_case(client: MCPClient, arguments: dict[str, Any], expected_status: str, expected_path: str | None = None, expected_route: str | None = None) -> dict[str, Any]:
     envelope = client.call("kb.query", arguments)
     result = envelope["result"]
-    require(result.get("status") == expected_status, f"status={result.get('status')}, expected {expected_status}")
+    require(result.get("status") == expected_status, f"status={result.get('status')}, expected {expected_status}; trace={result.get('plan_trace', [])}; uncertainty={result.get('uncertainty', [])}; budget_stops={result.get('budget_stops', [])}")
     returned_paths = paths(envelope)
     if expected_path:
         require(any(path.endswith(expected_path) for path in returned_paths), f"missing expected path {expected_path}: {returned_paths}")
@@ -276,7 +276,7 @@ def main() -> int:
     report_path = output / "acceptance-report.json"
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     os.chmod(report_path, 0o600)
-    print(json.dumps({"report": str(report_path), "disposition": report["disposition"], "cases": [{"id": case["id"], "status": case["status"]} for case in cases]}, indent=2))
+    print(json.dumps({"report": str(report_path), "disposition": report["disposition"], "cases": [{"id": case["id"], "status": case["status"], **({"diagnostics": case["diagnostics"]} if case["status"] == "fail" else {})} for case in cases]}, indent=2))
     return 0 if fixture_ready else 1
 
 

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/planner"
 	slicepkg "github.com/AdamNi-7080/AIOS/internal/slice"
 	"github.com/AdamNi-7080/AIOS/internal/store"
+	vectorpkg "github.com/AdamNi-7080/AIOS/internal/vector"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -686,5 +688,47 @@ func TestNeighborsTraversesCrossRepositoryEvidenceWithBudgets(t *testing.T) {
 	}
 	if _, _, err := s.neighbors(ctx, nil, neighborsIn{Handle: enc("e", p.ID, id), MaxFanout: 101}); err == nil {
 		t.Fatal("accepted oversized fanout")
+	}
+}
+
+// A native provider that waits for cancellation verifies budget propagation
+// without substituting synthetic embeddings for native acceptance evidence.
+type waitingNativeEmbedder struct{ vectorpkg.Local }
+
+func (waitingNativeEmbedder) Embed(string) ([]float64, error) { panic("uncancellable native call") }
+func (waitingNativeEmbedder) EmbedContext(ctx context.Context, _ string) ([]float64, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+func TestVectorQueryDeadlineReturnsUnknownWithoutClaimingIndexLoss(t *testing.T) {
+	ctx := context.Background()
+	db, err := store.OpenWriter(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	f := model.File{RepoID: "repo", Path: "source.go", SHA256: "one", Size: 12, Language: "go", Classification: "source", Content: "func A() {}"}
+	g, err := db.StageGeneration(ctx, model.Snapshot{RepoID: "repo", Root: "/repo", Git: model.GitState{Commit: "one"}, ContentHash: "one", FileCount: 1, TotalBytes: 12, IndexedAt: time.Now(), ExtractorVersions: model.ExtractorVersion}, []model.File{f}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = db.ActivateGeneration(ctx, g.ID); err != nil {
+		t.Fatal(err)
+	}
+	fixture := vectorpkg.NewLocal("fixture", 16)
+	if err = db.RebuildVectorProjection(ctx, store.VectorOptions{Enabled: true, Embedder: fixture}, "fixture"); err != nil {
+		t.Fatal(err)
+	}
+	service := &v1Service{cfg: catalog.Config{Version: 1, Limits: catalog.Defaults(), Repositories: []model.Repository{{ID: "repo", Root: "/repo"}}, Vector: catalog.VectorConfig{Enabled: true}}, db: db, embedder: waitingNativeEmbedder{fixture}}
+	started := time.Now()
+	_, out, err := service.query(ctx, nil, queryIn{Text: "customer purchase workflow", RetrievalMode: "vector", TimeMS: 20, Limit: 5})
+	if err != nil || out.Status != "unknown" || len(out.BudgetStops) == 0 || out.BudgetStops[0].Reason != "time_budget" {
+		t.Fatalf("result=%#v err=%v", out, err)
+	}
+	if time.Since(started) > time.Second {
+		t.Fatal("native provider escaped query budget")
+	}
+	if strings.Contains(strings.Join(out.Uncertainty, " "), "rebuild") {
+		t.Fatal("time exhaustion claimed a missing projection")
 	}
 }

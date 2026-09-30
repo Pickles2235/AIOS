@@ -98,7 +98,7 @@ func (s *Store) RebuildVectorProjection(ctx context.Context, options VectorOptio
 		var embeddingID string
 		err = tx.QueryRowContext(ctx, `SELECT embedding_id FROM vector_embedding_cache WHERE model_identity=? AND dimensions=? AND input_fingerprint=?`, identity, dimensions, content).Scan(&embeddingID)
 		if err == sql.ErrNoRows {
-			v, e := o.Embedder.Embed(text)
+			v, e := vectorpkg.Embed(ctx, o.Embedder, text)
 			if e != nil {
 				return e
 			}
@@ -152,7 +152,7 @@ func (s *Store) VectorCandidates(ctx context.Context, query string, filter Query
 	if err := s.requireProjection(ctx, "vector"); err != nil {
 		return nil, nil, err
 	}
-	qv, err := embedder.Embed(query)
+	qv, err := vectorpkg.Embed(ctx, embedder, query)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -3,6 +3,7 @@
 package vector
 
 import (
+	"context"
 	"crypto/sha256"
 	"math"
 	"regexp"
@@ -92,4 +93,22 @@ func Equal(a, b []float64) bool {
 		}
 	}
 	return true
+}
+
+// Embed preserves cancellation for native providers; legacy pure CPU embedders
+// retain the narrow interface used by deterministic fixtures.
+func Embed(ctx context.Context, provider Embedder, text string) ([]float64, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if contextual, ok := provider.(interface {
+		EmbedContext(context.Context, string) ([]float64, error)
+	}); ok {
+		return contextual.EmbedContext(ctx, text)
+	}
+	value, err := provider.Embed(text)
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	return value, err
 }

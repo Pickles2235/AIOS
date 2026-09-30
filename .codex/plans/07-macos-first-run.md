@@ -105,3 +105,36 @@ checks (07-web-repair.log), two fresh make acceptance-v1 runs at
 /workspace/scratch/07-acceptance-a and -b accepted with equal fingerprint
 f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea.
 Scoped diff and git diff --check inspected. Native rerun remains required.
+
+## Native vector investigation and bounded-runtime repair
+
+Snapshot repair e6d78a7412c039d620a57f8e26e25d9de1bdd3af is verified on main.
+Run 36766560106 / Apple Silicon job 110062085772 passed Go tests/vet, Python
+contracts, all 27 web units and native compilation. Native acceptance failed only
+route_vector; the other 13 cases passed. The summary omitted the failure details,
+so no specific cause is asserted as proven. Downstream archive/browser/offline
+checks were skipped by the failing preliminary step. Windows CI also failed;
+no Windows platform verification is claimed.
+
+To investigate and preserve the bounded contract, use CPU execution with two
+threads and no helper warmup (supported flags confirmed in the pinned helper),
+retaining pinned model/hash, mean pooling and 768 dimensions. Pass context through
+native embeddings, projection builds and vector reads. MCP gives vector work the
+remaining existing query deadline, terminates the helper on exhaustion and reports
+unknown with time_budget, without claiming a lost index or recommending rebuild.
+No public budget, fixture expectation or evidence rule was relaxed. Added actual
+cancellation/deadline regressions and native runtime permission assertions.
+
+Acceptance failure summaries now include trace/uncertainty/budget diagnostics.
+Native CI uploads the preliminary acceptance report even on failure and attempts
+installed-candidate verification independently, collecting whatever native stages
+actually pass. Archive evidence now records the digest itself as well as checksum
+verification. Native results for this repair are pending publication/rerun.
+
+Local Linux repair checks passed: make harness-validate (07-vector-core.log),
+go test ./internal/semantic ./internal/vector ./internal/store ./internal/mcp
+(07-vector-targeted-final.log), sh -n and git diff --check. Two fresh hermetic
+runs at /workspace/scratch/07-vector-acceptance-a and -b accepted with the same
+f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea fingerprint.
+Native model execution and performance remain unverified on the repaired revision
+until its exact Apple Silicon CI job completes. Manual observations still pending.

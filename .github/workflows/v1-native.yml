@@ -74,10 +74,10 @@ jobs:
         shell: pwsh
         run: python scripts/v1_acceptance.py --binary "$PWD/bin/aios.exe" --output-dir "$env:RUNNER_TEMP/acceptance-v1"
       - name: Install native browser for Apple Silicon first-run checks
-        if: matrix.target == 'macos-arm64'
+        if: always() && matrix.target == 'macos-arm64'
         run: npm exec --prefix web -- playwright install chromium
       - name: Verify Apple Silicon candidate installation and first run
-        if: matrix.target == 'macos-arm64'
+        if: always() && matrix.target == 'macos-arm64'
         env:
           PLAYWRIGHT_CHANNEL: chromium
         run: ./scripts/verify-macos-first-run.sh --version 1.0.0-harness --output-dir "$RUNNER_TEMP/macos-first-run"
@@ -86,6 +86,7 @@ jobs:
         with:
           name: macos-first-run-evidence
           path: |
+            ${{ runner.temp }}/acceptance-v1/acceptance-report.json
             ${{ runner.temp }}/macos-first-run/environment.txt
             ${{ runner.temp }}/macos-first-run/archive.sha256.txt
             ${{ runner.temp }}/macos-first-run/installed-binary.txt

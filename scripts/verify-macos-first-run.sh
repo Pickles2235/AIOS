@@ -34,7 +34,7 @@ cd "$root"
 make harness-validate
 make release VERSION="$version" OUTPUT_DIR="$native_output/release"
 archive="aios-$version-macos-arm64.tar.gz"
-(cd "$native_output/release" && shasum -a 256 -c "$archive.sha256") > "$native_output/archive.sha256.txt"
+(cd "$native_output/release" && cat "$archive.sha256" && shasum -a 256 -c "$archive.sha256") > "$native_output/archive.sha256.txt"
 mkdir -m 700 "$native_output/install"
 tar -xzf "$native_output/release/$archive" -C "$native_output/install"
 installed="$native_output/install/aios-$version-macos-arm64/bin/aios"

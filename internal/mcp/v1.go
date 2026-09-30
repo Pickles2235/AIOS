@@ -879,13 +879,23 @@ func (s *v1Service) query(ctx context.Context, _ *mcp.CallToolRequest, in queryI
 			vectorCondition = "vector_disabled"
 		} else if s.embedder == nil {
 			vectorCondition = "vector_unavailable"
-		} else if candidates, scores, e := s.db.VectorCandidates(ctx, text, filter, s.embedder, b.Candidates); e != nil {
-			vectorCondition = "vector_unavailable"
 		} else {
-			vectors = candidates
-			for i, c := range candidates {
-				vectorScores[c.Entity.ID+"\x00"+c.Evidence.ID] = scores[i]
-				exec.Add(planner.SourceVector, []planner.Candidate{plannerCandidate(c)}, b)
+			vectorCtx, vectorCancel := context.WithDeadline(ctx, started.Add(time.Duration(b.TimeMS)*time.Millisecond))
+			candidates, scores, e := s.db.VectorCandidates(vectorCtx, text, filter, s.embedder, b.Candidates)
+			exhausted := vectorCtx.Err() != nil
+			vectorCancel()
+			if e != nil {
+				vectorCondition = "vector_unavailable"
+				if exhausted {
+					vectorCondition = "vector_time_budget"
+					exec.Stop("time_budget", int(time.Since(started).Milliseconds()), b.TimeMS)
+				}
+			} else {
+				vectors = candidates
+				for i, c := range candidates {
+					vectorScores[c.Entity.ID+"\x00"+c.Evidence.ID] = scores[i]
+					exec.Add(planner.SourceVector, []planner.Candidate{plannerCandidate(c)}, b)
+				}
 			}
 		}
 		if vectorCondition != "" {
@@ -915,8 +925,13 @@ func (s *v1Service) query(ctx context.Context, _ *mcp.CallToolRequest, in queryI
 	if len(fused) == 0 {
 		if in.RetrievalMode == "vector" && vectorCondition != "" {
 			r.Status = "unknown"
-			r.Trace = append(r.Trace, "requested_vector_unavailable")
-			r.Uncertainty = append(r.Uncertainty, "requested vector projection is unavailable; rebuild it or use deterministic non-vector retrieval")
+			if vectorCondition == "vector_time_budget" {
+				r.Trace = append(r.Trace, "budget_incomplete")
+				r.Uncertainty = append(r.Uncertainty, "query time budget exhausted; deterministic canonical retrieval remains available")
+			} else {
+				r.Trace = append(r.Trace, "requested_vector_unavailable")
+				r.Uncertainty = append(r.Uncertainty, "requested vector projection is unavailable; rebuild it or use deterministic non-vector retrieval")
+			}
 		} else if len(exec.Stops) > 0 || !basis.Complete {
 			r.Status = "unknown"
 			if len(exec.Stops) > 0 {

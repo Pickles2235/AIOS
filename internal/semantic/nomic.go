@@ -82,13 +82,29 @@ func materialize(path string, data []byte, mode os.FileMode) error {
 	return replaceFile(tmp, path)
 }
 func (n *Nomic) Embed(text string) ([]float64, error) {
+	return n.EmbedContext(context.Background(), text)
+}
+
+// EmbedContext keeps the bundled helper within the caller's query/build budget.
+func (n *Nomic) EmbedContext(ctx context.Context, text string) ([]float64, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	n.prepare()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if n.err != nil {
 		return nil, n.err
 	}
-	cmd := exec.CommandContext(context.Background(), n.runtime, "-m", n.model, "--pooling", "mean", "--embd-output-format", "array", "-p", text)
+	// Avoid per-process Metal shader/warmup costs for short bounded queries.
+	// The pinned model and mean pooling stay unchanged; CPU execution uses two threads.
+	cmd := exec.CommandContext(ctx, n.runtime, "-m", n.model, "--gpu-layers", "0", "--no-warmup", "--threads", "2", "--pooling", "mean", "--embd-output-format", "array", "-p", text)
 	b, err := cmd.CombinedOutput()
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 		return nil, fmt.Errorf("local Nomic embedding: %w: %s", err, strings.TrimSpace(string(b)))
 	}
 	start, end := strings.IndexByte(string(b), '['), strings.LastIndexByte(string(b), ']')
