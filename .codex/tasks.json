@@ -50,9 +50,9 @@
       "dependencies": [
         "01-query-planning-docs"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/plans/02-variable-estate.md",
-      "completion_commit": null
+      "completion_commit": "383207888a75c2b7abe060c49ce97a917e030a5b"
     },
     {
       "id": "03-knowledge-instance",

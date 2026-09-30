@@ -1,6 +1,6 @@
 # 02-variable-estate: Replace exactly-25 product restriction with a bounded variable estate
 
-Status: ready. See the queue for authoritative status and dependencies.
+Status: completed. See the queue for authoritative status and dependencies.
 
 ## Baseline and resumption
 
@@ -68,3 +68,9 @@ Actual checks (Linux amd64, Go 1.26.1/JDK 21):
 - A first test run failed cleaning its read-only owned snapshot fixtures;
   cleanup now restores permissions on fixture directories only; rerun passed.
 - git diff --check passed. No native/vector or private-estate verification claimed.
+
+Implementation commit: 383207888a75c2b7abe060c49ce97a917e030a5b.
+Verified on fetched origin/main after exact-object GitHub API publication with
+force=false. Completed status recorded in this follow-up bookkeeping commit.
+No remaining blocker for this task. User requested the whole queue; continue
+with the next eligible task after verifying this bookkeeping publication.
