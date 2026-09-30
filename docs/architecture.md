@@ -4,7 +4,8 @@ V1 catalogs contain 1–100 `repository` sources and source-selection
 policy. A separate strict JSON mirror registry contains the
 matching approved Git addresses and refs. External cron runs `mirrors sync`; AIOS
 then compiles only a selected immutable Git archive materialized under its
-owner-only data directory. User checkouts are never compilation inputs.
+owner-only data directory. For approved local workspaces, pinned Git tree/blob objects are captured into
+read-only owned snapshots first. Mutable user checkouts are never compilation inputs.
 
 Every selection creates durable discovered, selected, source-delta, IR-staged,
 IR-activated, and projection/cache lifecycle events. Git tree/hash evidence is
@@ -45,7 +46,7 @@ the plan, stage trace, coverage, and active-generation evidence. See the
 [query planner reference](reference/repository-knowledge-v1.md#deterministic-query-planner).
 
 The browser UI is an embedded static projection of canonical SQLite evidence.
-There are no user-repository writes, arbitrary filesystem ingestion, live
+There are no user-repository writes, arbitrary non-Git folder ingestion, live
 connectors, LLM reasoning, agent/task planning or execution, or action-capable
 operations. Executing a bounded retrieval plan stays within read-only knowledge
 operations and supplies no agent runtime. The optional local vector projection

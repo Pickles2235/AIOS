@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/AdamNi-7080/AIOS/internal/adapter"
 	"github.com/AdamNi-7080/AIOS/internal/app"
 	"github.com/AdamNi-7080/AIOS/internal/benchmark"
 	cachepkg "github.com/AdamNi-7080/AIOS/internal/cache"
@@ -28,6 +29,38 @@ func run(ctx context.Context, args []string) error {
 		return usageError()
 	}
 	switch args[0] {
+	case "local":
+		if len(args) < 2 || args[1] != "ingest" {
+			return usageError()
+		}
+		fs := flag.NewFlagSet("local ingest", flag.ContinueOnError)
+		config := fs.String("config", "", "source-policy catalog")
+		registry := fs.String("registry", "", "approved local registry")
+		data := fs.String("data-dir", "", "owned data directory")
+		repo := fs.String("repo", "", "single approved repository ID")
+		all := fs.Bool("all", false, "atomically bootstrap all approved local workspaces")
+		if err := fs.Parse(args[2:]); err != nil {
+			return err
+		}
+		if *config == "" || *registry == "" || *data == "" {
+			return fmt.Errorf("--config, --registry and --data-dir are required")
+		}
+		if (*repo == "") == !*all {
+			return fmt.Errorf("exactly one of --repo or --all is required")
+		}
+		cfg, err := catalog.Load(*config)
+		if err != nil {
+			return err
+		}
+		reg, err := adapter.LoadLocalRegistry(*registry)
+		if err != nil {
+			return err
+		}
+		out, err := app.IngestLocal(ctx, cfg, reg, *data, *repo)
+		if err != nil {
+			return err
+		}
+		return writeJSON(out)
 	case "ingest":
 		fs := flag.NewFlagSet("ingest", flag.ContinueOnError)
 		config := fs.String("config", "", "mirror source-policy catalog JSON path")
@@ -318,5 +351,5 @@ func run(ctx context.Context, args []string) error {
 }
 func writeJSON(value any) error { return json.NewEncoder(os.Stdout).Encode(value) }
 func usageError() error {
-	return fmt.Errorf("usage: aios <catalog validate|mirrors sync|ingest (--all|--repo ID)|status|projections rebuild|doctor|benchmark|serve|ui serve --config CATALOG --data-dir DATA>")
+	return fmt.Errorf("usage: aios <catalog validate|mirrors sync|local ingest (--all|--repo ID)|ingest (--all|--repo ID)|status|projections rebuild|doctor|benchmark|serve|ui serve --config CATALOG --data-dir DATA>")
 }

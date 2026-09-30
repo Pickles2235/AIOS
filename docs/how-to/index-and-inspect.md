@@ -36,3 +36,28 @@ Run `mirrors sync` every 15 minutes. `status` reports selected/pending/current
 revisions, attempts, failure diagnostics, invalidation scope, and the durable
 event audit. The first mirror bootstrap remains catalog-atomic; subsequent
 repository deltas retain unchanged active generations.
+
+## Clean local Git workspaces
+
+Use a matching catalog and local registry, then run `aios local ingest --all
+--config catalog.json --registry local.json --data-dir /absolute/owned-data`.
+Local registry entries contain `id` and a canonical absolute Git top-level `path`.
+The browser source-type selector also supports this route. Workspaces must have a
+committed HEAD and be clean, including staged state and nonignored untracked files.
+Ignored files remain untouched and uncaptured. Dirty/untracked inputs fail without
+source writes; commit or remove them yourself, then retry.
+
+Capture reads pinned tree/blob objects with optional locks and lazy fetch disabled.
+It never runs source hooks/builds or compiles live files. Symlinks, submodules, partial
+clones, path collisions and overlapping source/data directories are rejected. The
+file-count, per-file and total-byte catalog limits also bound all captured tracked
+files before policy filtering. Repository export attributes do not alter the bytes.
+
+Read-only owned snapshots are reused only after verifying them against the pinned
+tree. A concurrent edit during capture fails before publication; edits afterward
+cannot change snapshot evidence. Generation handles cite the captured Git commit
+and file SHA256. Identical content may reuse its existing canonical generation
+and original captured-commit provenance; revision discovery stays in the audit.
+Stable identity is the explicitly approved repository ID, independent of snapshot
+paths and projection builds. Failed capture/ingestion retains the active catalog;
+retry after resolving the reported unsupported state.

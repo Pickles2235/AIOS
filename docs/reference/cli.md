@@ -23,3 +23,8 @@ Run the complete hermetic gate with
 `make acceptance-v1 ACCEPTANCE_OUTPUT=/private/acceptance-run`. The deterministic
 core runs on every supported native target; macOS arm64 additionally exercises
 the bundled Nomic runtime.
+
+`local ingest --config CATALOG --registry LOCAL --data-dir DATA --all` atomically
+bootstraps a matching approved local estate. Use `--repo ID` for later deltas.
+LOCAL is strict `{"version":1,"repositories":[{"id":"app","path":"/absolute/workspace"}]}`.
+IDs must match catalog policy; mirror ingestion commands remain unchanged.

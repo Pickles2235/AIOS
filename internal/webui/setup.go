@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/AdamNi-7080/AIOS/internal/adapter"
 	"github.com/AdamNi-7080/AIOS/internal/app"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/knowledge"
@@ -16,11 +17,13 @@ import (
 )
 
 type Setup struct {
-	State        string              `json:"state"`
-	Error        string              `json:"error,omitempty"`
-	Completed    int                 `json:"completed_repositories"`
-	Repositories []mirror.Repository `json:"repositories,omitempty"`
-	Active       catalog.Config      `json:"active_catalog"`
+	Mode              string                    `json:"mode,omitempty"`
+	LocalRepositories []adapter.LocalRepository `json:"local_repositories,omitempty"`
+	State             string                    `json:"state"`
+	Error             string                    `json:"error,omitempty"`
+	Completed         int                       `json:"completed_repositories"`
+	Repositories      []mirror.Repository       `json:"repositories,omitempty"`
+	Active            catalog.Config            `json:"active_catalog"`
 }
 
 func (s *Server) readService() *knowledge.Service { s.mu.Lock(); defer s.mu.Unlock(); return s.read }
@@ -126,13 +129,25 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/api/v1/onboarding/configure":
 		var in struct {
-			Repositories []mirror.Repository `json:"repositories"`
+			Mode              string                    `json:"mode,omitempty"`
+			LocalRepositories []adapter.LocalRepository `json:"local_repositories,omitempty"`
+			Repositories      []mirror.Repository       `json:"repositories"`
 		}
 		if decode(r, &in) != nil {
 			fail(w, 400, "invalid setup request")
 			return
 		}
-		if _, _, err := setupConfig(in.Repositories); err != nil {
+		if in.Mode != "" && in.Mode != "mirror" && in.Mode != "local" {
+			fail(w, 400, "unsupported source mode")
+			return
+		}
+		var validationErr error
+		if in.Mode == "local" {
+			_, validationErr = localSetupConfig(in.LocalRepositories, s.dataDir)
+		} else {
+			_, _, validationErr = setupConfig(in.Repositories)
+		}
+		if err := validationErr; err != nil {
 			fail(w, 400, err.Error())
 			return
 		}
@@ -143,6 +158,13 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		old := s.setup
+		if in.Mode == "local" {
+			in.Repositories = nil
+		} else {
+			in.LocalRepositories = nil
+		}
+		s.setup.Mode = in.Mode
+		s.setup.LocalRepositories = in.LocalRepositories
 		s.setup.Repositories = in.Repositories
 		s.setup.State = "configured"
 		s.setup.Error = ""
@@ -166,6 +188,11 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		cfg, reg, err := setupConfig(s.setup.Repositories)
+		mode := s.setup.Mode
+		locals := append([]adapter.LocalRepository(nil), s.setup.LocalRepositories...)
+		if mode == "local" {
+			cfg, err = localSetupConfig(locals, s.dataDir)
+		}
 		if err != nil {
 			fail(w, 400, err.Error())
 			return
@@ -173,6 +200,9 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 		s.jobCancel = cancel
 		s.setup.State = "syncing"
+		if mode == "local" {
+			s.setup.State = "ingesting"
+		}
 		s.setup.Error = ""
 		s.setup.Completed = 0
 		if err = s.persistSetup(); err != nil {
@@ -181,7 +211,7 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 			fail(w, 500, "unable to start setup")
 			return
 		}
-		go s.runSetup(ctx, cfg, reg)
+		go s.runSetup(ctx, cfg, reg, locals)
 		w.WriteHeader(202)
 		jsonBody(w, s.setup)
 	case "/api/v1/onboarding/cancel":
@@ -201,7 +231,7 @@ func (s *Server) cancelJob() {
 		s.jobCancel()
 	}
 }
-func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Registry) {
+func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Registry, local ...[]adapter.LocalRepository) {
 	var retErr error
 	defer func() {
 		s.mu.Lock()
@@ -226,6 +256,15 @@ func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Re
 			s.setup.Error = "Unable to persist setup status; inspect owned data permissions."
 		}
 	}()
+	if len(local) > 0 && len(local[0]) > 0 {
+		_, retErr = app.IngestLocal(ctx, cfg, adapter.LocalRegistry{Version: 1, Repositories: local[0]}, s.dataDir, "")
+		if retErr == nil {
+			s.mu.Lock()
+			s.setup.Completed = len(local[0])
+			s.mu.Unlock()
+		}
+		return
+	}
 	synced, err := mirror.Sync(ctx, reg, s.dataDir)
 	if err != nil {
 		retErr = err
@@ -260,4 +299,21 @@ func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Re
 		}
 	}
 	_, retErr = app.IngestMirrorCatalog(ctx, configPath, registryPath, s.dataDir)
+}
+
+func localSetupConfig(entries []adapter.LocalRepository, dataDir string) (catalog.Config, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	reg := adapter.LocalRegistry{Version: 1, Repositories: entries}
+	if err := adapter.ValidateLocalRegistry(reg); err != nil {
+		return catalog.Config{}, err
+	}
+	cfg := catalog.Config{Version: 1, Limits: catalog.Defaults(), RetentionGenerations: 3}
+	for _, entry := range entries {
+		if _, err := adapter.InspectLocal(ctx, entry, dataDir); err != nil {
+			return cfg, err
+		}
+		cfg.Sources = append(cfg.Sources, catalog.Source{Kind: model.SourceKindRepository, ID: entry.ID})
+	}
+	return cfg, catalog.Validate(cfg)
 }

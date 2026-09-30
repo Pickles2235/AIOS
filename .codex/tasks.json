@@ -142,7 +142,7 @@
       "dependencies": [
         "04-mirror-onboarding"
       ],
-      "status": "pending",
+      "status": "ready",
       "plan": ".codex/plans/05-local-snapshots.md",
       "completion_commit": null
     },

@@ -1,7 +1,7 @@
 # AIOS Repository Knowledge Engine
 
 This is a local-first, read-only repository knowledge engine. V1 compiles
-1–100 approved Git repository mirrors into canonical Knowledge IR.
+1–100 approved Git repository mirrors or clean local Git workspaces into canonical Knowledge IR.
 
 It compiles an approved repository catalog into deterministic source, symbol,
 relationship, claim, and evidence records. It exposes them through bounded
@@ -29,6 +29,7 @@ go run ./cmd/aios catalog validate --config catalog.json
 go run ./cmd/aios mirrors sync --registry mirrors.json --data-dir /absolute/data
 go run ./cmd/aios ingest --all --config catalog.json --registry mirrors.json --data-dir /absolute/data
 go run ./cmd/aios ingest --config catalog.json --registry mirrors.json --data-dir /absolute/data --repo frontend
+go run ./cmd/aios local ingest --all --config catalog.json --registry local.json --data-dir /absolute/data
 go run ./cmd/aios status --data-dir /absolute/data
 go run ./cmd/aios projections rebuild --data-dir /absolute/data
 go run ./cmd/aios projections rebuild --kind vector --config catalog.json --data-dir /absolute/data
