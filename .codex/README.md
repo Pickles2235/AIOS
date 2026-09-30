@@ -31,7 +31,7 @@ do not substitute for it. Linux cannot verify the Apple Silicon first-run UX.
 
 ## Start one independent task
 
-Merge the harness PR first, then use a clean checkout containing it:
+Use a clean checkout containing the harness published on main:
 
 ```sh
 git fetch origin main
@@ -44,8 +44,8 @@ configured model and authentication, and passes a task-specific prompt on stdin.
 It sets no model, credentials, login, or config override. No scheduled or repeated
 model calls occur. Codex CLI must already be installed and authenticated.
 A new `codex/<task>-<unique-id>` branch starts at the current HEAD; dependency
-merge commits must be ancestors of both HEAD and the locally fetched `origin/main`.
-Do not run from a branch carrying unrelated unmerged product work.
+completion commits must be ancestors of both HEAD and the locally fetched `origin/main`.
+Do not run from a branch carrying unrelated unpublished product work.
 
 Without the CLI, print the exact prompt and give it to a fresh Codex session:
 
@@ -65,19 +65,26 @@ a live lock. Logs can include repository content; inspect before sharing.
 ## Queue and persistent plans
 
 `tasks.json` is ordered, schema-versioned, and checked for missing fields, cycles,
-invalid statuses, missing plans, and invalid merge records. Each task has scope,
+invalid statuses, missing plans, and invalid completion records. Each task has scope,
 non-goals, observable acceptance criteria, checks, dependencies, and status.
 Plans in `.codex/plans/` persist decisions, progress, actual validation, blockers,
 and handoffs. Read earlier plans for context without implementing their scope.
 
-Status lifecycle: `pending` → `in_progress` → `awaiting_review` → `merged`;
+Status lifecycle: `pending` → `in_progress` → `ready` → `completed`;
 `blocked` requires a recorded reason and explicit return to `pending` before retry.
-After a reviewed PR merges, update its queue entry to `merged` and set
-`merge_commit` to the full reachable merge/squash commit SHA. Record PR/commit in
-its plan. This bookkeeping belongs in a follow-up commit/PR or the next task PR;
-only Git ancestry establishes eligibility. Never mark a task merged merely to
-unblock the queue. Failed runs require inspection and manual resumption; the
-launcher accepts only pending tasks and does not automatically retry.
+Use trunk-based publishing: fetch origin/main, reconcile any concurrent trunk
+changes, rerun affected validation, then `git push origin HEAD:main` without force.
+Only after verifying the implementation commit on fetched origin/main, set
+`completed` and `completion_commit` to its full SHA in a follow-up bookkeeping
+commit, which also lands directly on main. The implementation SHA refers to the
+preceding commit, avoiding a self-referential hash. Record the commit and final
+handoff in the plan using `.codex/HANDOFF_TEMPLATE.md`.
+
+A publishing failure leaves the validated task `ready` with its local commits
+and blocker preserved. Failed runs require inspection and manual resumption;
+the launcher accepts only pending tasks and does not automatically retry. No PR
+is required, and no automatic merge or next-task launch occurs. Predecessors
+must actually be on main; local completion claims do not satisfy dependencies.
 
 Use `make harness-test` after queue edits. All seven product tasks were seeded
 as pending; setting up this harness does not complete any of them.

@@ -24,7 +24,7 @@
       "dependencies": [],
       "status": "pending",
       "plan": ".codex/plans/01-query-planning-docs.md",
-      "merge_commit": null
+      "completion_commit": null
     },
     {
       "id": "02-variable-estate",
@@ -52,7 +52,7 @@
       ],
       "status": "pending",
       "plan": ".codex/plans/02-variable-estate.md",
-      "merge_commit": null
+      "completion_commit": null
     },
     {
       "id": "03-knowledge-instance",
@@ -82,7 +82,7 @@
       ],
       "status": "pending",
       "plan": ".codex/plans/03-knowledge-instance.md",
-      "merge_commit": null
+      "completion_commit": null
     },
     {
       "id": "04-mirror-onboarding",
@@ -113,7 +113,7 @@
       ],
       "status": "pending",
       "plan": ".codex/plans/04-mirror-onboarding.md",
-      "merge_commit": null
+      "completion_commit": null
     },
     {
       "id": "05-local-snapshots",
@@ -144,7 +144,7 @@
       ],
       "status": "pending",
       "plan": ".codex/plans/05-local-snapshots.md",
-      "merge_commit": null
+      "completion_commit": null
     },
     {
       "id": "06-spotlight-querying",
@@ -175,7 +175,7 @@
       ],
       "status": "pending",
       "plan": ".codex/plans/06-spotlight-querying.md",
-      "merge_commit": null
+      "completion_commit": null
     },
     {
       "id": "07-macos-first-run",
@@ -207,7 +207,7 @@
       ],
       "status": "pending",
       "plan": ".codex/plans/07-macos-first-run.md",
-      "merge_commit": null
+      "completion_commit": null
     }
   ]
 }

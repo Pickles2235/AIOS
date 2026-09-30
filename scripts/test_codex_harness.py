@@ -28,10 +28,10 @@ class QueueTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         shutil.copytree(ROOT / ".codex", self.root / ".codex")
-        # Tests need stable pending fixtures even after real task PRs merge.
+        # Tests need stable pending fixtures even after real tasks land on main.
         tasks = harness.load_queue(self.root)
         for task in tasks:
-            task.update(status="pending", merge_commit=None)
+            task.update(status="pending", completion_commit=None)
         self.save(tasks)
 
     def save(self, tasks):
@@ -48,14 +48,18 @@ class QueueTests(unittest.TestCase):
                 self.assertIn(heading, plan)
         self.assertIn("Complete exactly this one task", harness.prompt(tasks[0]))
         self.assertIn("Do not report unrun checks as passing", harness.prompt(tasks[0]))
+        self.assertIn("git push origin HEAD:main", harness.prompt(tasks[0]))
+        self.assertIn("completed only after verifying", harness.prompt(tasks[0]))
+        self.assertIn(".codex/HANDOFF_TEMPLATE.md", harness.prompt(tasks[0]))
+        self.assertNotIn("open a draft PR", harness.prompt(tasks[0]))
 
-    def test_rejects_missing_fields_cycles_bad_status_and_merge_records(self):
+    def test_rejects_missing_fields_cycles_bad_status_and_completion_records(self):
         originals = harness.load_queue(self.root)
         mutations = [lambda t: t[0].pop("acceptance"),
                      lambda t: t[0].update(dependencies=[t[1]["id"]]),
                      lambda t: t[0].update(status="done"),
-                     lambda t: t[0].update(status="merged"),
-                     lambda t: t[0].update(merge_commit="a" * 40),
+                     lambda t: t[0].update(status="completed"),
+                     lambda t: t[0].update(completion_commit="a" * 40),
                      lambda t: t[0].update(plan="../../outside"),
                      lambda t: t[0].update(checks=[])]
         for mutate in mutations:
@@ -142,27 +146,27 @@ sys.exit(int(os.environ.get("FAKE_EXIT", "0")))
         self.assertTrue(self.git("branch", "--show-current").startswith("codex/"))
         self.assertFalse((self.root / ".git/aios-codex.lock").exists())
 
-    def test_dependencies_need_merged_status_and_reachable_commits(self):
+    def test_dependencies_need_completed_status_and_reachable_commits(self):
         tasks = harness.load_queue(self.root)
         task = tasks[1]
         self.assertFalse(harness.eligible(self.root, task, tasks))
-        tasks[0].update(status="merged", merge_commit=self.git("rev-parse", "HEAD"))
+        tasks[0].update(status="completed", completion_commit=self.git("rev-parse", "HEAD"))
         self.assertFalse(harness.eligible(self.root, task, tasks))
-        self.git("update-ref", "refs/remotes/origin/main", tasks[0]["merge_commit"])
+        self.git("update-ref", "refs/remotes/origin/main", tasks[0]["completion_commit"])
         self.assertTrue(harness.eligible(self.root, task, tasks))
-        (self.root / "tracked.txt").write_text("unmerged\n")
+        (self.root / "tracked.txt").write_text("unpublished\n")
         self.git("commit", "-am", "local predecessor")
-        tasks[0]["merge_commit"] = self.git("rev-parse", "HEAD")
+        tasks[0]["completion_commit"] = self.git("rev-parse", "HEAD")
         self.assertFalse(harness.eligible(self.root, task, tasks))
-        self.git("update-ref", "refs/remotes/origin/main", tasks[0]["merge_commit"])
+        self.git("update-ref", "refs/remotes/origin/main", tasks[0]["completion_commit"])
         self.git("checkout", "HEAD~1")
         self.assertFalse(harness.eligible(self.root, task, tasks))
 
-    def test_awaiting_review_task_cannot_launch(self):
+    def test_ready_task_cannot_launch(self):
         tasks = harness.load_queue(self.root)
-        tasks[0]["status"] = "awaiting_review"
+        tasks[0]["status"] = "ready"
         self.save(tasks)
-        self.git("commit", "-am", "review status")
+        self.git("commit", "-am", "ready status")
         result = self.cli("run", self.task)
         self.assertEqual(result.returncode, 2)
         self.assertIn("not pending", result.stderr)

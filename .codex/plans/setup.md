@@ -1,16 +1,16 @@
 # Harness setup handoff
 
-Status: awaiting_review. Branch: `codex/development-harness`.
+Status: ready for direct publication to main. Branch: `codex/development-harness`.
 Baseline: `c285773` (clean main checkout cloned after confirming /workspace had
 no checkout or uploaded files). No AIOS-codex-harness.zip was available.
 
 ## Decisions
 
 - Inspect and follow the existing Go/SQLite/mirror/MCP/browser contracts; do not
-  implement the seven product tasks in the harness PR. Preserve the module path.
+  implement the seven product tasks in the harness change. Preserve the module path.
 - Use a standard-library Python queue/launcher plus Make targets and a small
   POSIX dependency setup script, reusing the existing test/build/acceptance tools.
-- Keep task merge status explicit and verify predecessor commit ancestry against
+- Keep task completion status explicit and verify predecessor commit ancestry against
   fetched origin/main and HEAD. Order the seven tasks sequentially for isolated
   reviews and integrated first-run acceptance.
 - Use one `codex exec --sandbox workspace-write` invocation. The installed CLI
@@ -85,32 +85,42 @@ Apple Silicon installation/UX and bundled vector execution were not run on
 Linux. The private real-estate gate was not run because no private corpus was
 provided. These are explicit limitations, not passing results.
 
+## Trunk workflow update and validation
+
+The user authorized direct publication to main and trunk-based independent work.
+Local task branches remain isolated workspaces; they publish scoped validated
+commits with normal fast-forward pushes, without a PR requirement. Queue status
+is now pending/in_progress/blocked/ready/completed with completion_commit;
+dependencies still require predecessor implementation SHAs on origin/main and
+HEAD. A completion bookkeeping commit follows verified publication, so its
+implementation hash is not self-referential. All seven product tasks remain
+pending. The optional PR template is retained, and the default handoff is
+.codex/HANDOFF_TEMPLATE.md.
+
+The initial harness was not yet published or used for product tasks, so changing
+its queue fields before first publication requires no existing-task migration.
+Re-ran make harness-test (11 passed), all Python contracts (25 passed), and final
+diff checks after the trunk workflow change. Prompt regression checks require
+direct main publishing and verified completion, and exclude a draft PR instruction.
+Go/product code and web assets are unchanged; the earlier Go and web results
+above still describe their validation. No new native or browser checks were run.
+
 ## Handoff
 
-Final diff inspected. Implementation commit: `ca5eb00` on
-`codex/development-harness`. Publishing is blocked: both normal git push and
-push with the configured gh credential helper received HTTP 403, permission
-denied to Pickles2235. Repository metadata reports admin/push rights for the
-account, but the connected GitHub create-tree API also returned HTTP 403:
-`Resource not accessible by integration` (FORBIDDEN). No remote task branch or
-draft PR was created. No credentials were replaced and no merge/force-push ran.
+Implementation commits: ca5eb00 and 684e4ea plus the trunk workflow update, on
+codex/development-harness. Earlier publication attempts failed: both Git pushes
+received HTTP 403 permission denied; connected GitHub create-tree returned
+403 Resource not accessible by integration. The user has since updated the
+connection. Refresh origin/main, inspect/validate the current scoped diff, and
+publish with git push origin HEAD:main. Never force-push. Verify the published
+commit against fetched origin/main and record the outcome here.
 
-A prepared PR body is in `.codex/harness-pr.md`. Resume publishing with a
-GitHub connection authorized to write Git objects and this workflow file:
-
-```sh
-git push -u origin codex/development-harness
-gh pr create --repo Pickles2235/AIOS --base main --head codex/development-harness \
-  --draft --title "Add repository-local Codex development harness" \
-  --body-file .codex/harness-pr.md
-```
-
-After review/merge, use a clean checkout and fetch origin/main before the first task:
+After publication, use a clean checkout containing the harness on main:
 
 ```sh
 python3 scripts/codex_harness.py run 01-query-planning-docs
 ```
 
 In this cloud workspace prepend the toolchain PATH shown above. Without Codex
-CLI use `python3 scripts/codex_harness.py prompt 01-query-planning-docs` and give
+CLI use python3 scripts/codex_harness.py prompt 01-query-planning-docs and give
 the output to a fresh session. Stop after that one task's reviewable handoff.

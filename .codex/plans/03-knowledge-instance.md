@@ -5,7 +5,7 @@ Status: pending. See the queue for authoritative status and dependencies.
 ## Baseline and resumption
 
 Seeded from c285773. No product implementation has been performed by the harness.
-Read AGENTS.md and the queue; fetch origin/main and verify merged predecessor
+Read AGENTS.md and the queue; fetch origin/main and verify completed predecessor
 commits before starting. Reinspect current code because predecessors change it.
 
 Inspect store schema migration and web session/API before designing persistence. Current active main.tsx does not provide durable instance branding. Prefer a bounded raster logo stored locally, no remote URL loading; record final metadata contract and compatibility decisions.
@@ -34,6 +34,9 @@ None assessed yet. Add exact symptoms and a concrete resume instruction if block
 
 ## Handoff
 
-No task PR or commit yet. Record branch, commit, draft PR, reviewed diff summary,
-acceptance evidence, remaining limitations and next action. Stop after this task.
-After merge, record the reachable merge/squash SHA in the queue and this plan.
+No task commit yet. Record branch, implementation commit, inspected diff summary,
+acceptance evidence, publication result, remaining limitations and next action.
+Publish validated scoped commits directly to main with a normal fast-forward
+push, then verify origin/main contains them. Set completed and completion_commit
+in a follow-up bookkeeping commit only after that verification. Stop after this
+task. Publishing failures leave the task ready with exact recovery instructions.

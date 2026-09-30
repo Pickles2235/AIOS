@@ -12,7 +12,7 @@ import sys
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-STATUSES = {"pending", "in_progress", "blocked", "awaiting_review", "merged"}
+STATUSES = {"pending", "in_progress", "blocked", "ready", "completed"}
 
 
 def git(root, *args):
@@ -27,7 +27,7 @@ def load_queue(root):
     for task in queue["tasks"]:
         if not isinstance(task, dict):
             raise ValueError("task must be an object")
-        for key in ("id", "title", "scope", "non_goals", "acceptance", "checks", "dependencies", "status", "plan", "merge_commit"):
+        for key in ("id", "title", "scope", "non_goals", "acceptance", "checks", "dependencies", "status", "plan", "completion_commit"):
             if key not in task:
                 raise ValueError(f"missing task field: {key}")
         if not isinstance(task["title"], str) or not task["title"].strip():
@@ -48,12 +48,12 @@ def load_queue(root):
         plan = Path(task["plan"])
         if plan.is_absolute() or ".." in plan.parts or plan.parts[:2] != (".codex", "plans") or not (root / plan).is_file():
             raise ValueError(f"missing or unsafe plan for {tid}")
-        commit = task["merge_commit"]
-        if task["status"] == "merged":
+        commit = task["completion_commit"]
+        if task["status"] == "completed":
             if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit):
-                raise ValueError(f"merged task {tid} needs a full merge commit")
+                raise ValueError(f"completed task {tid} needs a full implementation commit")
         elif commit is not None:
-            raise ValueError(f"unmerged task {tid} cannot have a merge commit")
+            raise ValueError(f"unpublished task {tid} cannot have a completion commit")
         seen.add(tid)
     if not seen:
         raise ValueError("empty task queue")
@@ -68,16 +68,16 @@ def eligible(root, task, tasks):
     if task["status"] != "pending":
         return False
     by_id = {t["id"]: t for t in tasks}
-    return all(by_id[d]["status"] == "merged" and
-               ancestor(root, by_id[d]["merge_commit"], "refs/remotes/origin/main") and
-               ancestor(root, by_id[d]["merge_commit"], "HEAD") for d in task["dependencies"])
+    return all(by_id[d]["status"] == "completed" and
+               ancestor(root, by_id[d]["completion_commit"], "refs/remotes/origin/main") and
+               ancestor(root, by_id[d]["completion_commit"], "HEAD") for d in task["dependencies"])
 
 
 def prompt(task):
     return f"""Work independently on AIOS task {task['id']}: {task['title']}.
 Read AGENTS.md, .codex/README.md, .codex/tasks.json, and {task['plan']}.
 Inspect current implementation, tests, documentation, branch and worktree first.
-Verify eligibility with scripts/codex_harness.py; predecessors must be merged,
+Verify eligibility with scripts/codex_harness.py; predecessors must be completed on origin/main,
 not merely on local branches. Preserve existing work and use a dedicated branch.
 Complete exactly this one task. Scope: {json.dumps(task['scope'])}
 Non-goals: {json.dumps(task['non_goals'])}
@@ -87,10 +87,14 @@ Mark in_progress before implementation. Persist decisions, progress, actual chec
 commands/results, blockers and handoff in the plan. Make routine decisions yourself;
 ask only for an unresolved scope or public-contract decision. Preserve all AGENTS.md
 invariants. Do not report unrun checks as passing. Inspect the final diff, commit
-scoped work and open a draft PR if access permits; otherwise record the precise
-publishing blocker. Set awaiting_review when ready, or blocked with recovery steps.
-Finish with a reviewable handoff using .github/PULL_REQUEST_TEMPLATE.md and stop.
-Do not merge, force-push, schedule calls, or continue to another task.
+scoped work and publish directly with a normal fast-forward push to main
+(git push origin HEAD:main). Fetch origin/main first; reconcile concurrent trunk
+changes and rerun affected checks before publishing. Never force-push. Set ready
+when validated, then completed only after verifying the implementation commit is
+on origin/main; record its full SHA as completion_commit in a follow-up bookkeeping
+commit. If publishing fails, retain ready status and record the precise blocker.
+Use .codex/HANDOFF_TEMPLATE.md and stop after this task's reviewable handoff.
+Do not auto-merge, schedule calls, or continue to another task.
 """
 
 
@@ -108,7 +112,7 @@ def run_task(root, task, tasks):
         if git(root, "status", "--porcelain", "--untracked-files=all", "--ignore-submodules=none"):
             raise ValueError("dirty checkout; preserve and resolve existing work before launching")
         if not eligible(root, task, tasks):
-            raise ValueError("task is not pending or dependencies are not merged in origin/main and HEAD")
+            raise ValueError("task is not pending or dependencies are not completed in origin/main and HEAD")
         if not shutil.which("codex"):
             raise ValueError("Codex CLI not installed; use the prompt command")
         run_id = task["id"] + "-" + uuid.uuid4().hex[:12]
@@ -172,14 +176,14 @@ def main():
         return 0
     if args.command == "next":
         task = next((t for t in tasks if eligible(ROOT, t, tasks)), None)
-        print(task["id"] if task else "No eligible pending task; inspect plans and merged dependency records")
+        print(task["id"] if task else "No eligible pending task; inspect plans and completed dependency records")
         return 0
     task = next((t for t in tasks if t["id"] == args.task), None)
     if task is None:
         raise ValueError("provide a known task ID")
     if args.command == "prompt":
         if not eligible(ROOT, task, tasks):
-            raise ValueError("task is not eligible; inspect status and merged dependencies")
+            raise ValueError("task is not eligible; inspect status and completed dependencies")
         print(prompt(task))
         return 0
     return run_task(ROOT, task, tasks)
