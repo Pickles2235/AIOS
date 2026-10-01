@@ -13,6 +13,7 @@ package localname
 typedef struct {
  DNSServiceRef service;
  DNSRecordRef record;
+ DNSRecordRef ipv6;
  DNSRecordRef ownership;
  int ready;
  DNSServiceErrorType error;
@@ -20,21 +21,27 @@ typedef struct {
 static void aios_reply(DNSServiceRef service, DNSRecordRef record, DNSServiceFlags flags,
  DNSServiceErrorType error, void *context) {
  aios_record *r=(aios_record*)context;
- if (error) {r->ready=2;r->error=error;} else {r->ready++;}
+ if (error) {r->ready=3;r->error=error;} else {r->ready++;}
 }
 static aios_record *aios_register(const char *host, const void *owner, uint16_t owner_size) {
  aios_record *r=calloc(1,sizeof(aios_record));
  if (!r) return NULL;
  r->error=DNSServiceCreateConnection(&r->service);
- if (r->error) {r->ready=2;return r;}
+ if (r->error) {r->ready=3;return r;}
  struct in_addr address; inet_pton(AF_INET,"127.0.0.1",&address);
  r->error=DNSServiceRegisterRecord(r->service,&r->record,kDNSServiceFlagsUnique,
  kDNSServiceInterfaceIndexLocalOnly,host,kDNSServiceType_A,kDNSServiceClass_IN,
  sizeof(address),&address,120,aios_reply,r);
+ // Complete dual-stack system lookups without advertising an unreachable
+ // IPv6-only listener. This mapped loopback address reaches the IPv4 socket.
+ struct in6_addr mapped; inet_pton(AF_INET6,"::ffff:127.0.0.1",&mapped);
+ if (!r->error) r->error=DNSServiceRegisterRecord(r->service,&r->ipv6,kDNSServiceFlagsUnique,
+ kDNSServiceInterfaceIndexLocalOnly,host,kDNSServiceType_AAAA,kDNSServiceClass_IN,
+ sizeof(mapped),&mapped,120,aios_reply,r);
  if (!r->error) r->error=DNSServiceRegisterRecord(r->service,&r->ownership,kDNSServiceFlagsUnique,
  kDNSServiceInterfaceIndexLocalOnly,host,kDNSServiceType_TXT,kDNSServiceClass_IN,
  owner_size,owner,120,aios_reply,r);
- if (r->error) r->ready=2;
+ if (r->error) r->ready=3;
  return r;
 }
 static void aios_poll(aios_record *r) {
@@ -44,8 +51,8 @@ static void aios_poll(aios_record *r) {
  if (result>0) {
    if (fd.revents&POLLIN) {
     DNSServiceErrorType e=DNSServiceProcessResult(r->service);
-    if (e) {r->error=e;r->ready=2;}
-   } else if (fd.revents&(POLLERR|POLLHUP|POLLNVAL)) {r->error=kDNSServiceErr_Unknown;r->ready=2;}
+    if (e) {r->error=e;r->ready=3;}
+   } else if (fd.revents&(POLLERR|POLLHUP|POLLNVAL)) {r->error=kDNSServiceErr_Unknown;r->ready=3;}
  }
 }
 static void aios_free(aios_record *r) { if(r->service) DNSServiceRefDeallocate(r->service);free(r); }
@@ -114,7 +121,7 @@ func registerNative(host string) (nativeRecord, error) {
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
 		r.mu.Lock()
-		ready := r.handle.ready >= 2
+		ready := r.handle.ready >= 3
 		code := int(r.handle.error)
 		r.mu.Unlock()
 		if ready {

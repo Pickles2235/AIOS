@@ -77,7 +77,7 @@ func verifyLoopback(host string) error {
 	defer cancel()
 	addresses, e := net.DefaultResolver.LookupIPAddr(ctx, host)
 	if e != nil || len(addresses) == 0 {
-		return fmt.Errorf("selected native name did not resolve locally")
+		return fmt.Errorf("selected native name did not resolve locally: %w", e)
 	}
 	for _, address := range addresses {
 		if !address.IP.IsLoopback() {
