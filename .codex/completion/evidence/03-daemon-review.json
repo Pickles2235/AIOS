@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "/root/baseline_reviewer",
+  "reviewed_commit": "837f2c9ea58100d80b1562b825d9c3451b7c353d",
+  "milestone": "03-daemon-install",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "checks_performed": [
+    "Read PRODUCT.md, ACCEPTANCE.md, REVIEWER.md, AGENTS.md and the task03 plan; independently reviewed daemon/install code, archive builder, native smoke/workflow, documentation, live browser entry point and tests. Approval is engineering milestone implementation with the explicit native deferral allowed by ACCEPTANCE.md, not final release acceptance.",
+    "Verified the final source revision and scoped diff; independently ran Go race tests for lifecycle/webui/CLI, candidate packaging unittest discovery and git diff --check successfully. Bookkeeping added after clean source receipts does not change product code.",
+    "Verified exact837f2c9 clean passing core/web/scoped-install receipts and every corrected raw-log SHA256. Core includes Python/Go tests, vet, race and build; web includes27unit and20browser cases at both supported desktop viewport sizes.",
+    "Inspected actual foreground-daemon browser tests for browser close/reopen, persistent instance identity after process restart and authenticated Stop causing actual process exit/disconnection. Separate route-injected failure/session-expiry tests exercise user feedback and are not presented as native launchd tests.",
+    "Requested and verified fixes for foreign-root/service ownership before bootout, exact loaded program/plist/argument matching, canonical owned-root/LaunchAgents ancestor validation before mutation, UID/permission checks, foreground versus managed Stop behavior and failed Stop/session/transport observability. Adjacent tests verify foreign targets/source remain untouched and existing normal0755 LaunchAgents directories are not chmodded.",
+    "Reviewed exclusive no-follow daemon locks, bounded owner-only metadata/control, fresh one-use capabilities and retained loopback/origin/session/CSRF protection. Requested and verified explicit byte-length rejection and regression for valid control JSON padded past the limit with hidden trailing data.",
+    "Independently fetched first real Darwinarm64 job110483087639 logs at source9a61a0e and confirmed the native long-socket-path failure. Withdrew the earlier portable review draft. Reviewed corrected short canonical temporary socket routing, bounded hashed per-instance path, read-only canonical/owned0700 parent and owned0600 socket checks, no symlink aliases and empty-directory-only cleanup; long-root/shared-parent/symlink/missing-endpoint nonmutation regressions pass.",
+    "Inspected ZIP validation/extraction against unsafe paths, duplicates, special files, incomplete inventories, tampering, pathname replacement and size overflow. Verification/extraction use one opened descriptor and recheck exact size/checksum while extracting into owned staging; installation metadata constrains uninstall to owned paths and matching service.",
+    "Independently verified actual837 developer ZIP SHA256e1d4b714e791067fadb1c8e277dfb0faad11ed854dd43e95243bc9d3bd0eca63, exhaustive seven-file inventory/checksums, source/platform/architecture/IR manifest and extracted binary clean Go VCS revision837f2c9. Independently reran scoped install probes against my own extracted packaged binary:15live bundled-assets/auth/runtime assertions and5per-user plist assertions pass. Full install correctly exits1 and records an explicit Linux native blocker with zero scenarios.",
+    "Independently fetched successful earlier native job110488961085/run36897762577 at source3df36c2, downloaded artifact11181212247, verified GitHub artifact SHA2566f0cf0d49b3c004a52b11c81f79fe355128dc53d0264f56ca3edf3882fedbc22 and inspected actual daemon-native.json. It attests Darwinarm64 checksummed ZIP install, headless launchd, foreign-root Stop rejection, Stop/start identity, native open and preserve/delete uninstall. This is earlier-source smoke, not native837 proof.",
+    "Verified earlier3df artifact hardware/source capture, two fresh equal native semantic fingerprints and accepted legacy installed offline acceptance. Also independently fetched successful5f96 job110491952812/run36898649485 logs and artifact11181700873, verified ZIP SHA2560feda6d76fe6251925c21b101578ac3ad396270654e5e26cc6892721e17faedb and inspected passing actual daemon-native.json bound to5f96ef1. Its inspected source uses install with space, so this real run exercises loaded launchctl argument matching with spaces. Latest837 changes only the compiler detection field/caveat plus historical bookkeeping since5f96; its own native rerun remains pending.",
+    "Found and verified correction of false runtime-screen documentation and javac/JDK detection wording. Latest runtime exposes javac_command_detected with an explicit caveat because macOS may supply a launcher stub; no compiler execution/download is used for detection. Guide honestly records unfinished daemon credentials, upgrades, complete licenses and engineering candidate status."
+  ],
+  "nonblocking_findings": [
+    "Native passing evidence is explicitly bound to earlier sources3df36c2c0a4d087bb88e28d7d330fca231f2e9e5 and5f96ef154df7cfef3bf043718a2f3b6adb4a78eb, including the real space-containing install fixture. Latest-source837 native CI remains pending at issuance. Any observed native failure must reopen this milestone; this engineering deferral is not a passing native837 receipt.",
+    "Actual login-at-load, all latest-source installed ZIP/offline/no-development-tool/source-nonmutation checks and full assembled native gates remain final task15 obligations. Final acceptance requires one exact tested source and artifact; earlier smoke and scoped receipts cannot satisfy it.",
+    "Atomic upgrade/state rollback remains task07 work. Manifest compatibility declarations/update wrapper do not establish a supported upgrade; complete transitive/native-helper attribution remains final packaging work. No candidate-ready or public-release approval is issued."
+  ],
+  "evidence": [
+    ".codex/completion/evidence/03-daemon-core-commands.json",
+    ".codex/completion/evidence/03-daemon-web-commands.json",
+    ".codex/completion/evidence/03-daemon-install-commands.json",
+    ".codex/completion/evidence/03-package-commands.json",
+    ".codex/completion/evidence/03-daemon-ci-3df.json",
+    ".codex/completion/evidence/03-daemon-native-3df.json",
+    "/workspace/scratch/reviewer-task03-install-commands.json",
+    "/workspace/scratch/reviewer-task03-native-block-commands.json",
+    "/workspace/scratch/reviewer-task03-native-3df.json",
+    "/workspace/scratch/reviewer-task03-native-5f96.json"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "purpose": "milestone_daemon_ci",
+  "tested_commit": "5f96ef154df7cfef3bf043718a2f3b6adb4a78eb",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "hardware": {
+    "os_version": "15.7.9",
+    "logical_cpus": 3,
+    "memory_bytes": 7516192768
+  },
+  "workflow_run": 36898649485,
+  "job_id": 110491952812,
+  "workflow_url": "https://github.com/Pickles2235/AIOS/actions/runs/36898649485",
+  "job_conclusion": "success",
+  "artifact_id": 11181700873,
+  "artifact_sha256": "0feda6d76fe6251925c21b101578ac3ad396270654e5e26cc6892721e17faedb",
+  "native_report": "03-daemon-native-5f96.json",
+  "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+  "fresh_acceptance_runs": 2,
+  "installed_offline_acceptance": "accepted",
+  "full_release_gates": false
+}

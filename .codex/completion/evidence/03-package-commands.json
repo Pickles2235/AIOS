@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "purpose": "developer_package",
+  "tested_commit": "837f2c9ea58100d80b1562b825d9c3451b7c353d",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "artifact": {
+    "path": "/workspace/scratch/aios-daemon-package-commands/aios-1.0.0-daemon-commands-linux-amd64.zip",
+    "sha256": "e1d4b714e791067fadb1c8e277dfb0faad11ed854dd43e95243bc9d3bd0eca63"
+  },
+  "inventory_files": 7,
+  "all_checksums_verified": true,
+  "product_candidate_ready": false
+}

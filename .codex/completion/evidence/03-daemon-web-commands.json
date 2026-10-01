@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "gate": "web",
+  "milestone": null,
+  "tested_commit": "837f2c9ea58100d80b1562b825d9c3451b7c353d",
+  "clean_product_tree": true,
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "timestamp": 1790875879.584148,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "harness-validate-web"
+      ],
+      "exit_code": 0,
+      "seconds": 29.707314491271973,
+      "log_sha256": "23bb2eba1af02bb7cb300335d635a630910b3986a4888f0f18cae3b4ea4b14b6"
+    }
+  ]
+}

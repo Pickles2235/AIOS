@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "install",
+  "milestone": "03-daemon-install",
+  "tested_commit": "837f2c9ea58100d80b1562b825d9c3451b7c353d",
+  "clean_product_tree": true,
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "timestamp": 1790875936.8153412,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=03-daemon-install",
+        "COMPLETION_GATE=install"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1810610294342041,
+      "log_sha256": "5f1bc9b32203eefaec3f2e0c82a9793b07dc4fc4a933e3cedcf36a666b0f3b10"
+    }
+  ]
+}
