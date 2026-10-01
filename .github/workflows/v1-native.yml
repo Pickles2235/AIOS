@@ -57,6 +57,9 @@ jobs:
         run: go build -trimpath -o bin/aios ./cmd/aios
         env:
           CGO_ENABLED: "1"
+      - name: Verify native login Git authentication and namespace transitions
+        if: matrix.target == 'macos-arm64'
+        run: python3 scripts/verify_onboarding_native.py --output "$RUNNER_TEMP/onboarding-native.json"
       - name: Run native deterministic acceptance
         run: python3 scripts/v1_acceptance.py --binary "$PWD/bin/aios" --output-dir "$RUNNER_TEMP/acceptance-v1"
       - name: Install native browser for Apple Silicon first-run checks
@@ -81,6 +84,7 @@ jobs:
             ${{ runner.temp }}/macos-first-run/installed-binary.txt
             ${{ runner.temp }}/macos-first-run/fingerprints.txt
             ${{ runner.temp }}/daemon-native.json
+            ${{ runner.temp }}/onboarding-native.json
             ${{ runner.temp }}/macos-first-run/acceptance-*/acceptance-report.json
             web/playwright-report
             web/test-results

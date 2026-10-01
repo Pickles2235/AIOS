@@ -18,6 +18,7 @@ func TestInstanceMutationRequiresCSRFAndPersistsIdentity(t *testing.T) {
 	}
 	for _, authorized := range []bool{false, true} {
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/instance", strings.NewReader(`{"name":"Research","seed_colour":"#123456"}`))
+		r.Host = s.listener.Addr().String()
 		r.Header.Set("Origin", s.origin)
 		r.AddCookie(&http.Cookie{Name: "aios_kb_session", Value: "session"})
 		if authorized {
@@ -37,6 +38,7 @@ func TestInstanceMutationRequiresCSRFAndPersistsIdentity(t *testing.T) {
 		t.Fatalf("persistence: %#v %v", second, err)
 	}
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/instance", nil)
+	r.Host = s.listener.Addr().String()
 	w := httptest.NewRecorder()
 	s.api(w, r)
 	if w.Code != 403 {

@@ -2,6 +2,7 @@
 package mirror
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -165,22 +166,88 @@ func Sync(ctx context.Context, r Registry, dataDir string) ([]Synced, error) {
 }
 
 func git(ctx context.Context, dir string, args ...string) (string, error) {
-	base := []string{"--no-pager", "-c", "core.hooksPath=/dev/null", "-c", "credential.helper=", "-c", "core.askPass="}
+	base := []string{"--no-pager", "-c", "core.hooksPath=/dev/null", "-c", "protocol.ext.allow=never", "-c", "core.askPass="}
 	if dir != "" {
 		base = append(base, "-C", dir)
 	}
 	cmd := exec.CommandContext(ctx, "git", append(base, args...)...)
-	cmd.Env = append([]string{"GIT_ASKPASS=/usr/bin/false", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_NOSYSTEM=1", "GIT_TERMINAL_PROMPT=0", "LC_ALL=C"}, "PATH="+os.Getenv("PATH"))
-	for _, key := range []string{"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy", "SSL_CERT_FILE", "SSL_CERT_DIR", "GIT_SSL_CAINFO", "SSH_AUTH_SOCK"} {
-		if value, ok := os.LookupEnv(key); ok {
-			cmd.Env = append(cmd.Env, key+"="+value)
+	boundGitProcess(cmd)
+	cmd.Env = CredentialEnvironment()
+	var output boundedGitOutput
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+	err := cmd.Run()
+	cleanupGitProcess(cmd)
+	if err != nil {
+		kind := "unavailable"
+		lower := strings.ToLower(output.String())
+		for _, marker := range []string{"authentication failed", "permission denied", "could not read username", "terminal prompts disabled", "credential", "401", "403"} {
+			if strings.Contains(lower, marker) {
+				kind = "authentication"
+				break
+			}
+		}
+		return "", &GitError{Kind: kind}
+	}
+	if output.overflow {
+		return "", &GitError{Kind: "output_limit"}
+	}
+	return output.String(), nil
+}
+
+// Configuration/helpers are the user's trusted machine setup. No credential
+// response or raw stderr is persisted or returned through the product API.
+func CredentialEnvironment() []string {
+	blocked := map[string]bool{"GIT_DIR": true, "GIT_WORK_TREE": true, "GIT_INDEX_FILE": true, "GIT_OBJECT_DIRECTORY": true, "GIT_COMMON_DIR": true, "GIT_ALTERNATE_OBJECT_DIRECTORIES": true, "GIT_ASKPASS": true, "GIT_TERMINAL_PROMPT": true, "LC_ALL": true, "SSH_ASKPASS": true, "SSH_ASKPASS_REQUIRE": true}
+	out := []string{}
+	for _, v := range os.Environ() {
+		key, _, _ := strings.Cut(v, "=")
+		if !blocked[key] {
+			out = append(out, v)
 		}
 	}
-	b, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("git %v: %w: %s", args, err, strings.TrimSpace(string(b)))
+	return append(out, "GIT_ASKPASS=/usr/bin/false", "SSH_ASKPASS=/usr/bin/false", "SSH_ASKPASS_REQUIRE=never", "GIT_TERMINAL_PROMPT=0", "LC_ALL=C")
+}
+func CredentialStatus(ctx context.Context, login bool) map[string]bool {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "git", "config", "--get-all", "credential.helper")
+	boundGitProcess(cmd)
+	cmd.Env = CredentialEnvironment()
+	var out boundedGitOutput
+	cmd.Stdout = &out
+	_ = cmd.Run()
+	cleanupGitProcess(cmd)
+	return map[string]bool{"credential_helpers_enabled": true, "default_helper_configured": strings.TrimSpace(out.String()) != "", "ssh_agent_environment_present": os.Getenv("SSH_AUTH_SOCK") != "", "login_context": login, "terminal_prompt_enabled": false, "product_token_store": false}
+}
+
+type GitError struct{ Kind string }
+
+func (e *GitError) Error() string { return "Git source operation failed (" + e.Kind + ")" }
+func (e *GitError) Remediation() string {
+	if e.Kind == "authentication" {
+		return "Git authentication failed in the daemon login environment. Configure your machine Git/SSH credential helper outside AgentOS, then retry. You may explicitly choose Direct mode for local workspaces; your selected mode has not changed."
 	}
-	return string(b), nil
+	return "Git source is unavailable. Check network access, approved remote/ref and machine credentials, then retry. You may explicitly choose Direct mode; your selected mode has not changed."
+}
+
+type boundedGitOutput struct {
+	bytes.Buffer
+	overflow bool
+}
+
+func (b *boundedGitOutput) Write(p []byte) (int, error) {
+	n := len(p)
+	remain := (32 << 20) - b.Len()
+	if remain < n {
+		b.overflow = true
+		if remain > 0 {
+			_, _ = b.Buffer.Write(p[:remain])
+		}
+		return n, nil
+	}
+	_, _ = b.Buffer.Write(p)
+	return n, nil
 }
 
 func validURL(value string) bool {

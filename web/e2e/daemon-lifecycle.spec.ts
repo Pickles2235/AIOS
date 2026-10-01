@@ -65,3 +65,49 @@ test("stop failure and session expiry are distinguished from disconnected daemon
     await expect(page.getByRole("alert")).not.toContainText("Daemon disconnected");
   } finally {if (child) await stop(child); rmSync(root, {recursive: true, force: true});}
 });
+
+test("real logo and namespace selection migrate origins, recover and persist without automatic rename", async ({page,context}) => {
+  const root=realpathSync(mkdtempSync(join(tmpdir(),"aios-onboarding-browser-")));
+  const other=realpathSync(mkdtempSync(join(tmpdir(),"aios-namespace-collision-")));
+  let child:ChildProcess|undefined,second:ChildProcess|undefined;
+  try {
+    child=await launch(root);await page.goto(await fresh(root));
+    await page.getByRole("button",{name:"Edit instance"}).click();
+    await page.getByRole("button",{name:"Generate local logo"}).click();
+    await expect(page.getByLabel("Knowledge instance").locator("img")).toBeVisible();
+    await page.getByLabel("Instance name").fill("Onboarding fixture");
+    await page.getByRole("button",{name:"Save instance"}).click();
+    const saved=JSON.parse(readFileSync(join(root,"data","instance.json"),"utf8"));
+    expect(saved.logo).toMatch(/^data:image\/png;base64,/);
+    const name=`aios-browser-${process.pid}-${Date.now()}`;
+    await page.getByLabel("Namespace",{exact:true}).fill(name);
+    await page.getByRole("button",{name:"Use namespace",exact:true}).click();
+    await expect.poll(()=>new URL(page.url()).hostname).toBe(`${name}.${process.platform==="darwin"?"local":"localhost"}`);
+    await expect(page.getByRole("heading",{name:"No active generation"})).toBeVisible();
+    // Rename from the old named origin, after its registration is released.
+    await page.getByLabel("Namespace",{exact:true}).fill(name+"-next");
+    await page.getByRole("button",{name:"Use namespace",exact:true}).click();
+    await expect.poll(()=>new URL(page.url()).hostname).toBe(`${name}-next.${process.platform==="darwin"?"local":"localhost"}`);
+    await expect(page.getByLabel("Knowledge instance")).toContainText("Onboarding fixture");
+    second=await launch(other);const alternative=await context.newPage();await alternative.goto(await fresh(other));
+    await alternative.getByLabel("Namespace",{exact:true}).fill(name+"-next");
+    await alternative.getByRole("button",{name:"Use namespace",exact:true}).click();
+    await expect(alternative.getByLabel("Namespace alternatives")).toBeVisible();
+    expect(()=>readFileSync(join(other,"data","namespace.json"))).toThrow();
+    const option=alternative.getByLabel("Namespace alternatives").getByRole("button").first();
+    const selected=(await option.textContent())!.replace("Select ","");await option.click();
+    expect(()=>readFileSync(join(other,"data","namespace.json"))).toThrow();
+    await alternative.getByRole("button",{name:"Use namespace",exact:true}).click();
+    await expect.poll(()=>new URL(alternative.url()).hostname).toBe(`${selected}.${process.platform==="darwin"?"local":"localhost"}`);
+    const recovery=JSON.parse(execFileSync(process.env.AIOS_UI_BINARY||resolve("../bin/aios"),["daemon","link","--root",root,"--recovery"],{timeout:5000}).toString()).url;
+    await page.goto(recovery);await expect(page.getByLabel("Namespace",{exact:true})).toHaveValue(name+"-next");
+    await stop(child);child=await launch(root);await page.goto(await fresh(root));
+    await expect(page.getByLabel("Knowledge instance")).toContainText("Onboarding fixture");
+    await expect(page.getByLabel("Knowledge instance").locator("img")).toBeVisible();
+    expect(JSON.parse(readFileSync(join(root,"data","instance.json"),"utf8")).id).toBe(saved.id);
+    await expect(page.getByLabel("Namespace",{exact:true})).toHaveValue(name+"-next");
+  } finally {
+    if(child)await stop(child);if(second)await stop(second);
+    rmSync(root,{recursive:true,force:true});rmSync(other,{recursive:true,force:true});
+  }
+});

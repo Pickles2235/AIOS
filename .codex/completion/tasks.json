@@ -100,7 +100,7 @@
         "core",
         "web"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "plan": ".codex/completion/plans/04-onboarding-namespace.md",
       "completion_commit": null,
       "review": null,

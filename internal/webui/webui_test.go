@@ -40,6 +40,7 @@ func TestAPIRejectsWritesAndUnknownPaths(t *testing.T) {
 	s := server(t)
 	for _, target := range []string{"/api/v1/onboarding/index", "/api/v1/../../etc/passwd"} {
 		r := httptest.NewRequest(http.MethodPost, target, nil)
+		r.Host = s.listener.Addr().String()
 		r.Header.Set("Origin", s.origin)
 		w := httptest.NewRecorder()
 		s.api(w, r)
@@ -52,6 +53,7 @@ func TestSessionIsOneUseAndCSRFProtected(t *testing.T) {
 	s := server(t)
 	body := `{"token":"` + s.capability + `"}`
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/session", strings.NewReader(body))
+	r.Host = s.listener.Addr().String()
 	r.Header.Set("Origin", s.origin)
 	w := httptest.NewRecorder()
 	s.api(w, r)
@@ -59,6 +61,7 @@ func TestSessionIsOneUseAndCSRFProtected(t *testing.T) {
 		t.Fatalf("session=%d", w.Code)
 	}
 	r = httptest.NewRequest(http.MethodPost, "/api/v1/session", strings.NewReader(body))
+	r.Host = s.listener.Addr().String()
 	r.Header.Set("Origin", s.origin)
 	w = httptest.NewRecorder()
 	s.api(w, r)
@@ -76,6 +79,7 @@ func TestSessionRejectsOversizedTrailingAndUnknownJSON(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			s := server(t)
 			r := httptest.NewRequest(http.MethodPost, "/api/v1/session", strings.NewReader(body))
+			r.Host = s.listener.Addr().String()
 			r.Header.Set("Origin", s.origin)
 			w := httptest.NewRecorder()
 			s.api(w, r)
@@ -89,6 +93,7 @@ func TestSessionRejectsOversizedTrailingAndUnknownJSON(t *testing.T) {
 func TestSessionRefreshRequiresExistingSameOriginCookie(t *testing.T) {
 	s := server(t)
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/session", strings.NewReader(`{"token":"`+s.capability+`"}`))
+	r.Host = s.listener.Addr().String()
 	r.Header.Set("Origin", s.origin)
 	w := httptest.NewRecorder()
 	s.api(w, r)
@@ -101,6 +106,7 @@ func TestSessionRefreshRequiresExistingSameOriginCookie(t *testing.T) {
 		{false, "", 403}, {true, "https://foreign.example", 403}, {true, "", 200}, {true, s.origin, 200},
 	} {
 		r = httptest.NewRequest(http.MethodGet, "/api/v1/session", nil)
+		r.Host = s.listener.Addr().String()
 		if tc.cookie {
 			r.AddCookie(cookie)
 		}

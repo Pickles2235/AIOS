@@ -40,13 +40,35 @@ the artifact and its source; do not disable Gatekeeper globally. Signing and a
 menu-bar application are outside this first candidate's prerequisites.
 
 Choose exactly one source mode in Repository setup: Mirror creates owned mirrors;
-Direct selects local workspaces. Reuse of machine Git credentials in the daemon
-is still task04 work: current mirror discovery disables credential helpers/global
-Git configuration. Configure credentials outside AgentOS; authentication remediation
-and namespace support are not yet certified. Source checkouts must never be reset, stashed, built or written by
-AgentOS. Knowledge and UI links carry generation/provenance and coverage; an unknown
-result is not proof of absence. The completion mission adds maintenance, namespace,
-resource policy and investigation features in later milestones.
+Direct captures clean committed local workspaces without modifying them. Preview a
+batch of 1–100 sources and adjust include/exclude patterns before Build. Language
+and framework-manifest discovery describe scope; they do not certify compiler or
+dependency availability. Build enters the main UI immediately. Discovery and staged
+generations are progress only; validated catalog promotion makes evidence queryable.
+A failed or cancelled build keeps the last good active knowledge.
+
+Git uses your machine's external configuration and credential helpers without
+terminal/password prompts. AgentOS does not store helper responses or tokens.
+Configure credentials outside AgentOS. Installation retains only explicit external
+Git configuration and CA-file paths; SSH agent sockets are inherited from the
+current login environment. `"$AIOS_BIN" daemon credentials` explicitly probes the
+running daemon's configuration; helper detection alone is not proof a remote can
+be authenticated. Authentication failure explains how to retry or explicitly choose
+Direct mode while leaving your selected mode unchanged.
+
+Choose a local namespace yourself. Native macOS registers a DNS-SD name only on
+this Mac, resolves it to loopback and uses an explicit HTTP port. Collision suggestions
+are never saved until you select one. Changing the name navigates with a fresh private
+launch link. `"$AIOS_BIN" daemon link --recovery` obtains a localhost link if the name
+is unavailable. Saved names are retained on restart; unavailable registration is
+reported rather than automatically renamed. Linux names use a developer `.localhost`
+address and do not certify native DNS integration. Instance name, colour and optional
+locally generated PNG logo preserve the same durable identity.
+
+Knowledge and UI links carry generation, provenance and coverage; an unknown result
+is not proof of absence. Source checkouts must never be reset, stashed, built or written
+by AgentOS. Native login Git/namespace certification remains pending the retained
+macOS checks; later milestones add maintenance, resource and investigation features.
 
 To uninstall, choose explicitly: `"$AIOS_BIN" uninstall --preserve-data --json`
 retains configuration/KB for reinstall; `--delete-data` deletes owned state. Both

@@ -23,14 +23,16 @@ test("saves and displays instance branding in the live entry point",async({page}
  await page.goto("/#token=test");await page.getByRole("button",{name:"Edit instance"}).click();await page.getByLabel("Instance name").fill("Research");await page.getByRole("button",{name:"Save instance"}).click();await expect(page.getByLabel("Knowledge instance")).toContainText("Research");expect(instance.id).toBe("stable");
 });
 
-test("first-run mirror setup reports real stages and reaches knowledge",async({page})=>{
+test("first-run setup renders staged status before promotion",async({page})=>{
  let state="unconfigured",ready=false;
  await page.route("**/api/v1/session",r=>r.fulfill({json:{csrf_token:"csrf"}}));
  await page.route("**/api/v1/status",r=>r.fulfill({json:{projection_state:ready?"ready":"no_active_generation",repositories:[]}}));
  await page.route("**/api/v1/onboarding/configure",r=>{expect(r.request().headers()["x-csrf-token"]).toBe("csrf");return r.fulfill({json:{state:"configured"}})});
+ await page.route("**/api/v1/onboarding/preview",r=>r.fulfill({json:{valid:true,repositories:[{id:"repo",valid:true,files:1,languages:["java"],frameworks:[],exclusions:{}}]}}));
+ await page.route("**/api/v1/activity",r=>r.fulfill({json:{events:[]}}));
  await page.route("**/api/v1/onboarding/start",r=>{state="ingesting";return r.fulfill({status:202,json:{state,completed_repositories:1}})});
- await page.route("**/api/v1/onboarding",r=>{if(state==="ingesting"){state="ready";ready=true}return r.fulfill({json:{state,completed_repositories:ready?1:0}})});
- await page.goto("/#token=test");await page.getByLabel("id 1",{exact:true}).fill("repo");await page.getByLabel("url 1",{exact:true}).fill("https://github.com/example/approved.git");await page.getByRole("button",{name:"Sync and index"}).click();await expect(page.getByText("1 mirrors synchronized. Compiling snapshots…")).toBeVisible();await expect(page.getByRole("heading",{name:"Knowledge map"})).toBeVisible();
+ await page.route("**/api/v1/onboarding",r=>r.fulfill({json:{state,completed_repositories:state==="ingesting"?1:0}}));
+ await page.goto("/#token=test");await page.getByLabel("id 1",{exact:true}).fill("repo");await page.getByLabel("url 1",{exact:true}).fill("https://github.com/example/approved.git");await page.getByRole("button",{name:"Preview scope"}).click();await expect(page.getByText("Sources validated")).toBeVisible();await page.getByRole("button",{name:"Sync and index"}).click();await expect(page.getByText("1 mirrors synchronized. Compiling snapshots…")).toBeVisible();await expect(page.getByLabel("Repository setup")).not.toBeVisible();state="ready";ready=true;await expect(page.getByRole("heading",{name:"Knowledge map"})).toBeVisible();
 });
 
 test("Spotlight keyboard, truthful result states, cloud boundaries and stale evidence", async({page}) => {

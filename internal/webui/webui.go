@@ -21,6 +21,7 @@ import (
 
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/knowledge"
+	"github.com/AdamNi-7080/AIOS/internal/localname"
 	"github.com/AdamNi-7080/AIOS/internal/semantic"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
@@ -39,6 +40,12 @@ type Server struct {
 	jobCancel                         context.CancelFunc
 	stopDaemon                        func() error
 	stopState                         string
+	activity                          []ActivityEvent
+	activitySequence                  uint64
+	namespaceMu                       sync.Mutex
+	namespace                         string
+	namespaceError                    string
+	namespaceLease                    *localname.Lease
 }
 
 func token() string {
@@ -71,20 +78,44 @@ func New(cfg catalog.Config, db *store.Store, listener net.Listener) (*Server, e
 		_ = listener.Close()
 		return nil, e
 	}
+	if e = s.restoreNamespace(); e != nil {
+		_ = listener.Close()
+		return nil, e
+	}
 	return s, nil
 }
 func (s *Server) URL() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.origin + "/#token=" + s.capability
+	origin := s.namespaceOriginLocked()
+	if origin == "" {
+		origin = s.origin
+	}
+	return origin + "/#token=" + s.capability
 }
 func (s *Server) FreshURL() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.capability = token()
-	return s.origin + "/#token=" + s.capability
+	origin := s.namespaceOriginLocked()
+	if origin == "" {
+		origin = s.origin
+	}
+	return origin + "/#token=" + s.capability
 }
-func (s *Server) Close() error { s.cancelJob(); return s.listener.Close() }
+func (s *Server) Close() error {
+	s.cancelJob()
+	s.namespaceMu.Lock()
+	s.mu.Lock()
+	lease := s.namespaceLease
+	s.namespaceLease = nil
+	s.mu.Unlock()
+	if lease != nil {
+		lease.Close()
+	}
+	s.namespaceMu.Unlock()
+	return s.listener.Close()
+}
 func (s *Server) SetStopDaemon(stop func() error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -94,7 +125,7 @@ func (s *Server) authorised(r *http.Request, csrf bool) bool {
 	// Browsers omit Origin on ordinary same-origin GETs. Only state-changing
 	// request shapes require Origin plus CSRF; every route remains session bound.
 	origin := r.Header.Get("Origin")
-	if (origin != "" && origin != s.origin) || (csrf && origin == "") {
+	if !s.requestOriginAllowed(r) || (csrf && origin == "") {
 		return false
 	}
 	s.mu.Lock()
@@ -135,6 +166,9 @@ func decode(r *http.Request, v any) error {
 }
 func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
+	case "/api/v1/namespace", "/api/v1/namespace/open":
+		s.namespaceAPI(w, r)
+		return
 	case "/api/v1/runtime":
 		if r.Method != http.MethodGet || !s.authorised(r, false) {
 			fail(w, 403, "authorised session required")
@@ -207,7 +241,7 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 			jsonBody(w, map[string]string{"csrf_token": v})
 			return
 		}
-		if r.Method != http.MethodPost || r.Header.Get("Origin") != s.origin {
+		if r.Method != http.MethodPost || r.Header.Get("Origin") == "" || !s.requestOriginAllowed(r) {
 			fail(w, http.StatusForbidden, "same-origin session required")
 			return
 		}
@@ -230,10 +264,16 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "aios_kb_session", Value: s.session, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})
 		jsonBody(w, map[string]string{"csrf_token": s.csrf})
 		return
+	case "/api/v1/onboarding/preview":
+		s.previewAPI(w, r)
+		return
+	case "/api/v1/activity":
+		s.activityAPI(w, r)
+		return
 	case "/api/v1/onboarding", "/api/v1/onboarding/configure", "/api/v1/onboarding/start", "/api/v1/onboarding/cancel":
 		s.setupAPI(w, r)
 		return
-	case "/api/v1/instance", "/api/v1/instance/logo":
+	case "/api/v1/instance", "/api/v1/instance/logo", "/api/v1/instance/logo/generate":
 		s.instanceAPI(w, r)
 		return
 	case "/api/v1/status":
@@ -342,6 +382,10 @@ func (s *Server) Serve(ctx context.Context) error {
 		return e
 	}
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !s.requestOriginAllowed(r) {
+			fail(w, 403, "unapproved local Host or origin")
+			return
+		}
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; connect-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")

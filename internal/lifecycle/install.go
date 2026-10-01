@@ -28,12 +28,13 @@ type Manifest struct {
 	SHA256            map[string]string `json:"sha256"`
 }
 type Installation struct {
-	Scope        string `json:"scope"`
-	Binary       string `json:"binary"`
-	DataDir      string `json:"data_dir"`
-	ServiceLabel string `json:"service_label"`
-	Version      string `json:"version"`
-	Installed    bool   `json:"installed"`
+	Scope          string            `json:"scope"`
+	Binary         string            `json:"binary"`
+	DataDir        string            `json:"data_dir"`
+	ServiceLabel   string            `json:"service_label"`
+	Version        string            `json:"version"`
+	Installed      bool              `json:"installed"`
+	GitEnvironment map[string]string `json:"git_environment,omitempty"`
 }
 
 var shaPattern = regexp.MustCompile(`^[a-f0-9]{64}$`)
@@ -185,6 +186,9 @@ func readInstallation(root string) (Installation, error) {
 	if v.Scope != "user" || v.DataDir != filepath.Join(root, "data") || v.Binary != filepath.Join(root, "current", "bin", "aios") || !labelPattern.MatchString(v.ServiceLabel) {
 		return v, fmt.Errorf("invalid owned installation metadata")
 	}
+	if err = validateGitEnvironment(v.GitEnvironment); err != nil {
+		return v, err
+	}
 	return v, nil
 }
 
@@ -220,6 +224,10 @@ func Install(ctx context.Context, filename string, o Options) (Installation, err
 		return Installation{}, err
 	}
 	v := Installation{Scope: "user", Binary: filepath.Join(o.Root, "current", "bin", "aios"), DataDir: filepath.Join(o.Root, "data"), ServiceLabel: o.Label, Version: m.Version}
+	v.GitEnvironment, err = machineGitEnvironment()
+	if err != nil {
+		return v, err
+	}
 	if err = writeOwnedJSON(o.Root, "installation.json", v); err != nil {
 		return v, err
 	}

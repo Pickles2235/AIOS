@@ -48,6 +48,7 @@ func TestAuthenticatedMirrorOnboardingRetryAndRestart(t *testing.T) {
 		t.Helper()
 		b, _ := json.Marshal(body)
 		r := httptest.NewRequest(http.MethodPost, path, strings.NewReader(string(b)))
+		r.Host = s.listener.Addr().String()
 		r.Header.Set("Origin", s.origin)
 		r.AddCookie(&http.Cookie{Name: "aios_kb_session", Value: s.session})
 		if csrf {

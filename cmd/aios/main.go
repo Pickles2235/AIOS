@@ -37,6 +37,8 @@ func run(ctx context.Context, args []string) error {
 		return runInstallation(ctx, args)
 	case "daemon":
 		return runDaemon(ctx, args[1:])
+	case "namespace":
+		return runNamespace(ctx, args[1:])
 	case "local":
 		if len(args) < 2 || args[1] != "ingest" {
 			return usageError()

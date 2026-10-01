@@ -17,6 +17,7 @@ func TestDaemonStopAuthenticationFailureAndFreshCapability(t *testing.T) {
 	s.SetStopDaemon(func() error { return fmt.Errorf("private path secret must not persist") })
 	request := func(authorized bool) *httptest.ResponseRecorder {
 		r := httptest.NewRequest("POST", "/api/v1/daemon/stop", strings.NewReader(`{}`))
+		r.Host = s.listener.Addr().String()
 		if authorized {
 			r.Header.Set("Origin", s.origin)
 			r.Header.Set("X-CSRF-Token", s.csrf)
@@ -46,6 +47,7 @@ func TestDaemonStopAuthenticationFailureAndFreshCapability(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	r := httptest.NewRequest("GET", "/api/v1/daemon/status", nil)
+	r.Host = s.listener.Addr().String()
 	r.AddCookie(&http.Cookie{Name: "aios_kb_session", Value: s.session})
 	w := httptest.NewRecorder()
 	s.api(w, r)

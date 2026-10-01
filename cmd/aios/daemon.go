@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/lifecycle"
+	"github.com/AdamNi-7080/AIOS/internal/mirror"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 	"github.com/AdamNi-7080/AIOS/internal/webui"
+	"net"
+	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
@@ -24,6 +27,7 @@ func runDaemon(ctx context.Context, args []string) error {
 	fs.StringVar(&o.Label, "service-label", "", "per-user launchd service label")
 	fs.BoolVar(&o.Managed, "launchd", false, "run as the managed launchd child")
 	_ = fs.Bool("json", false, "structured JSON output")
+	recovery := fs.Bool("recovery", false, "open/link through localhost recovery without renaming the namespace")
 	if err := fs.Parse(args[1:]); err != nil {
 		return err
 	}
@@ -59,6 +63,12 @@ func runDaemon(ctx context.Context, args []string) error {
 			return writeJSON(map[string]any{"running": false, "restart": "aios daemon start", "service_state": "unreachable"})
 		}
 		return writeJSON(s)
+	case "credentials":
+		s, e := lifecycle.Control(o, "credentials")
+		if e != nil {
+			return fmt.Errorf("daemon unavailable; start a disposable or installed daemon to inspect its actual credential context")
+		}
+		return writeJSON(s.Credentials)
 	case "open":
 		s, e := lifecycle.Control(o, "open")
 		if e != nil {
@@ -66,6 +76,14 @@ func runDaemon(ctx context.Context, args []string) error {
 		}
 		if runtime.GOOS != "darwin" {
 			return fmt.Errorf("native browser open requires macOS; use daemon run for developer smoke")
+		}
+		if *recovery {
+			u, e := url.Parse(s.URL)
+			if e != nil {
+				return e
+			}
+			u.Host = net.JoinHostPort("localhost", u.Port())
+			s.URL = u.String()
 		}
 		if e = exec.CommandContext(ctx, "/usr/bin/open", s.URL).Run(); e != nil {
 			return e
@@ -76,6 +94,14 @@ func runDaemon(ctx context.Context, args []string) error {
 		s, e := lifecycle.Control(o, "open")
 		if e != nil {
 			return fmt.Errorf("daemon unavailable; start it before requesting a private launch link")
+		}
+		if *recovery {
+			u, e := url.Parse(s.URL)
+			if e != nil {
+				return e
+			}
+			u.Host = net.JoinHostPort("localhost", u.Port())
+			s.URL = u.String()
 		}
 		return writeJSON(s)
 	case "run":
@@ -125,9 +151,12 @@ func serveDaemon(ctx context.Context, o lifecycle.Options) error {
 	} else {
 		s.SetStopDaemon(func() error { cancel(); return nil })
 	}
-	if err = lifecycle.ServeControl(ctx, o, func() lifecycle.State {
+	credentials := func() map[string]bool {
+		return mirror.CredentialStatus(ctx, runtime.GOOS == "darwin" && o.Managed && os.Getppid() == 1)
+	}
+	if err = lifecycle.ServeControlWithCredentials(ctx, o, func() lifecycle.State {
 		return lifecycle.State{Running: true, InstanceID: instance.ID, PID: os.Getpid(), Restart: "aios daemon start; aios daemon open"}
-	}, s.FreshURL); err != nil {
+	}, s.FreshURL, credentials); err != nil {
 		return err
 	}
 	// Native launchd discards stderr. Developer foreground launch links remain

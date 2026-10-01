@@ -61,6 +61,15 @@
         ]
       },
       {
+        "test": "test_git_helper_failure_keeps_mode_and_last_good",
+        "requirements": [
+          "R05"
+        ],
+        "milestones": [
+          "04-onboarding-namespace"
+        ]
+      },
+      {
         "test": "test_native_git_namespace",
         "requirements": [
           "R05",

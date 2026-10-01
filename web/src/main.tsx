@@ -1,17 +1,18 @@
 import React, {useEffect, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import "./style.css";
-import {MirrorSetup} from "./mirror-setup";
+import {MirrorSetup, IndexingCard, type Setup} from "./mirror-setup";
+import {NamespaceSettings} from "./namespace-settings";
 import {InstanceBrand, type Instance} from "./instance-brand";
 import {KnowledgeCloud} from "./knowledge-cloud";
 import {Spotlight} from "./spotlight";
 import {QueryFeedback, type Entity, type Excerpt, type Projection, type QueryResult, type Status} from "./runtime-types";
 
 let csrf = "";
-class ApiError extends Error {constructor(message: string, public status: number) {super(message);}}
+class ApiError extends Error {constructor(message: string, public status: number, public details?: {suggestions?:string[]}) {super(message);}}
 const request = async <T,>(path: string, body?: unknown): Promise<T> => {
   const r = await fetch(path, {method: body === undefined ? "GET" : "POST", credentials: "same-origin", headers: body === undefined ? undefined : {"Content-Type": "application/json", "X-CSRF-Token": csrf}, body: body === undefined ? undefined : JSON.stringify(body)});
-  if (!r.ok) throw new ApiError((await r.json().catch(() => ({error: "Request failed"}))).error, r.status);
+  if (!r.ok) {const details=await r.json().catch(()=>({error:"Request failed"}));throw new ApiError(details.error,r.status,details);}
   return r.json();
 };
 const message = (e: unknown) => e instanceof Error ? e.message : "Knowledge unavailable";
@@ -20,6 +21,7 @@ function App() {
   const [repo, setRepo] = useState(""), [projection, setProjection] = useState<Projection>(), [selected, setSelected] = useState<Entity>(), [evidence, setEvidence] = useState<Excerpt>();
   const [query, setQuery] = useState(""), [result, setResult] = useState<QueryResult>(), [notice, setNotice] = useState(""), [mapNotice, setMapNotice] = useState(""), [busy, setBusy] = useState(false);
   const [daemonState, setDaemonState] = useState<"connected" | "stopping" | "disconnected">("connected");
+  const [indexing,setIndexing]=useState(false);
   const inspection = useRef(0), loading = useRef(0), searching = useRef(0);
   function clearSelection() {inspection.current++; setSelected(undefined); setEvidence(undefined); searching.current++; setResult(undefined); setBusy(false);}
   async function load(wanted?: string) {
@@ -28,6 +30,8 @@ function App() {
       const s = await request<Status>("/api/v1/status"), brand = await request<Instance>("/api/v1/instance");
       if (id !== loading.current) return;
       setStatus(s); setInstance(brand);
+      const setup=await request<Setup>("/api/v1/onboarding");if(id!==loading.current)return;
+      if(setup.state==="syncing"||setup.state==="ingesting")setIndexing(true);
       const active = s.repositories.filter(r => r.active), next = active.find(r => r.id === (wanted || repo))?.id || active[0]?.id || "";
       setRepo(next);
       if (next) {
@@ -82,14 +86,15 @@ function App() {
     catch (e) {if (id === loading.current) {setProjection(undefined); setMapNotice(`Projection page stale or unavailable. Refresh to reload the active generation. ${message(e)}`);}}
   }
   if (!status) return <main><h1>Repository knowledge</h1><p role={notice ? "alert" : "status"}>{notice || "Opening local knowledge…"}</p></main>;
-  const brand = instance && <InstanceBrand instance={instance} onSave={async value => setInstance(await request<Instance>("/api/v1/instance", value))}/>;
+  const brand = instance && <InstanceBrand instance={instance} onSave={async value => setInstance(await request<Instance>("/api/v1/instance", value))} onGenerate={async()=>{const result=await request<{instance:Instance}>("/api/v1/instance/logo/generate",{seed:crypto.randomUUID()});setInstance(result.instance);return result.instance.logo||""}}/>;
   return <main>{brand}<header><p>Read-only repository knowledge</p><h1>{status.projection_state === "no_active_generation" ? "No active generation" : "Knowledge map"}</h1>
     <button onClick={() => setSpotlight(true)}>Open Spotlight</button><small>⌘ / Ctrl K</small><button onClick={() => void load()}>Refresh</button><button onClick={() => setShowSetup(!showSetup)}>Repository setup</button>
     <button disabled={daemonState !== "connected"} onClick={() => void stopDaemon()}>Stop daemon</button>
   </header>
     {daemonState !== "connected" && <p role="alert">{daemonState === "stopping" ? "Stopping daemon… Waiting for disconnection." : "Daemon disconnected. Saved knowledge and configuration remain on this Mac. Run aios daemon start, then aios daemon open to reconnect."}</p>}
     {status.projection_state === "no_active_generation" && <p>No repository checkout has been changed.</p>}
-    {(showSetup || status.projection_state === "no_active_generation") && <MirrorSetup request={request} onReady={load}/>}
+    {(showSetup || status.projection_state === "no_active_generation") && !indexing && <><NamespaceSettings request={request}/><MirrorSetup request={request} onBuild={()=>{setShowSetup(false);setIndexing(true)}}/></>}
+    {indexing && <IndexingCard request={request} onReady={async()=>{await load();setIndexing(false)}} onRetry={()=>{setIndexing(false);setShowSetup(true)}}/>}
     {status.projection_state === "unavailable" && <section><h2>Knowledge is safe</h2><p>Canonical source evidence remains intact</p><p>A derived projection is unavailable. Search will report its own available coverage.</p></section>}
     {notice && <p role="alert">{notice}</p>}{mapNotice && <p role="status">{mapNotice}</p>}
     {status.repositories.some(r => r.active) && <label>Active repository<select value={repo} onChange={e => void load(e.target.value)}>{status.repositories.filter(r => r.active).map(r => <option key={r.id} value={r.id}>{r.id}</option>)}</select></label>}

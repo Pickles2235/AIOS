@@ -3,6 +3,7 @@ package webui
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/AdamNi-7080/AIOS/internal/adapter"
 	"github.com/AdamNi-7080/AIOS/internal/app"
@@ -24,6 +25,7 @@ type Setup struct {
 	Completed         int                       `json:"completed_repositories"`
 	Repositories      []mirror.Repository       `json:"repositories,omitempty"`
 	Active            catalog.Config            `json:"active_catalog"`
+	Rules             map[string]ScopeRules     `json:"rules,omitempty"`
 }
 
 func (s *Server) readService() *knowledge.Service { s.mu.Lock(); defer s.mu.Unlock(); return s.read }
@@ -132,6 +134,7 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 			Mode              string                    `json:"mode,omitempty"`
 			LocalRepositories []adapter.LocalRepository `json:"local_repositories,omitempty"`
 			Repositories      []mirror.Repository       `json:"repositories"`
+			Rules             map[string]ScopeRules     `json:"rules,omitempty"`
 		}
 		if decode(r, &in) != nil {
 			fail(w, 400, "invalid setup request")
@@ -141,11 +144,19 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, "unsupported source mode")
 			return
 		}
+		if (in.Mode == "local" && len(in.Repositories) != 0) || (in.Mode != "local" && len(in.LocalRepositories) != 0) {
+			fail(w, 400, "Choose Direct OR Mirror; mixed source arrays are rejected.")
+			return
+		}
+		var approved catalog.Config
 		var validationErr error
 		if in.Mode == "local" {
-			_, validationErr = localSetupConfig(in.LocalRepositories, s.dataDir)
+			approved, validationErr = localSetupConfig(in.LocalRepositories, s.dataDir)
 		} else {
-			_, _, validationErr = setupConfig(in.Repositories)
+			approved, _, validationErr = setupConfig(in.Repositories)
+		}
+		if validationErr == nil {
+			validationErr = applyScope(&approved, in.Rules)
 		}
 		if err := validationErr; err != nil {
 			fail(w, 400, err.Error())
@@ -166,6 +177,7 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		s.setup.Mode = in.Mode
 		s.setup.LocalRepositories = in.LocalRepositories
 		s.setup.Repositories = in.Repositories
+		s.setup.Rules = in.Rules
 		s.setup.State = "configured"
 		s.setup.Error = ""
 		s.setup.Completed = 0
@@ -193,11 +205,15 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		if mode == "local" {
 			cfg, err = localSetupConfig(locals, s.dataDir)
 		}
+		if err == nil {
+			err = applyScope(&cfg, s.setup.Rules)
+		}
 		if err != nil {
 			fail(w, 400, err.Error())
 			return
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+		ctx = app.WithProgress(ctx, s.recordProgress)
 		s.jobCancel = cancel
 		s.setup.State = "syncing"
 		if mode == "local" {
@@ -238,7 +254,11 @@ func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Re
 		defer s.mu.Unlock()
 		if retErr != nil {
 			s.setup.State = "failed"
-			s.setup.Error = retErr.Error()
+			s.setup.Error = "Build failed; the last active knowledge remains available. Validate the sources and retry."
+			var gitErr *mirror.GitError
+			if errors.As(retErr, &gitErr) {
+				s.setup.Error = gitErr.Remediation()
+			}
 			if ctx.Err() != nil {
 				s.setup.State = "interrupted"
 				s.setup.Error = "Setup interrupted; retry preserves the last active generation."

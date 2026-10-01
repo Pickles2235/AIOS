@@ -38,7 +38,7 @@ corresponding tests is an acceptance regression.
 | Owner | Remaining required depth |
 | --- | --- |
 | 03 | Installed launchd login/headless and disconnect smoke on real Apple Silicon; runtime assets/toolchain absence. Portable runtime/plist probes are separate. |
-| 04 | Auth failure/remediation under actual daemon Git environment; collision suggestions and explicitly selected namespace; partial batch/staged build. |
+| 04 | Live scoped probes exercise verified-TLS helper success/failure, last-good catalog, collision/human selection, partial scope preview and real staging activity. Race regressions cover staged-query isolation, cancellation/resume and same-revision scope changes. Native launchd helper and real named-origin rename/recovery/restart run in verify_onboarding_native.py; retain actual CI evidence or explicitly defer native certification. |
 | 05 | Guarded: changed generations under durable retries, restart/wake/lost events, burst debounce/coalescing, capture races, projection faults, concurrent readers and per-repo isolation. |
 | 06 | Remove racing queued/in-flight jobs; inspect owned canonical/projection/history/cache/mirror deletion, preserve sources. |
 | 07 | Guarded: distinct prior package populated with nonempty IR; matching binary/state rollback at six FAULTS boundaries, actual killed-process crashes and next-start recovery, compatibility rejection before mutation. Native cleanup always runs. |

@@ -23,6 +23,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
+from completion_scenarios.auth_fixture import credential_remote
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = ROOT
@@ -110,11 +111,11 @@ class ProductScenarios(unittest.TestCase):
             self.check(False, 'CLI must return structured JSON')
 
     @contextmanager
-    def server(self, data=None):
+    def server(self, data=None, env=None):
         data = data or self.root / 'data'
         child = subprocess.Popen([str(self.binary), 'ui', 'serve', '--data-dir', str(data)],
                                  stderr=subprocess.PIPE, stdout=subprocess.DEVNULL,
-                                 stdin=subprocess.DEVNULL)
+                                 stdin=subprocess.DEVNULL, env=env)
         try:
             url = startup_url(child)
             self.check(url is not None, 'loopback backend startup')
@@ -259,6 +260,21 @@ class ProductScenarios(unittest.TestCase):
             result = api('/api/v1/namespace', {'namespace': 'generic-fixture'})
             self.check(result['namespace'] == 'generic-fixture' and result['persisted'], 'chosen namespace persists')
             self.check(result['local_only'] and result['port'], 'honest namespace port contract')
+            with self.server(self.root / 'second-data') as (other, _, _):
+                collision = other('/api/v1/namespace', {'namespace':'generic-fixture'}, expected=409)
+                self.check(collision['requires_selection'] and collision['suggestions'], 'human collision alternatives')
+                self.check(other('/api/v1/namespace')['namespace'] == '', 'collision saved no automatic rename')
+                choice = collision['suggestions'][0]
+                self.check(other('/api/v1/namespace', {'namespace':choice})['namespace'] == choice,
+                           'explicit alternative selected')
+            invalid = api('/api/v1/onboarding/preview', {'mode':'local','paths':[str(source),str(source/'absent')]})
+            self.check(not invalid['valid'] and invalid['repositories'][0]['valid'] and
+                       not invalid['repositories'][1]['valid'], 'actual partial batch preview')
+            self.check(api('/api/v1/onboarding')['state'] == 'unconfigured', 'preview never saves approval')
+            scoped = api('/api/v1/onboarding/preview', {'mode':'local','local_repositories':[{'id':'fixture','path':str(source)}],
+                         'rules':{'fixture':{'exclude':['src/client.ts']}}})
+            self.check(scoped['valid'] and scoped['repositories'][0]['exclusions']['catalog_pattern'] == 1,
+                       'actual include/exclude scope')
 
     def test_build_staging_activity(self):
         source = fixture(self.root, symbols=500)
@@ -269,15 +285,45 @@ class ProductScenarios(unittest.TestCase):
             self.check(any(e['stage'] == 'discovered' for e in events), 'actual discovered event')
             self.check(any(e['stage'] == 'staged' for e in events), 'actual staged event')
             self.check(any(e['stage'] == 'activated' for e in events), 'atomic promotion event')
-            self.check(state['active_catalog']['sources'][0]['id'] == 'fixture', 'active catalog after promotion')
+            self.check(all(e['queryable'] == (e['stage'] == 'activated') for e in events), 'staged events never claim queryability')
+            status = api('/api/v1/status')
+            self.check(status['active_catalog_revision'] and status['repositories'][0]['id'] == 'fixture', 'active catalog after promotion')
+
+    def test_git_helper_failure_keeps_mode_and_last_good(self):
+        source = fixture(self.root)
+        before = source_fingerprint(source)
+        with credential_remote(self.root/'external-machine-profile', source) as remote:
+            env = dict(os.environ, **remote['environment'])
+            with self.server(env=env) as (api, _, _):
+                body = {'mode':'mirror','repositories':[{'id':'fixture','url':remote['url'],'ref':'refs/heads/main'}]}
+                self.check(api('/api/v1/onboarding/preview',body)['valid'], 'actual TLS authenticated preview')
+                self.check(remote['marker'].is_file() and remote['successful'].is_set(), 'external helper actually supplied auth')
+                api('/api/v1/onboarding/configure',body)
+                api('/api/v1/onboarding/start',{},expected=202)
+                def wait(expected):
+                    deadline = time.monotonic()+60
+                    while time.monotonic()<deadline:
+                        state=api('/api/v1/onboarding')
+                        if state['state'] == expected: return state
+                        if state['state'] in ('failed','ready'): break
+                        time.sleep(.05)
+                    self.check(False,'bounded authenticated build outcome')
+                wait('ready')
+                active = api('/api/v1/status')['active_catalog_revision']
+                remote['accept'].clear()
+                api('/api/v1/onboarding/start',{},expected=202)
+                failed = wait('failed')
+                self.check(failed['mode'] == 'mirror' and 'Direct' in failed['error'], 'auth remediation preserves chosen mode')
+                self.check(remote['url'] not in failed['error'] and 'fixture-only-password' not in json.dumps(failed), 'sanitized auth diagnostics')
+                self.check(api('/api/v1/status')['active_catalog_revision'] == active, 'auth failure retains last good catalog')
+                self.check(api('/api/v1/query',{'repository':'fixture','text':'Worker'})['status'] == 'found', 'last good evidence remains queryable')
+        self.check(source_fingerprint(source) == before, 'authentication never modifies source')
 
     def test_native_git_namespace(self):
         self.native()
-        source = fixture(self.root)
-        env = self.cli('daemon', 'credentials', '--data-dir', self.root / 'data', '--json')
-        self.check(env['credential_helpers_enabled'] and env['login_context'], 'actual daemon Git auth environment')
-        namespace = self.cli('namespace', 'verify', '--name', 'generic-fixture', '--json')
-        self.check(namespace['resolved_loopback'] and namespace['http_origin_verified'], 'native addressing reaches secure origin')
+        from verify_onboarding_native import run
+        report = run(self.root/'native-onboarding.json',binary=self.binary,package=self.package())
+        self.check(report['passed'] and len(report['checks']) >= 9, 'actual installed login helper and named-origin outcomes')
 
     def test_dirty_untracked_capture(self):
         source = fixture(self.root)

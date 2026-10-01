@@ -64,6 +64,18 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 		if _, e = db.Discover(ctx, repo.ID, discovery.Revision, fingerprint); e != nil {
 			return out, e
 		}
+		// A batch may contain unchanged members. Keep those immutable inputs in
+		// the coherent catalog without selecting an already-completed revision.
+		// index still compares scoped files, so changed inclusion rules rebuild.
+		queues, e := db.IngestionStatus(ctx, repo.ID)
+		if e != nil {
+			return out, e
+		}
+		if len(queues) == 1 && queues[0].CurrentRevision == discovery.Revision && queues[0].PendingRevision == "" && queues[0].ManifestFingerprint == fingerprint && queues[0].State == "completed" {
+			selected[i].Root = discovery.Root
+			revisions[repo.ID] = model.GitState{Commit: discovery.Revision, Branch: "captured-local-commit"}
+			continue
+		}
 		q, e := db.SelectRevision(ctx, repo.ID, discovery.Revision, fingerprint)
 		if e != nil {
 			return out, e

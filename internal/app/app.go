@@ -51,6 +51,7 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 			}
 		}
 		allFiles := files
+		progress(ctx, Progress{Stage: "discovered", Repository: repo.ID, Files: len(allFiles)})
 		previous, previousErr := db.ActiveFiles(ctx, repo.ID)
 		changes := discover.Diff(previous, allFiles)
 		for _, change := range changes {
@@ -129,6 +130,7 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 		if err := db.StageInvalidations(ctx, generation.ID, changes); err != nil {
 			return result, fmt.Errorf("stage invalidations %s: %w", repo.ID, err)
 		}
+		progress(ctx, Progress{Stage: "staged", Repository: repo.ID, Generation: generation.ID, Files: len(allFiles)})
 		staged = append(staged, generation.ID)
 		result.Snapshots = append(result.Snapshots, snapshot)
 	}
@@ -157,6 +159,11 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 	}
 	if err := db.ActivateCatalog(ctx, staged); err != nil {
 		return result, fmt.Errorf("activate catalog: %w", err)
+	}
+	for _, id := range staged {
+		if g, e := db.GenerationByID(ctx, id); e == nil {
+			progress(ctx, Progress{Stage: "activated", Repository: g.RepoID, Generation: id})
+		}
 	}
 	// Vector indexing is optional derived work. Its failure must never retract a
 	// complete canonical activation; vector queries will report it unavailable.

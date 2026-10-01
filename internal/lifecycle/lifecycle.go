@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,6 +31,7 @@ type Options struct {
 	Root, DataDir, Binary, Label string
 	Managed                      bool
 	home                         string // injected only within this package's ownership tests
+	gitEnvironment               map[string]string
 }
 type Plan struct {
 	Scope        string `json:"scope"`
@@ -39,13 +41,18 @@ type Plan struct {
 	ServiceLabel string `json:"service_label"`
 }
 type State struct {
-	Running         bool   `json:"running"`
-	BrowserRequired bool   `json:"browser_required"`
-	InstanceID      string `json:"instance_id,omitempty"`
-	URL             string `json:"url,omitempty"`
-	PID             int    `json:"pid,omitempty"`
-	Restart         string `json:"restart"`
+	Running         bool            `json:"running"`
+	BrowserRequired bool            `json:"browser_required"`
+	InstanceID      string          `json:"instance_id,omitempty"`
+	URL             string          `json:"url,omitempty"`
+	PID             int             `json:"pid,omitempty"`
+	Credentials     map[string]bool `json:"credentials,omitempty"`
+	Restart         string          `json:"restart"`
 }
+
+// OpenMetadata verifies local authority before opening shared product metadata.
+// Callers additionally enforce their smaller format-specific size limit.
+func OpenMetadata(path string) (*os.File, error) { return openOwned(path) }
 
 func Defaults(o Options) (Options, error) {
 	home := o.home
@@ -95,6 +102,9 @@ func Defaults(o Options) (Options, error) {
 		}
 	}
 	o.Binary, err = filepath.Abs(o.Binary)
+	if installed, e := readInstallation(o.Root); e == nil {
+		o.gitEnvironment = installed.GitEnvironment
+	}
 	return o, err
 }
 
@@ -120,8 +130,39 @@ func MakePlan(o Options) (Plan, error) {
 	for _, v := range args {
 		a.WriteString("<string>" + escaped(v) + "</string>")
 	}
+	var gitEnv strings.Builder
+	keys := []string{}
+	for key := range o.gitEnvironment {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		gitEnv.WriteString("<key>" + escaped(key) + "</key><string>" + escaped(o.gitEnvironment[key]) + "</string>")
+	}
 	p := `<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>Label</key><string>` + escaped(o.Label) + `</string><key>ProgramArguments</key><array>` + a.String() + `</array><key>RunAtLoad</key><true/><key>KeepAlive</key><true/><key>ThrottleInterval</key><integer>10</integer><key>Umask</key><integer>63</integer><key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict><key>StandardOutPath</key><string>/dev/null</string><key>StandardErrorPath</key><string>/dev/null</string></dict></plist>`
+	// Environment pointers only; credentials and helper responses stay external.
+	p = strings.Replace(p, "</string></dict><key>StandardOutPath</key>", "</string>"+gitEnv.String()+"</dict><key>StandardOutPath</key>", 1)
 	return Plan{Scope: "user", RunAtLoad: true, Plist: p, PlistPath: filepath.Join(home, "Library", "LaunchAgents", o.Label+".plist"), ServiceLabel: o.Label}, nil
+}
+
+var gitPathKeys = map[string]bool{"GIT_CONFIG_GLOBAL": true, "GIT_SSL_CAINFO": true, "SSL_CERT_FILE": true}
+
+func validateGitEnvironment(values map[string]string) error {
+	for key, value := range values {
+		if !gitPathKeys[key] || len(value) > 4096 || !filepath.IsAbs(value) || filepath.Clean(value) != value || strings.ContainsAny(value, "\x00\n\r") {
+			return fmt.Errorf("Git environment permits only bounded external configuration paths")
+		}
+	}
+	return nil
+}
+func machineGitEnvironment() (map[string]string, error) {
+	values := map[string]string{}
+	for key := range gitPathKeys {
+		if value := os.Getenv(key); value != "" {
+			values[key] = value
+		}
+	}
+	return values, validateGitEnvironment(values)
 }
 
 func RequireNative() error {
@@ -382,7 +423,7 @@ func Control(o Options, action string) (State, error) {
 	if err != nil {
 		return State{}, err
 	}
-	if action != "status" && action != "open" {
+	if action != "status" && action != "open" && action != "credentials" {
 		return State{}, fmt.Errorf("invalid control action")
 	}
 	controlPath, err := ControlPath(o.DataDir)
@@ -487,6 +528,11 @@ func cleanupControl(data string) error {
 // ServeControl uses filesystem access as the local control authority. Capability
 // launch links travel only over this owner-only socket; never a public HTTP API.
 func ServeControl(ctx context.Context, o Options, status func() State, open func() string) error {
+	return ServeControlWithCredentials(ctx, o, status, open, nil)
+}
+
+// Credential diagnostics execute only for an explicit owner control request.
+func ServeControlWithCredentials(ctx context.Context, o Options, status func() State, open func() string, credentials func() map[string]bool) error {
 	o, err := Defaults(o)
 	if err != nil {
 		return err
@@ -544,7 +590,7 @@ func ServeControl(ctx context.Context, o Options, status func() State, open func
 			}
 			func() {
 				defer conn.Close()
-				_ = conn.SetDeadline(time.Now().Add(time.Second))
+				_ = conn.SetDeadline(time.Now().Add(4 * time.Second))
 				var in struct {
 					Action string `json:"action"`
 				}
@@ -563,6 +609,8 @@ func ServeControl(ctx context.Context, o Options, status func() State, open func
 				s := status()
 				if in.Action == "open" {
 					s.URL = open()
+				} else if in.Action == "credentials" && credentials != nil {
+					s.Credentials = credentials()
 				} else if in.Action != "status" {
 					return
 				}
