@@ -5,8 +5,9 @@ Extract the candidate ZIP and verify its adjacent SHA256 file with
 `shasum -a 256 -c aios-VERSION-darwin-arm64.zip.sha256`. No Go, Node, Python or JDK
 is needed to install or run. Required UI, structural extractors and local embedding
 assets are bundled. Git is required for repository sources. Semantic Java and
-TypeScript compilers are optional; the runtime screen reports detection separately
-from successfully covered source evidence. Unsupported extraction remains unknown.
+TypeScript compilers are optional. The authenticated `/api/v1/runtime` endpoint
+reports detection separately from successfully covered source evidence; a runtime
+settings screen is still pending. Unsupported extraction remains unknown.
 
 From the extracted directory run `./install.sh --package /absolute/candidate.zip
 --json`. Use your own login account, without sudo. The default owned installation
