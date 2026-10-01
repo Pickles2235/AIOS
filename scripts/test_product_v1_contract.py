@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ALLOWED_IMPLEMENTATION_VERSIONS = ("Nomic v1.5", "knowledge-ir-v9")
+ALLOWED_IMPLEMENTATION_VERSIONS = ("Nomic v1.5", "knowledge-ir-v9", "knowledge-ir-v10")
 
 
 class ProductV1ContractTest(unittest.TestCase):

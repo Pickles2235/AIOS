@@ -2,9 +2,15 @@ package app
 
 import (
 	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/AdamNi-7080/AIOS/internal/adapter"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
+	"github.com/AdamNi-7080/AIOS/internal/discover"
 	"github.com/AdamNi-7080/AIOS/internal/model"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
@@ -46,21 +52,29 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 	if err = db.ReplaceApprovedOwnership(ctx, repos); err != nil {
 		return out, err
 	}
-	fingerprint := adapter.LocalFingerprint(reg)
+	manifest, _ := json.Marshal(struct {
+		Config   catalog.Config
+		Registry adapter.LocalRegistry
+	}{cfg, reg})
+	manifestHash := sha256.Sum256(manifest)
+	fingerprint := hex.EncodeToString(manifestHash[:])
 	revisions := map[string]model.GitState{}
+	coverage := map[string]model.CoverageReport{}
+	selections := []store.ActivationSelection{}
 	pending := []selectedRevision{}
 	defer func() {
 		if retErr != nil {
 			for _, item := range pending {
-				_ = db.FailRevision(context.Background(), item.repositoryID, item.revision, item.fingerprint, retErr.Error())
+				_ = db.FailRevision(context.Background(), item.repositoryID, item.revision, item.fingerprint, "local_revision_failed")
 			}
 		}
 	}()
 	for i, repo := range selected {
-		discovery, e := adapter.CaptureLocal(ctx, byID[repo.ID], dataDir, cfg.Limits)
+		discovery, e := adapter.CaptureLocalScoped(ctx, byID[repo.ID], dataDir, cfg.Limits, repo)
 		if e != nil {
 			return out, e
 		}
+		coverage[repo.ID] = discovery.Coverage
 		if _, e = db.Discover(ctx, repo.ID, discovery.Revision, fingerprint); e != nil {
 			return out, e
 		}
@@ -73,10 +87,10 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 		}
 		if len(queues) == 1 && queues[0].CurrentRevision == discovery.Revision && queues[0].PendingRevision == "" && queues[0].ManifestFingerprint == fingerprint && queues[0].State == "completed" {
 			selected[i].Root = discovery.Root
-			revisions[repo.ID] = model.GitState{Commit: discovery.Revision, Branch: "captured-local-commit"}
+			revisions[repo.ID] = discovery.Git
 			continue
 		}
-		q, e := db.SelectRevision(ctx, repo.ID, discovery.Revision, fingerprint)
+		q, e := db.SelectRepairRevision(ctx, repo.ID, discovery.Revision, fingerprint)
 		if e != nil {
 			return out, e
 		}
@@ -84,27 +98,23 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 		if e = db.DiscardStagedRepository(ctx, repo.ID); e != nil {
 			return out, e
 		}
-		if _, e = db.RecordSourceDelta(ctx, repo.ID, q.CurrentRevision, discovery.Revision, fingerprint, "local_snapshot", nil); e != nil {
-			return out, e
-		}
-		selected[i].Root = discovery.Root
-		revisions[repo.ID] = model.GitState{Commit: discovery.Revision, Branch: "captured-local-commit"}
-	}
-	out, err = indexMirrorRepositories(ctx, cfg, selected, revisions, db, dataDir)
-	if err != nil {
-		return out, err
-	}
-	for _, item := range pending {
-		g, e := db.ActiveGeneration(ctx, item.repositoryID)
+		capturedRepo := repo
+		capturedRepo.Root = discovery.Root
+		files, e := discover.Files(capturedRepo, cfg.Limits)
 		if e != nil {
 			return out, e
 		}
-		if e = db.FinalizeDelta(ctx, item.repositoryID, item.revision, item.fingerprint, g.ID); e != nil {
+		previous, e := db.ActiveFiles(ctx, repo.ID)
+		if e != nil && !errors.Is(e, sql.ErrNoRows) {
 			return out, e
 		}
-		if e = db.CompleteRevision(ctx, item.repositoryID, item.revision, item.fingerprint); e != nil {
+		delta, e := db.RecordSourceDelta(ctx, repo.ID, q.CurrentRevision, discovery.Revision, fingerprint, "local_snapshot", discover.Diff(previous, files))
+		if e != nil {
 			return out, e
 		}
+		selections = append(selections, store.ActivationSelection{Repository: repo.ID, Revision: discovery.Revision, Fingerprint: fingerprint, Delta: delta})
+		selected[i].Root = discovery.Root
+		revisions[repo.ID] = discovery.Git
 	}
-	return out, nil
+	return indexMirrorRepositories(ctx, cfg, selected, revisions, db, dataDir, indexInputs{Coverage: coverage, Selections: selections})
 }

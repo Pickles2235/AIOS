@@ -149,7 +149,7 @@ func (s *Server) previewAPI(w http.ResponseWriter, r *http.Request) {
 		if in.Mode == "local" {
 			_, err = adapter.InspectLocal(ctx, in.Local[i], s.dataDir)
 			if err == nil {
-				snapshot, err = adapter.CaptureLocal(ctx, in.Local[i], temp, cfg.Limits)
+				snapshot, err = adapter.CaptureLocalScoped(ctx, in.Local[i], temp, cfg.Limits, source)
 			}
 		} else {
 			reg := mirror.Registry{Version: 1, Repositories: []mirror.Repository{in.Mirrors[i]}}
@@ -163,6 +163,7 @@ func (s *Server) previewAPI(w http.ResponseWriter, r *http.Request) {
 			files, coverage, e := discover.FilesWithCoverage(source, cfg.Limits)
 			err = e
 			if err == nil {
+				coverage.Entries = append(coverage.Entries, snapshot.Coverage.Entries...)
 				languages := map[string]bool{}
 				for _, f := range files {
 					if f.Language != "" {

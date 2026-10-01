@@ -1,6 +1,6 @@
 # Generations and storage
 
-The writer verifies the exact `knowledge-ir-v9` schema format, SQLite integrity,
+The writer verifies the exact `knowledge-ir-v10` schema format, SQLite integrity,
 and foreign keys. Knowledge IR is authoritative; every index and visualisation
 is a rebuildable projection. Indexing first stages source input and writes
 immutable repository revisions, locations, canonical entities, aliases, facts,
@@ -58,4 +58,6 @@ record rather than disappearing. A normal source delta rebuilds affected files
 and cross-identities; bootstrap, extractor-wide changes, and framework/contract
 configuration are explicit full-repository fallbacks.
 
-Readers open the database with SQLite read-only mode. A writer lock prevents concurrent ingestion writers. If ingestion fails, the queue retains its pending revision and failure diagnostic, while the active catalog remains unchanged; rerunning ingestion resumes with the same idempotency key. `status` and `kb.status` expose queue state, revisions, delta counts, and the bounded event audit trail. Older databases are intentionally unsupported: move aside only the agent-owned data directory and perform a clean V1 mirror reingestion. Repository inputs are never removed.
+Readers open the database with SQLite read-only mode. A writer lock prevents concurrent ingestion writers. If ingestion fails, the queue retains its pending revision and failure diagnostic, while the active catalog remains unchanged; maintained ingestion retries or supersedes the failed selection safely. `status` and `kb.status` expose queue state, revisions, delta counts, and the bounded event audit trail.
+
+The writer upgrades `knowledge-ir-v9` with a verified owner-only SQLite backup and an atomic transaction. The new format preserves distinct capture epochs when content reverts to earlier bytes; prior canonical observations remain intact. A failed migration retains the old format and last-good active generation. Backups remain in the owned data directory as `index.ir-9-backup-*.db`. Other historical derived formats require a clean IR reindex; repository inputs are never removed. This database migration alone does not certify a complete installed-package upgrade.

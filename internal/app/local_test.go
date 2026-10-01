@@ -67,8 +67,22 @@ func TestLocalIngestCitesCapturedCommitAndRetainsGenerationOnFailure(t *testing.
 		t.Fatalf("evidence: %#v %v", excerpt, err)
 	}
 	os.WriteFile(file, []byte("class Changed {}"), before.Mode().Perm())
-	if _, err = IngestLocal(context.Background(), cfg, reg, data, ""); err == nil {
-		t.Fatal("dirty ingest accepted")
+	dirty, err := IngestLocal(context.Background(), cfg, reg, data, "")
+	if err != nil || !dirty.Snapshots[0].Git.Dirty || dirty.Snapshots[0].Git.Commit != out.Snapshots[0].Git.Commit {
+		t.Fatalf("working-tree capture: %+v %v", dirty, err)
+	}
+	changed, err := reader.Query(context.Background(), knowledge.Query{Text: "Changed", Repository: "repo"})
+	if err != nil || changed.Status != "found" {
+		t.Fatalf("dirty evidence unavailable: %+v %v", changed, err)
+	}
+	status, err = reader.Status(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tooSmall := cfg
+	tooSmall.Limits.MaxFileBytes = 2
+	if _, err = IngestLocal(context.Background(), tooSmall, reg, data, ""); err == nil {
+		t.Fatal("oversized capture accepted")
 	}
 	after, err := reader.Status(context.Background())
 	if err != nil || after.ActiveCatalog != status.ActiveCatalog {
@@ -81,12 +95,17 @@ func TestLocalIngestCitesCapturedCommitAndRetainsGenerationOnFailure(t *testing.
 	}
 	git("add", ".")
 	git("-c", "user.name=t", "-c", "user.email=t@e", "commit", "-qm", "two")
-	if _, err = IngestLocal(context.Background(), cfg, reg, data, "repo"); err != nil {
+	metadataUpdate, err := IngestLocal(context.Background(), cfg, reg, data, "repo")
+	if err != nil {
 		t.Fatal(err)
 	}
 	after, err = reader.Status(context.Background())
-	if err != nil || after.ActiveCatalog == status.ActiveCatalog {
-		t.Fatal("committed local delta not activated")
+	if err != nil || after.ActiveCatalog == status.ActiveCatalog || len(metadataUpdate.Changes) != 0 || metadataUpdate.Snapshots[0].Git.Dirty {
+		t.Fatal("committed provenance was not refreshed with reused unchanged inputs")
+	}
+	queues, err := db.IngestionStatus(context.Background(), "repo")
+	if err != nil || len(queues) != 1 || queues[0].PendingRevision != "" || queues[0].State != "completed" {
+		t.Fatalf("committed source freshness not recorded: %+v %v", queues, err)
 	}
 }
 

@@ -349,7 +349,7 @@ func Uninstall(ctx context.Context, o Options, preserve bool) error {
 		return e
 	}
 	if !preserve {
-		return removeOwnedTree(ctx,o.Root)
+		return removeOwnedTree(ctx, o.Root)
 	}
 	if err = os.RemoveAll(filepath.Join(o.Root, "current")); err != nil {
 		return err

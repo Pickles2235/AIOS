@@ -101,6 +101,21 @@
         ]
       },
       {
+        "test": "test_mirror_retry_isolation_coalescing",
+        "requirements": ["R06", "R08"],
+        "milestones": ["05-maintained-repositories"]
+      },
+      {
+        "test": "test_direct_continuous_edits_and_projection_repair",
+        "requirements": ["R07", "R08"],
+        "milestones": ["05-maintained-repositories"]
+      },
+      {
+        "test": "test_healthy_bootstrap_with_unavailable_member",
+        "requirements": ["R06", "R08"],
+        "milestones": ["05-maintained-repositories"]
+      },
+      {
         "test": "test_remove_purge_rebuild",
         "requirements": [
           "R09",

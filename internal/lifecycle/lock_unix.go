@@ -43,6 +43,12 @@ func owned(info os.FileInfo) bool {
 	return ok && int(stat.Uid) == os.Geteuid()
 }
 func openOwned(path string) (*os.File, error) {
+	return openOwnedBounded(path, 65536)
+}
+func openOwnedBounded(path string, limit int64) (*os.File, error) {
+	if limit < 0 || limit > 1<<20 {
+		return nil, fmt.Errorf("invalid metadata bound")
+	}
 	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_CLOEXEC|syscall.O_NOFOLLOW, 0)
 	if err != nil {
 		return nil, err
@@ -53,7 +59,7 @@ func openOwned(path string) (*os.File, error) {
 		f.Close()
 		return nil, err
 	}
-	if !info.Mode().IsRegular() || !owned(info) || info.Mode().Perm() != 0600 || info.Size() > 65536 {
+	if !info.Mode().IsRegular() || !owned(info) || info.Mode().Perm() != 0600 || info.Size() > limit {
 		f.Close()
 		return nil, fmt.Errorf("metadata must be bounded, owned and owner-only")
 	}

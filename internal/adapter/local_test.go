@@ -51,13 +51,24 @@ func TestLocalSnapshotsArePinnedBoundedAndNonMutating(t *testing.T) {
 		t.Fatalf("snapshot reuse: %#v %v", again, err)
 	}
 	os.WriteFile(filepath.Join(source, "a.txt"), []byte("changed"), before.Mode().Perm())
-	if _, err = CaptureLocal(context.Background(), entry, data, catalog.Defaults()); err == nil {
-		t.Fatal("dirty files accepted")
+	dirty, err := CaptureLocal(context.Background(), entry, data, catalog.Defaults())
+	if err != nil || !dirty.Git.Dirty || dirty.Revision == first.Revision || dirty.Root == first.Root {
+		t.Fatalf("dirty capture/provenance: %+v %v", dirty, err)
+	}
+	dirtyBody, _ := os.ReadFile(filepath.Join(dirty.Root, "a.txt"))
+	oldBody, _ := os.ReadFile(filepath.Join(first.Root, "a.txt"))
+	if string(dirtyBody) != "changed" || string(oldBody) != "one" {
+		t.Fatal("dirty capture modified old immutable input")
 	}
 	os.WriteFile(filepath.Join(source, "a.txt"), []byte("one"), before.Mode().Perm())
 	os.WriteFile(filepath.Join(source, "untracked.txt"), []byte("private"), 0600)
-	if _, err = CaptureLocal(context.Background(), entry, data, catalog.Defaults()); err == nil {
-		t.Fatal("untracked files accepted")
+	untracked, err := CaptureLocal(context.Background(), entry, data, catalog.Defaults())
+	if err != nil || untracked.Git.UntrackedCount != 1 {
+		t.Fatalf("untracked capture: %+v %v", untracked, err)
+	}
+	untrackedBody, _ := os.ReadFile(filepath.Join(untracked.Root, "untracked.txt"))
+	if string(untrackedBody) != "private" {
+		t.Fatal("eligible untracked file missing")
 	}
 	b, _ := os.ReadFile(filepath.Join(source, "untracked.txt"))
 	if string(b) != "private" {

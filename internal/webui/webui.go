@@ -23,6 +23,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/knowledge"
 	"github.com/AdamNi-7080/AIOS/internal/localname"
+	"github.com/AdamNi-7080/AIOS/internal/maintenance"
 	"github.com/AdamNi-7080/AIOS/internal/semantic"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
@@ -47,6 +48,11 @@ type Server struct {
 	namespace                         string
 	namespaceError                    string
 	namespaceLease                    *localname.Lease
+	maintenanceMu                     sync.Mutex
+	maintainer                        *maintenance.Engine
+	maintenanceContext                context.Context
+	maintenanceError                  string
+	setupTransitionMu                 sync.Mutex
 }
 
 func token() string {
@@ -109,6 +115,7 @@ func (s *Server) FreshURL() string {
 	return origin + "/#token=" + s.capability
 }
 func (s *Server) Close() error {
+	s.stopMaintenance()
 	s.cancelJob()
 	s.namespaceMu.Lock()
 	s.mu.Lock()
@@ -171,6 +178,9 @@ func decode(r *http.Request, v any) error {
 }
 func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
+	case "/api/v1/jobs", "/api/v1/jobs/configure", "/api/v1/repositories", "/api/v1/repositories/check-now":
+		s.maintenanceAPI(w, r)
+		return
 	case "/api/v1/namespace", "/api/v1/namespace/open":
 		s.namespaceAPI(w, r)
 		return
@@ -382,6 +392,10 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (s *Server) Serve(ctx context.Context) error {
+	s.maintenanceMu.Lock()
+	s.maintenanceContext = ctx
+	s.maintenanceMu.Unlock()
+	s.startMaintenance()
 	sub, e := fs.Sub(assets, "dist")
 	if e != nil {
 		return e
@@ -412,7 +426,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		http.FileServer(http.FS(sub)).ServeHTTP(w, r.WithContext(ctx))
 	})
 	server := &http.Server{Handler: h}
-	go func() { <-ctx.Done(); s.cancelJob(); _ = server.Close() }()
+	go func() { <-ctx.Done(); _ = server.Close(); s.cancelJob(); s.stopMaintenance() }()
 	e = server.Serve(s.listener)
 	if e == http.ErrServerClosed {
 		return nil

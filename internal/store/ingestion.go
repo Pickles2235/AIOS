@@ -20,6 +20,17 @@ func (s *Store) Discover(ctx context.Context, repo, revision, fingerprint string
 // SelectRevision creates or resumes a single serialized repository job. The
 // caller must have already verified the revision against the approved mirror.
 func (s *Store) SelectRevision(ctx context.Context, repo, revision, fingerprint string) (IngestionQueueStatus, error) {
+	return s.selectRevision(ctx, repo, revision, fingerprint, false)
+}
+
+// SelectRepairRevision is reserved for the serialized maintained-repository
+// writer. Its exclusive writer lease proves an interrupted pending job has no
+// concurrent owner. Supersession is durable and never changes active knowledge.
+func (s *Store) SelectRepairRevision(ctx context.Context, repo, revision, fingerprint string) (IngestionQueueStatus, error) {
+	return s.selectRevision(ctx, repo, revision, fingerprint, true)
+}
+
+func (s *Store) selectRevision(ctx context.Context, repo, revision, fingerprint string, repair bool) (IngestionQueueStatus, error) {
 	if s.readOnly {
 		return IngestionQueueStatus{}, fmt.Errorf("store is read-only")
 	}
@@ -34,20 +45,32 @@ func (s *Store) SelectRevision(ctx context.Context, repo, revision, fingerprint 
 	var q IngestionQueueStatus
 	err = tx.QueryRowContext(ctx, `SELECT repository_id,current_revision,pending_revision,manifest_fingerprint,state,attempt,failure_diagnostic,selected_at,activated_at,completed_at FROM ingestion_queues WHERE repository_id=?`, repo).Scan(&q.RepositoryID, &q.CurrentRevision, &q.PendingRevision, &q.ManifestFingerprint, &q.State, &q.Attempt, &q.FailureDiagnostic, &q.SelectedAt, &q.ActivatedAt, &q.CompletedAt)
 	if err == nil {
-		if q.PendingRevision == revision && q.ManifestFingerprint == fingerprint {
+		if q.PendingRevision == revision && q.ManifestFingerprint == fingerprint && !repair {
 			return q, tx.Commit()
 		}
 		if q.PendingRevision != "" {
-			return q, fmt.Errorf("out-of-order revision for %s: pending %s", repo, q.PendingRevision)
+			if !repair {
+				return q, fmt.Errorf("out-of-order revision for %s: pending %s", repo, q.PendingRevision)
+			}
+			if q.PendingRevision != revision || q.ManifestFingerprint != fingerprint {
+				e := IngestionEvent{RepositoryID: repo, Type: "revision_superseded", SourceRevision: q.PendingRevision, TargetRevision: revision, ManifestFingerprint: fingerprint, Attempt: q.Attempt, Status: "superseded"}
+				if err = recordEventTx(ctx, tx, &e); err != nil {
+					return q, err
+				}
+			}
 		}
-		if q.CurrentRevision == revision {
+		if q.CurrentRevision == revision && !repair {
 			return q, fmt.Errorf("stale revision for %s: %s is already active", repo, revision)
 		}
 	} else if err != sql.ErrNoRows {
 		return q, err
 	}
-	var source string
-	_ = tx.QueryRowContext(ctx, `SELECT g.git_commit FROM active_generations a JOIN generations g ON g.generation_id=a.generation_id WHERE a.repo_id=?`, repo).Scan(&source)
+	source := q.CurrentRevision
+	if source == "" {
+		if e := tx.QueryRowContext(ctx, `SELECT g.git_commit FROM active_generations a JOIN generations g ON g.generation_id=a.generation_id WHERE a.repo_id=?`, repo).Scan(&source); e != nil && e != sql.ErrNoRows {
+			return q, e
+		}
+	}
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	attempt := 1
 	if q.RepositoryID != "" {
@@ -160,13 +183,20 @@ func (s *Store) CompleteRevision(ctx context.Context, repo, revision, fingerprin
 		return err
 	}
 	defer tx.Rollback()
+	if err = completeRevisionTx(ctx, tx, repo, revision, fingerprint); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func completeRevisionTx(ctx context.Context, tx *sql.Tx, repo, revision, fingerprint string) error {
 	var attempt int
 	var source string
-	if err = tx.QueryRowContext(ctx, `SELECT current_revision,attempt FROM ingestion_queues WHERE repository_id=? AND pending_revision=? AND manifest_fingerprint=?`, repo, revision, fingerprint).Scan(&source, &attempt); err != nil {
+	if err := tx.QueryRowContext(ctx, `SELECT current_revision,attempt FROM ingestion_queues WHERE repository_id=? AND pending_revision=? AND manifest_fingerprint=?`, repo, revision, fingerprint).Scan(&source, &attempt); err != nil {
 		return fmt.Errorf("complete revision: %w", err)
 	}
 	now := time.Now().UTC().Format(time.RFC3339Nano)
-	if _, err = tx.ExecContext(ctx, `UPDATE ingestion_queues SET current_revision=?,pending_revision='',state='completed',failure_diagnostic='',activated_at=?,completed_at=? WHERE repository_id=?`, revision, now, now, repo); err != nil {
+	if _, err := tx.ExecContext(ctx, `UPDATE ingestion_queues SET current_revision=?,pending_revision='',state='completed',failure_diagnostic='',activated_at=?,completed_at=? WHERE repository_id=?`, revision, now, now, repo); err != nil {
 		return err
 	}
 	for _, e := range []IngestionEvent{
@@ -174,11 +204,11 @@ func (s *Store) CompleteRevision(ctx context.Context, repo, revision, fingerprin
 		{RepositoryID: repo, Type: EventProjectionRequested, SourceRevision: source, TargetRevision: revision, ManifestFingerprint: fingerprint, Attempt: attempt, Status: "requested"},
 		{RepositoryID: repo, Type: EventProjectionCompleted, SourceRevision: source, TargetRevision: revision, ManifestFingerprint: fingerprint, Attempt: attempt, Status: "completed"},
 	} {
-		if err = recordEventTx(ctx, tx, &e); err != nil {
+		if err := recordEventTx(ctx, tx, &e); err != nil {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 // FailRevision is restart-safe: it retains the selected revision and records
@@ -214,7 +244,6 @@ func (s *Store) RecordSourceDelta(ctx context.Context, repo, source, target, fin
 	if s.readOnly {
 		return "", fmt.Errorf("store is read-only")
 	}
-	id := eventID(IngestionEvent{RepositoryID: repo, Type: EventSourceDeltaCalculated, SourceRevision: source, TargetRevision: target, ManifestFingerprint: fingerprint})
 	counts := map[string]int{}
 	for _, c := range changes {
 		counts[c.Kind]++
@@ -230,7 +259,19 @@ func (s *Store) RecordSourceDelta(ctx context.Context, repo, source, target, fin
 	}
 	defer tx.Rollback()
 	now := time.Now().UTC().Format(time.RFC3339Nano)
-	_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO ir_delta_records(delta_id,repository_id,source_generation_id,target_generation_id,source_revision,target_revision,manifest_fingerprint,created_at,activated_at,invalidation_scope,counts_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, id, repo, "", "", source, target, fingerprint, now, "", scope, encoded)
+	var sourceGeneration string
+	if e := tx.QueryRowContext(ctx, `SELECT generation_id FROM active_generations WHERE repo_id=?`, repo).Scan(&sourceGeneration); e != nil && e != sql.ErrNoRows {
+		return "", e
+	}
+	var attempt int
+	var selectedAt string
+	if e := tx.QueryRowContext(ctx, `SELECT attempt, selected_at FROM ingestion_queues WHERE repository_id=?`, repo).Scan(&attempt, &selectedAt); e != nil && e != sql.ErrNoRows {
+		return "", e
+	}
+	// A content revision may be revisited after a different canonical epoch.
+	// Keep each selected attempt's evidence separate and immutable.
+	id := eventID(IngestionEvent{RepositoryID: repo, Type: EventSourceDeltaCalculated, SourceRevision: source + "\x00" + sourceGeneration + "\x00" + selectedAt, TargetRevision: target, ManifestFingerprint: fingerprint, Attempt: attempt})
+	_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO ir_delta_records(delta_id,repository_id,source_generation_id,target_generation_id,source_revision,target_revision,manifest_fingerprint,created_at,activated_at,invalidation_scope,counts_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, id, repo, sourceGeneration, "", source, target, fingerprint, now, "", scope, encoded)
 	if err != nil {
 		return "", err
 	}
@@ -239,7 +280,7 @@ func (s *Store) RecordSourceDelta(ctx context.Context, repo, source, target, fin
 			return "", err
 		}
 	}
-	e := IngestionEvent{RepositoryID: repo, Type: EventSourceDeltaCalculated, SourceRevision: source, TargetRevision: target, ManifestFingerprint: fingerprint, Status: "calculated"}
+	e := IngestionEvent{RepositoryID: repo, Type: EventSourceDeltaCalculated, SourceRevision: source, TargetRevision: target, ManifestFingerprint: fingerprint, Attempt: attempt, Status: "calculated"}
 	if err = recordEventTx(ctx, tx, &e); err != nil {
 		return "", err
 	}
@@ -254,6 +295,16 @@ func (s *Store) RecordSourceDelta(ctx context.Context, repo, source, target, fin
 // activated by the catalog writer. A fact absent only because its source file
 // was deleted is retained canonically and marked inactive with its reason.
 func (s *Store) FinalizeDelta(ctx context.Context, repo, target, fingerprint, generation string) error {
+	return s.finalizeDelta(ctx, "WHERE repository_id=? AND target_revision=? AND manifest_fingerprint=? ORDER BY rowid DESC LIMIT 1", []any{repo, target, fingerprint}, generation)
+}
+
+// FinalizeRecordedDelta binds maintained jobs to the exact recorded source
+// epoch, including repeated visits to the same working revision.
+func (s *Store) FinalizeRecordedDelta(ctx context.Context, delta, generation string) error {
+	return s.finalizeDelta(ctx, "WHERE delta_id=?", []any{delta}, generation)
+}
+
+func (s *Store) finalizeDelta(ctx context.Context, where string, args []any, generation string) error {
 	if s.readOnly {
 		return fmt.Errorf("store is read-only")
 	}
@@ -262,25 +313,92 @@ func (s *Store) FinalizeDelta(ctx context.Context, repo, target, fingerprint, ge
 		return err
 	}
 	defer tx.Rollback()
-	var delta, source string
-	if err = tx.QueryRowContext(ctx, `SELECT delta_id,source_revision FROM ir_delta_records WHERE repository_id=? AND target_revision=? AND manifest_fingerprint=?`, repo, target, fingerprint).Scan(&delta, &source); err != nil {
+	if err = finalizeDeltaTx(ctx, tx, where, args, generation); err != nil {
 		return err
+	}
+	return tx.Commit()
+}
+
+func finalizeDeltaTx(ctx context.Context, tx *sql.Tx, where string, args []any, generation string) error {
+	var delta, source, repository, priorTarget, priorActivation string
+	if err := tx.QueryRowContext(ctx, `SELECT delta_id,source_generation_id,repository_id,target_generation_id,activated_at FROM ir_delta_records `+where, args...).Scan(&delta, &source, &repository, &priorTarget, &priorActivation); err != nil {
+		return err
+	}
+	var generationRepository string
+	if err := tx.QueryRowContext(ctx, `SELECT repo_id FROM generations WHERE generation_id=?`, generation).Scan(&generationRepository); err != nil {
+		return err
+	}
+	if generationRepository != repository {
+		return fmt.Errorf("delta generation belongs to another repository")
+	}
+	if priorActivation != "" {
+		if priorTarget != generation {
+			return fmt.Errorf("activated delta is immutable")
+		}
+		return nil
 	}
 	now := time.Now().UTC().Format(time.RFC3339Nano)
-	if _, err = tx.ExecContext(ctx, `UPDATE ir_delta_records SET target_generation_id=?,activated_at=? WHERE delta_id=?`, generation, now, delta); err != nil {
+	if _, err := tx.ExecContext(ctx, `UPDATE ir_delta_records SET target_generation_id=?,activated_at=? WHERE delta_id=? AND activated_at=''`, generation, now, delta); err != nil {
 		return err
 	}
-	if _, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO ir_fact_lifecycle(fact_id,generation_id,state,reason,delta_id) SELECT DISTINCT fact_id,?,'active','observed',? FROM ir_fact_observations WHERE revision_id=?`, generation, delta, generation); err != nil {
+	if _, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO ir_fact_lifecycle(fact_id,generation_id,state,reason,delta_id) SELECT DISTINCT fact_id,?,'active','observed',? FROM ir_fact_observations WHERE revision_id=?`, generation, delta, generation); err != nil {
 		return err
 	}
 	if source != "" {
-		if _, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO ir_fact_lifecycle(fact_id,generation_id,state,reason,delta_id)
+		if _, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO ir_fact_lifecycle(fact_id,generation_id,state,reason,delta_id)
  SELECT DISTINCT o.fact_id,?,'inactive','source_deleted',? FROM ir_fact_observations o JOIN evidence e ON e.evidence_id=o.evidence_id
  JOIN ir_delta_changes d ON d.delta_id=? AND d.change_kind='removed' AND d.canonical_id=e.path
- WHERE o.revision_id=(SELECT generation_id FROM generations WHERE repo_id=? AND git_commit=? ORDER BY activated_at DESC LIMIT 1)
- AND NOT EXISTS (SELECT 1 FROM ir_fact_observations n WHERE n.revision_id=? AND n.fact_id=o.fact_id)`, generation, delta, delta, repo, source, generation); err != nil {
+	 WHERE o.revision_id=?
+	 AND NOT EXISTS (SELECT 1 FROM ir_fact_observations n WHERE n.revision_id=? AND n.fact_id=o.fact_id)`, generation, delta, delta, source, generation); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+type ActivationSelection struct{ Repository, Revision, Fingerprint, Delta string }
+
+func completeSelectionsTx(ctx context.Context, tx *sql.Tx, selections []ActivationSelection) error {
+	for _, selection := range selections {
+		var generation string
+		if err := tx.QueryRowContext(ctx, `SELECT generation_id FROM active_generations WHERE repo_id=?`, selection.Repository).Scan(&generation); err != nil {
+			return err
+		}
+		where, args := "WHERE delta_id=?", []any{selection.Delta}
+		if selection.Delta == "" {
+			where = "WHERE repository_id=? AND target_revision=? AND manifest_fingerprint=? ORDER BY rowid DESC LIMIT 1"
+			args = []any{selection.Repository, selection.Revision, selection.Fingerprint}
+		}
+		var repo, target, fingerprint string
+		if err := tx.QueryRowContext(ctx, `SELECT repository_id,target_revision,manifest_fingerprint FROM ir_delta_records `+where, args...).Scan(&repo, &target, &fingerprint); err != nil {
+			return err
+		}
+		if repo != selection.Repository || target != selection.Revision || fingerprint != selection.Fingerprint {
+			return fmt.Errorf("activation selection does not match recorded delta")
+		}
+		if err := finalizeDeltaTx(ctx, tx, where, args, generation); err != nil {
+			return err
+		}
+		if err := completeRevisionTx(ctx, tx, repo, target, fingerprint); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CompleteUnchangedSelections commits queue/delta freshness together while
+// retaining the canonical catalog when validated input is entirely unchanged.
+func (s *Store) CompleteUnchangedSelections(ctx context.Context, selections []ActivationSelection) error {
+	if s.readOnly {
+		return fmt.Errorf("store is read-only")
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if err = completeSelectionsTx(ctx, tx, selections); err != nil {
+		return err
 	}
 	return tx.Commit()
 }

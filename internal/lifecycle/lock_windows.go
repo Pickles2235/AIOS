@@ -10,3 +10,6 @@ func Lock(data string) (*os.File, error) {
 }
 func owned(info os.FileInfo) bool             { return false }
 func openOwned(path string) (*os.File, error) { return nil, fmt.Errorf("unsupported daemon platform") }
+func openOwnedBounded(path string, limit int64) (*os.File, error) {
+	return nil, fmt.Errorf("unsupported daemon platform")
+}

@@ -27,6 +27,24 @@ func Files(repo model.Repository, limits model.Limits) ([]model.File, error) {
 	return files, err
 }
 
+// PathExclusionReason applies discovery's path policy before Direct capture
+// opens a source file, including excluded ancestors.
+func PathExclusionReason(repo model.Repository, path string) string {
+	if alwaysBlocked(path) {
+		return "built_in_policy"
+	}
+	parts := strings.Split(path, "/")
+	for i := range parts {
+		if matchesAny(repo.Exclude, strings.Join(parts[:i+1], "/")) {
+			return "catalog_pattern"
+		}
+	}
+	if len(repo.Include) > 0 && !matchesAny(repo.Include, path) {
+		return "not_included"
+	}
+	return ""
+}
+
 // FilesWithReport returns bounded reason counts for excluded catalogue entries.
 // Counts describe encountered filesystem entries; an excluded directory is one
 // entry and its unread descendants are intentionally not traversed.

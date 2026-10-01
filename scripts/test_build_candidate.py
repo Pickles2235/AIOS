@@ -23,7 +23,7 @@ class CandidatePackageTests(unittest.TestCase):
                 manifest_name = next(n for n in bundle.namelist() if n.endswith('/manifest.json'))
                 manifest = json.loads(bundle.read(manifest_name))
                 self.assertEqual(manifest['source_commit'], 'a' * 40)
-                self.assertEqual(manifest['knowledge_ir_format'], 'knowledge-ir-v9')
+                self.assertEqual(manifest['knowledge_ir_format'], 'knowledge-ir-v10')
                 self.assertEqual(set(manifest['sha256']), set(bundle.namelist()) - {manifest_name})
                 for name, digest in manifest['sha256'].items():
                     self.assertEqual(hashlib.sha256(bundle.read(name)).hexdigest(), digest)

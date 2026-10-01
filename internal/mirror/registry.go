@@ -195,6 +195,23 @@ func git(ctx context.Context, dir string, args ...string) (string, error) {
 	return output.String(), nil
 }
 
+// ReadOnlyGit inspects a local source without optional Git writes or prompts.
+// Its process group and inherited pipes obey the same deadline as remote Git.
+func ReadOnlyGit(ctx context.Context, root string, args ...string) (string, error) {
+	base := []string{"--no-pager", "--no-optional-locks", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "credential.helper=", "-c", "diff.external=", "-C", root}
+	cmd := exec.CommandContext(ctx, "git", append(base, args...)...)
+	cmd.Env = append(CredentialEnvironment(), "GIT_OPTIONAL_LOCKS=0", "GIT_NO_LAZY_FETCH=1")
+	boundGitProcess(cmd)
+	var out boundedGitOutput
+	cmd.Stdout = &out
+	err := cmd.Run()
+	cleanupGitProcess(cmd)
+	if err != nil || out.overflow {
+		return "", fmt.Errorf("local Git read failed or exceeded output bound")
+	}
+	return out.String(), nil
+}
+
 // Configuration/helpers are the user's trusted machine setup. No credential
 // response or raw stderr is persisted or returned through the product API.
 func CredentialEnvironment() []string {

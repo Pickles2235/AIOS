@@ -57,6 +57,12 @@ type State struct {
 // Callers additionally enforce their smaller format-specific size limit.
 func OpenMetadata(path string) (*os.File, error) { return openOwned(path) }
 
+// OpenBoundedMetadata keeps the same owner/no-follow authority while permitting
+// explicitly bounded multi-repository journals larger than single controls.
+func OpenBoundedMetadata(path string, limit int64) (*os.File, error) {
+	return openOwnedBounded(path, limit)
+}
+
 func Defaults(o Options) (Options, error) {
 	home := o.home
 	var err error

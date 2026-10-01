@@ -16,6 +16,8 @@ type Discovery struct {
 	Revision string
 	Root     string
 	Changes  []model.FileChange
+	Git      model.GitState
+	Coverage model.CoverageReport
 }
 
 // SourceAdapter discovers a fixed approved revision. Extraction remains in

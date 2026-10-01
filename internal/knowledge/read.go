@@ -95,19 +95,20 @@ type Projection struct {
 	AppliedLimits map[string]int `json:"applied_limits"`
 }
 type Excerpt struct {
-	GitCommit  string   `json:"git_commit"`
-	SHA256     string   `json:"sha256"`
-	Evidence   string   `json:"evidence"`
-	Source     string   `json:"source"`
-	Repository string   `json:"repository"`
-	Path       string   `json:"path"`
-	Revision   string   `json:"revision"`
-	Generation string   `json:"generation"`
-	Span       Span     `json:"span"`
-	Lines      []string `json:"lines"`
-	StartLine  int      `json:"start_line"`
-	EndLine    int      `json:"end_line"`
-	Truncated  bool     `json:"truncated"`
+	GitCommit   string   `json:"git_commit"`
+	WorkingTree bool     `json:"working_tree"`
+	SHA256      string   `json:"sha256"`
+	Evidence    string   `json:"evidence"`
+	Source      string   `json:"source"`
+	Repository  string   `json:"repository"`
+	Path        string   `json:"path"`
+	Revision    string   `json:"revision"`
+	Generation  string   `json:"generation"`
+	Span        Span     `json:"span"`
+	Lines       []string `json:"lines"`
+	StartLine   int      `json:"start_line"`
+	EndLine     int      `json:"end_line"`
+	Truncated   bool     `json:"truncated"`
 }
 type Query struct {
 	Text              string  `json:"text"`
@@ -360,11 +361,13 @@ func (s *Service) Excerpt(ctx context.Context, evidence string, before, after, m
 		return Excerpt{}, fmt.Errorf("invalid source bounds")
 	}
 	var content, sid string
+	var untracked int
 	var x Excerpt
-	e = s.db.QueryRowCanonical(ctx, "SELECT f.content,f.source_id,v.repo_id,v.path,v.file_sha256,v.generation_id,g.git_commit,v.start_byte,v.end_byte,v.start_line,v.start_column,v.end_line,v.end_column FROM evidence v JOIN source_files f ON f.source_id=v.source_id JOIN generations g ON g.generation_id=v.generation_id WHERE v.generation_id=? AND v.evidence_id=?", h.Generation, h.ID).Scan(&content, &sid, &x.Repository, &x.Path, &x.Revision, &x.Generation, &x.GitCommit, &x.Span.StartByte, &x.Span.EndByte, &x.Span.StartLine, &x.Span.StartColumn, &x.Span.EndLine, &x.Span.EndColumn)
+	e = s.db.QueryRowCanonical(ctx, "SELECT f.content,f.source_id,v.repo_id,v.path,v.file_sha256,v.generation_id,g.git_commit,g.dirty,g.untracked_count,v.start_byte,v.end_byte,v.start_line,v.start_column,v.end_line,v.end_column FROM evidence v JOIN source_files f ON f.source_id=v.source_id JOIN generations g ON g.generation_id=v.generation_id WHERE v.generation_id=? AND v.evidence_id=?", h.Generation, h.ID).Scan(&content, &sid, &x.Repository, &x.Path, &x.Revision, &x.Generation, &x.GitCommit, &x.WorkingTree, &untracked, &x.Span.StartByte, &x.Span.EndByte, &x.Span.StartLine, &x.Span.StartColumn, &x.Span.EndLine, &x.Span.EndColumn)
 	if e != nil {
 		return x, fmt.Errorf("handle is stale or unknown")
 	}
+	x.WorkingTree = x.WorkingTree || untracked > 0
 	all := strings.Split(content, "\n")
 	start := maxInt(1, x.Span.StartLine-before)
 	end := minInt(len(all), x.Span.EndLine+after)

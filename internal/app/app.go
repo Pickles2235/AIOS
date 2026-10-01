@@ -3,6 +3,8 @@ package app
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	cachepkg "github.com/AdamNi-7080/AIOS/internal/cache"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
@@ -15,23 +17,38 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 )
 
 type IndexResult struct {
-	Database   string                    `json:"database"`
-	Snapshots  []model.Snapshot          `json:"snapshots"`
-	Changes    map[string]int            `json:"changes,omitempty"`
-	Exclusions map[string]map[string]int `json:"exclusions,omitempty"`
+	Database          string                    `json:"database"`
+	Snapshots         []model.Snapshot          `json:"snapshots"`
+	Changes           map[string]int            `json:"changes,omitempty"`
+	Exclusions        map[string]map[string]int `json:"exclusions,omitempty"`
+	ActiveGenerations map[string]string         `json:"active_generations,omitempty"`
 }
 
-func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fixedGit map[string]model.GitState, db *store.Store, dataDir string) (IndexResult, error) {
+type indexInputs struct {
+	Coverage   map[string]model.CoverageReport
+	Selections []store.ActivationSelection
+}
+
+func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fixedGit map[string]model.GitState, db *store.Store, dataDir string, inputs ...indexInputs) (IndexResult, error) {
+	options := indexInputs{}
+	if len(inputs) > 0 {
+		options = inputs[0]
+	}
+	activeBindings := map[string]string{}
 	result := IndexResult{Database: db.Path(), Changes: map[string]int{}, Exclusions: map[string]map[string]int{}}
 	staged := make([]string, 0, len(repos))
 	changedCatalog := false
 	changedRepositories := []string{}
 	for _, repo := range repos {
+		if err := ctx.Err(); err != nil {
+			return result, err
+		}
 		before, fixed := fixedGit[repo.ID]
 		var err error
 		if !fixed {
@@ -44,6 +61,7 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 		if err != nil {
 			return result, fmt.Errorf("discover %s: %w", repo.ID, err)
 		}
+		coverage.Entries = append(coverage.Entries, options.Coverage[repo.ID].Entries...)
 		result.Exclusions[repo.ID] = map[string]int{}
 		for _, entry := range coverage.Entries {
 			if entry.Outcome != "included" {
@@ -53,6 +71,9 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 		allFiles := files
 		progress(ctx, Progress{Stage: "discovered", Repository: repo.ID, Files: len(allFiles)})
 		previous, previousErr := db.ActiveFiles(ctx, repo.ID)
+		if previousErr != nil && !errors.Is(previousErr, sql.ErrNoRows) {
+			return result, previousErr
+		}
 		changes := discover.Diff(previous, allFiles)
 		for _, change := range changes {
 			result.Changes[change.Kind]++
@@ -62,12 +83,21 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 			bytes += file.Size
 		}
 		snapshot := model.Snapshot{RepoID: repo.ID, Source: model.SourceIdentity{ID: repo.ID, Kind: model.SourceKindRepository, AdapterVersion: model.RepositoryAdapterVersion}, Root: repo.Root, Git: before, ContentHash: store.ContentSnapshot(allFiles), FileCount: len(allFiles), TotalBytes: bytes, IndexedAt: time.Now().UTC(), ExtractorVersions: model.ExtractorVersion}
-		if previousErr == nil && len(changes) == 0 {
+		var previousMetadata model.Snapshot
+		var previousCoverage model.CoverageReport
+		if previousErr == nil {
+			previousMetadata, previousCoverage, err = db.ActiveInputMetadata(ctx, repo.ID)
+			if err != nil {
+				return result, err
+			}
+		}
+		if previousErr == nil && len(changes) == 0 && previousMetadata.Root == repo.Root && previousMetadata.Git == before && previousMetadata.ExtractorVersions == snapshot.ExtractorVersions && sameCoverage(previousCoverage, coverage) {
 			generation, activeErr := db.ActiveGeneration(ctx, repo.ID)
 			if activeErr != nil {
 				return result, fmt.Errorf("read active generation %s: %w", repo.ID, activeErr)
 			}
 			staged = append(staged, generation.ID)
+			activeBindings[repo.ID] = generation.ID
 			result.Snapshots = append(result.Snapshots, snapshot)
 			continue
 		}
@@ -94,6 +124,9 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 			files = selectAffected(allFiles, affected)
 		}
 		for _, file := range files {
+			if err := ctx.Err(); err != nil {
+				return result, err
+			}
 			s, e, parseErr := extract.Parse(file)
 			if parseErr != nil {
 				return result, fmt.Errorf("extract %s/%s: %w", repo.ID, file.Path, parseErr)
@@ -119,6 +152,15 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 			}
 		}
 		diagnostics := make([]model.CompilerDiagnostic, 0, len(compiled.Diagnostics))
+		parsed := map[string]bool{}
+		for _, f := range files {
+			parsed[f.Path] = true
+		}
+		for _, d := range previousMetadata.CompilerDiagnostics {
+			if !parsed[d.Path] {
+				diagnostics = append(diagnostics, d)
+			}
+		}
 		for _, d := range compiled.Diagnostics {
 			diagnostics = append(diagnostics, model.CompilerDiagnostic{Language: d.Language, Code: d.Code, Message: d.Message, Path: d.Path})
 		}
@@ -132,9 +174,16 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 		}
 		progress(ctx, Progress{Stage: "staged", Repository: repo.ID, Generation: generation.ID, Files: len(allFiles)})
 		staged = append(staged, generation.ID)
+		activeBindings[repo.ID] = generation.ID
 		result.Snapshots = append(result.Snapshots, snapshot)
 	}
 	if !changedCatalog {
+		if len(options.Selections) > 0 {
+			if err := db.CompleteUnchangedSelections(ctx, options.Selections); err != nil {
+				return result, err
+			}
+		}
+		result.ActiveGenerations = activeBindings
 		return result, nil
 	}
 	// A repository-scoped ingestion still activates a coherent catalog. Reuse
@@ -157,9 +206,10 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 		}
 		staged = append(staged, g.ID)
 	}
-	if err := db.ActivateCatalog(ctx, staged); err != nil {
+	if err := db.ActivateCatalogWithSelections(ctx, staged, options.Selections); err != nil {
 		return result, fmt.Errorf("activate catalog: %w", err)
 	}
+	result.ActiveGenerations = activeBindings
 	for _, id := range staged {
 		if g, e := db.GenerationByID(ctx, id); e == nil {
 			progress(ctx, Progress{Stage: "activated", Repository: g.RepoID, Generation: id})
@@ -180,14 +230,25 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 	return result, nil
 }
 
+func sameCoverage(a, b model.CoverageReport) bool {
+	left, right := append([]model.CoverageEntry(nil), a.Entries...), append([]model.CoverageEntry(nil), b.Entries...)
+	key := func(e model.CoverageEntry) string {
+		return strings.Join([]string{e.Path, e.Language, e.Classification, e.Outcome, e.Reason, e.Capability, e.Diagnostic}, "\x00")
+	}
+	order := func(a, b model.CoverageEntry) int { return strings.Compare(key(a), key(b)) }
+	slices.SortFunc(left, order)
+	slices.SortFunc(right, order)
+	return slices.Equal(left, right)
+}
+
 // IndexRepository compiles exactly one immutable agent-owned source root while
 // retaining all other active catalog members at activation time.
 func IndexRepository(ctx context.Context, cfg catalog.Config, repo model.Repository, db *store.Store, dataDir string) (IndexResult, error) {
 	return index(ctx, cfg, []model.Repository{repo}, nil, db, dataDir)
 }
 
-func indexMirrorRepositories(ctx context.Context, cfg catalog.Config, repositories []model.Repository, revisions map[string]model.GitState, db *store.Store, dataDir string) (IndexResult, error) {
-	return index(ctx, cfg, repositories, revisions, db, dataDir)
+func indexMirrorRepositories(ctx context.Context, cfg catalog.Config, repositories []model.Repository, revisions map[string]model.GitState, db *store.Store, dataDir string, inputs ...indexInputs) (IndexResult, error) {
+	return index(ctx, cfg, repositories, revisions, db, dataDir, inputs...)
 }
 
 func selectAffected(files []model.File, affected map[string]bool) []model.File {

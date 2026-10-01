@@ -1,9 +1,9 @@
 CREATE TABLE schema_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-INSERT INTO schema_metadata(key,value) VALUES ('format','knowledge-ir-v9');
+INSERT INTO schema_metadata(key,value) VALUES ('format','knowledge-ir-v10');
 -- These immutable records are the authority.  FTS and graph tables below are
 -- explicitly projections and must carry a matching projection_build record.
 CREATE TABLE ir_repositories (repository_id TEXT PRIMARY KEY, created_at TEXT NOT NULL);
-CREATE TABLE ir_source_revisions (revision_id TEXT PRIMARY KEY, repository_id TEXT NOT NULL REFERENCES ir_repositories(repository_id), source_kind TEXT NOT NULL, source_adapter_version TEXT NOT NULL, git_commit TEXT NOT NULL, content_hash TEXT NOT NULL, extractor_versions TEXT NOT NULL, indexed_at TEXT NOT NULL, UNIQUE(repository_id,content_hash,extractor_versions));
+CREATE TABLE ir_source_revisions (revision_id TEXT PRIMARY KEY, repository_id TEXT NOT NULL REFERENCES ir_repositories(repository_id), source_kind TEXT NOT NULL, source_adapter_version TEXT NOT NULL, git_commit TEXT NOT NULL, content_hash TEXT NOT NULL, extractor_versions TEXT NOT NULL, indexed_at TEXT NOT NULL);
 CREATE TABLE ir_locations (location_id TEXT PRIMARY KEY, revision_id TEXT NOT NULL REFERENCES ir_source_revisions(revision_id), source_id TEXT NOT NULL, path TEXT NOT NULL, file_sha256 TEXT NOT NULL, start_byte INTEGER NOT NULL, end_byte INTEGER NOT NULL, start_line INTEGER NOT NULL, start_column INTEGER NOT NULL, end_line INTEGER NOT NULL, end_column INTEGER NOT NULL, CHECK(start_byte >= 0 AND end_byte >= start_byte));
 CREATE TABLE ir_entities (canonical_entity_id TEXT PRIMARY KEY, repository_id TEXT NOT NULL REFERENCES ir_repositories(repository_id), kind TEXT NOT NULL, normalized_identity TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE(repository_id,kind,normalized_identity));
 CREATE TABLE ir_entity_aliases (canonical_entity_id TEXT NOT NULL REFERENCES ir_entities(canonical_entity_id), alias TEXT NOT NULL, normalization TEXT NOT NULL, location_id TEXT NOT NULL REFERENCES ir_locations(location_id), PRIMARY KEY(canonical_entity_id,alias,normalization,location_id));

@@ -5,10 +5,62 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/AdamNi-7080/AIOS/internal/model"
 	"sort"
 	"strings"
 	"time"
 )
+
+// ActiveInputMetadata lets ingestion compare canonical coverage/provenance
+// even when source bytes are unchanged. It never reads a source workspace.
+func (s *Store) ActiveInputMetadata(ctx context.Context, repo string) (model.Snapshot, model.CoverageReport, error) {
+	snapshots, err := s.Status(ctx, repo)
+	if err != nil {
+		return model.Snapshot{}, model.CoverageReport{}, err
+	}
+	if len(snapshots) != 1 {
+		return model.Snapshot{}, model.CoverageReport{}, sql.ErrNoRows
+	}
+	snapshot := snapshots[0]
+	rows, err := s.db.QueryContext(ctx, `SELECT e.path,e.language,e.classification,e.outcome,e.reason,e.capability,e.diagnostic FROM coverage_entries e JOIN coverage_runs c ON c.coverage_id=e.coverage_id JOIN active_generations a ON a.generation_id=c.generation_id WHERE a.repo_id=? ORDER BY e.path,e.outcome,e.reason`, repo)
+	if err != nil {
+		return snapshot, model.CoverageReport{}, err
+	}
+	report := model.CoverageReport{}
+	for rows.Next() {
+		var entry model.CoverageEntry
+		if err = rows.Scan(&entry.Path, &entry.Language, &entry.Classification, &entry.Outcome, &entry.Reason, &entry.Capability, &entry.Diagnostic); err != nil {
+			rows.Close()
+			return snapshot, report, err
+		}
+		report.Entries = append(report.Entries, entry)
+		if len(report.Entries) > 100000 {
+			rows.Close()
+			return snapshot, report, fmt.Errorf("canonical coverage exceeds maintenance bound")
+		}
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil {
+		return snapshot, report, err
+	}
+	rows, err = s.db.QueryContext(ctx, `SELECT language,code,message,path FROM compiler_diagnostics d JOIN active_generations a ON a.generation_id=d.generation_id WHERE a.repo_id=?`, repo)
+	if err != nil {
+		return snapshot, report, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var d model.CompilerDiagnostic
+		if err = rows.Scan(&d.Language, &d.Code, &d.Message, &d.Path); err != nil {
+			return snapshot, report, err
+		}
+		snapshot.CompilerDiagnostics = append(snapshot.CompilerDiagnostics, d)
+		if len(snapshot.CompilerDiagnostics) > 20000 {
+			return snapshot, report, fmt.Errorf("canonical diagnostics exceed maintenance bound")
+		}
+	}
+	return snapshot, report, rows.Err()
+}
 
 // CoverageBasis is a bounded, source-content-free explanation of whether an
 // absence assertion is safe for a particular canonical capability.

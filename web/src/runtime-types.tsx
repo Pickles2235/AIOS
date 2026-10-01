@@ -3,7 +3,7 @@ export type Entity = {handle: string; kind: string; label: string; identity: str
 export type Claim = {handle: string; subject: string; object: string; predicate: string; evidence: string; confidence: number; derivation: string};
 export type Projection = {repository: string; generation: string; nodes: Entity[]; edges: Claim[]; truncated: boolean; next_cursor?: string; applied_limits?: Record<string, number>};
 export type Status = {projection_state: string; repositories: {id: string; generation: string; revision: string; active: boolean}[]};
-export type Excerpt = {path: string; repository: string; generation: string; git_commit: string; sha256: string; start_line: number; end_line: number; lines: string[]; truncated: boolean};
+export type Excerpt = {path: string; repository: string; generation: string; git_commit: string; working_tree?:boolean; sha256: string; start_line: number; end_line: number; lines: string[]; truncated: boolean};
 export type QueryResult = {status: string; entities: Entity[]; trace: {kind: string; detail: string}[]; truncated: boolean; applied_limits?: Record<string, number>; coverage?: {complete: boolean; generations: string[]; repositories: string[]; exclusions?: string[]; uncertainty?: string[]}};
 export function queryNotice(result: QueryResult) {
   const kinds = new Set(result.trace.map(t => t.kind));

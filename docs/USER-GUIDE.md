@@ -40,12 +40,23 @@ the artifact and its source; do not disable Gatekeeper globally. Signing and a
 menu-bar application are outside this first candidate's prerequisites.
 
 Choose exactly one source mode in Repository setup: Mirror creates owned mirrors;
-Direct captures clean committed local workspaces without modifying them. Preview a
+Direct captures current local working trees, including tracked edits and eligible
+untracked files, without modifying them. Git ignore rules and approved scope
+patterns are applied before source bytes are copied. Preview a
 batch of 1–100 sources and adjust include/exclude patterns before Build. Language
 and framework-manifest discovery describe scope; they do not certify compiler or
 dependency availability. Build enters the main UI immediately. Discovery and staged
 generations are progress only; validated catalog promotion makes evidence queryable.
 A failed or cancelled build keeps the last good active knowledge.
+
+After Build, Direct watches approximately one second of quiet edits with a
+five-second maximum delay. Periodic reconciliation repairs missed events. Mirror
+checks every 15 minutes by default. Expand Repository health to change the Mirror
+interval or Check now for one repository. The panel reports actual last success,
+active revision, next check and stale warnings. Failed checks retry with bounded
+exponential backoff; healthy repositories continue independently. Restart restores
+the owned durable queue and checks for missed changes. Native sleep/wake evidence
+remains part of final candidate validation.
 
 Git uses your machine's external configuration and credential helpers without
 terminal/password prompts. AgentOS does not store helper responses or tokens.
@@ -83,6 +94,6 @@ milestones. Until those pass, this package is an engineering candidate, not a
 candidate-ready release. Do not replace binaries/state manually to simulate an update.
 
 Manifest `disk_schema: 1` describes the installation layout/metadata only. The
-canonical database is `knowledge-ir-v9`; `compatible_from` is a declaration, not
+canonical database is `knowledge-ir-v10`; `compatible_from` is a declaration, not
 proof of a supported upgrade until the upgrade milestone passes. Complete
 transitive dependency/native helper attribution is required before final packaging.

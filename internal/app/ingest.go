@@ -36,12 +36,13 @@ func IngestMirrorCatalog(ctx context.Context, configPath, registryPath, dataDir 
 	}
 	fingerprint := mirror.Fingerprint(registry)
 	selected := make([]selectedRevision, 0, len(repositories))
+	selections := []store.ActivationSelection{}
 	defer func() {
 		if retErr == nil {
 			return
 		}
 		for _, item := range selected {
-			_ = db.FailRevision(ctx, item.repositoryID, item.revision, item.fingerprint, retErr.Error())
+			_ = db.FailRevision(context.Background(), item.repositoryID, item.revision, item.fingerprint, "mirror_revision_failed")
 		}
 	}()
 	adapterSource := adapter.RepositoryGit{Registry: registry, DataDir: dataDir}
@@ -73,29 +74,15 @@ func IngestMirrorCatalog(ctx context.Context, configPath, registryPath, dataDir 
 			return IndexResult{}, e
 		}
 		scope := ingestrules.DecideRebuildScope(queue.CurrentRevision == "", false, changes)
-		if _, e = db.RecordSourceDelta(ctx, repositoryID, queue.CurrentRevision, revision, fingerprint, scope.Kind, changes); e != nil {
+		delta, e := db.RecordSourceDelta(ctx, repositoryID, queue.CurrentRevision, revision, fingerprint, scope.Kind, changes)
+		if e != nil {
 			return IndexResult{}, e
 		}
+		selections = append(selections, store.ActivationSelection{Repository: repositoryID, Revision: revision, Fingerprint: fingerprint, Delta: delta})
 		repositories[i].Root = discovery.Root
 		revisions[repositoryID] = model.GitState{Commit: revision, Branch: entry.Ref}
 	}
-	out, err = indexMirrorRepositories(ctx, cfg, repositories, revisions, db, dataDir)
-	if err != nil {
-		return out, err
-	}
-	for _, item := range selected {
-		generation, e := db.ActiveGeneration(ctx, item.repositoryID)
-		if e != nil {
-			return out, e
-		}
-		if e = db.FinalizeDelta(ctx, item.repositoryID, item.revision, item.fingerprint, generation.ID); e != nil {
-			return out, e
-		}
-		if e = db.CompleteRevision(ctx, item.repositoryID, item.revision, item.fingerprint); e != nil {
-			return out, e
-		}
-	}
-	return out, nil
+	return indexMirrorRepositories(ctx, cfg, repositories, revisions, db, dataDir, indexInputs{Selections: selections})
 }
 
 func loadMirrorInputs(configPath, registryPath string) (catalog.Config, mirror.Registry, []model.Repository, error) {
@@ -178,7 +165,7 @@ func IngestMirrorRevision(ctx context.Context, configPath, registryPath, dataDir
 	selected := true
 	defer func() {
 		if selected && retErr != nil {
-			_ = db.FailRevision(ctx, repositoryID, revision, fingerprint, retErr.Error())
+			_ = db.FailRevision(context.Background(), repositoryID, revision, fingerprint, "mirror_revision_failed")
 		}
 	}()
 	if err = db.DiscardStagedRepository(ctx, repositoryID); err != nil {
@@ -193,24 +180,11 @@ func IngestMirrorRevision(ctx context.Context, configPath, registryPath, dataDir
 		return IndexResult{}, err
 	}
 	scope := ingestrules.DecideRebuildScope(q.CurrentRevision == "", false, changes)
-	if _, err = db.RecordSourceDelta(ctx, repositoryID, q.CurrentRevision, revision, fingerprint, scope.Kind, changes); err != nil {
+	delta, err := db.RecordSourceDelta(ctx, repositoryID, q.CurrentRevision, revision, fingerprint, scope.Kind, changes)
+	if err != nil {
 		return IndexResult{}, err
 	}
 	repo := repositories[*configured]
 	repo.Root = discovery.Root
-	out, err = indexMirrorRepositories(ctx, cfg, []model.Repository{repo}, map[string]model.GitState{repositoryID: {Commit: revision, Branch: mr.Ref}}, db, dataDir)
-	if err != nil {
-		return out, err
-	}
-	g, err := db.ActiveGeneration(ctx, repositoryID)
-	if err != nil {
-		return out, err
-	}
-	if err = db.FinalizeDelta(ctx, repositoryID, revision, fingerprint, g.ID); err != nil {
-		return out, err
-	}
-	if err = db.CompleteRevision(ctx, repositoryID, revision, fingerprint); err != nil {
-		return out, err
-	}
-	return out, nil
+	return indexMirrorRepositories(ctx, cfg, []model.Repository{repo}, map[string]model.GitState{repositoryID: {Commit: revision, Branch: mr.Ref}}, db, dataDir, indexInputs{Selections: []store.ActivationSelection{{Repository: repositoryID, Revision: revision, Fingerprint: fingerprint, Delta: delta}}})
 }

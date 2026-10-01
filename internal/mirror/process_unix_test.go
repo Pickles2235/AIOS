@@ -68,3 +68,18 @@ func TestExitedGitWithInheritedPipeIsBounded(t *testing.T) {
 		t.Fatal("exited parent left pipe wait unbounded", err)
 	}
 }
+
+func TestReadOnlyLocalGitCancelsPipeHoldingDescendant(t *testing.T) {
+	root := t.TempDir()
+	wrapper := filepath.Join(root, "git")
+	if err := os.WriteFile(wrapper, []byte("#!/bin/sh\nsleep 120 &\nwait\n"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
+	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+	defer cancel()
+	start := time.Now()
+	if _, err := ReadOnlyGit(ctx, root, "status"); err == nil || time.Since(start) > 2*time.Second {
+		t.Fatal("local Git descendant defeated cancellation", err)
+	}
+}

@@ -26,6 +26,7 @@ type Setup struct {
 	Repositories      []mirror.Repository       `json:"repositories,omitempty"`
 	Active            catalog.Config            `json:"active_catalog"`
 	Rules             map[string]ScopeRules     `json:"rules,omitempty"`
+	ActiveMode        string                    `json:"active_mode,omitempty"`
 }
 
 func (s *Server) readService() *knowledge.Service { s.mu.Lock(); defer s.mu.Unlock(); return s.read }
@@ -78,6 +79,9 @@ func (s *Server) restoreSetup(cfg catalog.Config) error {
 			if err = s.persistSetup(); err != nil {
 				return err
 			}
+		}
+		if s.setup.ActiveMode == "" && s.setup.State == "ready" {
+			s.setup.ActiveMode = s.setup.Mode
 		}
 		if len(s.setup.Active.Sources) > 0 {
 			s.read = knowledge.New(s.setup.Active, s.db)
@@ -162,6 +166,9 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, err.Error())
 			return
 		}
+		s.setupTransitionMu.Lock()
+		defer s.setupTransitionMu.Unlock()
+		s.stopMaintenance()
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		if s.jobCancel != nil {
@@ -193,6 +200,9 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, "invalid setup request")
 			return
 		}
+		s.setupTransitionMu.Lock()
+		defer s.setupTransitionMu.Unlock()
+		s.stopMaintenance()
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		if s.jobCancel != nil {
@@ -251,7 +261,6 @@ func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Re
 	var retErr error
 	defer func() {
 		s.mu.Lock()
-		defer s.mu.Unlock()
 		if retErr != nil {
 			s.setup.State = "failed"
 			s.setup.Error = "Build failed; the last active knowledge remains available. Validate the sources and retry."
@@ -266,6 +275,7 @@ func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Re
 		} else {
 			s.setup.State = "ready"
 			s.setup.Active = cfg
+			s.setup.ActiveMode = s.setup.Mode
 			s.read = knowledge.New(cfg, s.db)
 		}
 		if s.jobCancel != nil {
@@ -275,6 +285,8 @@ func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Re
 		if err := s.persistSetup(); err != nil {
 			s.setup.Error = "Unable to persist setup status; inspect owned data permissions."
 		}
+		s.mu.Unlock()
+		s.startMaintenance()
 	}()
 	if len(local) > 0 && len(local[0]) > 0 {
 		_, retErr = app.IngestLocal(ctx, cfg, adapter.LocalRegistry{Version: 1, Repositories: local[0]}, s.dataDir, "")

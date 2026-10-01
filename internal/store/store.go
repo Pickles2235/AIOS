@@ -23,7 +23,7 @@ import (
 )
 
 const DatabaseName = "index.db"
-const format = "knowledge-ir-v9"
+const format = "knowledge-ir-v10"
 
 //go:embed schema.sql
 var schema string
@@ -264,16 +264,29 @@ func OpenWriter(dataDir string) (*Store, error) {
 		return nil, err
 	}
 	if exists {
+		if err = prepareDatabaseFile(path); err == nil {
+			err = enforceDatabasePermissions(path)
+		}
+		if err != nil {
+			lock.close()
+			return nil, err
+		}
 		db, openErr := sql.Open("sqlite", path)
 		if openErr == nil {
-			openErr = verifyFormat(context.Background(), db)
+			db.SetMaxOpenConns(1)
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			openErr = upgradeMaintainedFormat(ctx, db, path)
+			cancel()
 		}
 		if openErr != nil {
 			if db != nil {
 				_ = db.Close()
 			}
 			lock.close()
-			return nil, fmt.Errorf("existing derived database requires a clean IR reindex: rerun index with --reset-derived-data")
+			if errors.Is(openErr, errUnsupportedCanonicalFormat) {
+				return nil, fmt.Errorf("existing derived database requires a clean IR reindex: rerun index with --reset-derived-data")
+			}
+			return nil, fmt.Errorf("unable to open or safely upgrade canonical knowledge: %w", openErr)
 		}
 		db.SetMaxOpenConns(1)
 		if _, openErr = db.Exec(`PRAGMA foreign_keys=ON`); openErr != nil {
@@ -543,6 +556,12 @@ func (s *Store) ActivateGeneration(ctx context.Context, id string) error {
 // ActivateCatalog makes a complete staged repository set visible in one
 // transaction. Callers must have staged every repository they intend to query.
 func (s *Store) ActivateCatalog(ctx context.Context, ids []string) error {
+	return s.ActivateCatalogWithSelections(ctx, ids, nil)
+}
+
+// ActivateCatalogWithSelections commits canonical knowledge, projections and
+// selected ingestion identities in one transaction, including crash recovery.
+func (s *Store) ActivateCatalogWithSelections(ctx context.Context, ids []string, selections []ActivationSelection) error {
 	if s.readOnly {
 		return fmt.Errorf("store is read-only")
 	}
@@ -654,6 +673,9 @@ func (s *Store) ActivateCatalog(ctx context.Context, ids []string) error {
 		return err
 	}
 	if err = invalidateNegativeEvidenceTx(ctx, tx); err != nil {
+		return err
+	}
+	if err = completeSelectionsTx(ctx, tx, selections); err != nil {
 		return err
 	}
 	return tx.Commit()

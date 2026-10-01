@@ -3,6 +3,7 @@ module github.com/AdamNi-7080/AIOS
 go 1.25.0
 
 require (
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/tree-sitter-grammars/tree-sitter-kotlin v1.1.0
 	github.com/tree-sitter/go-tree-sitter v0.25.0

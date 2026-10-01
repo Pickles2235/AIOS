@@ -3,6 +3,7 @@ import {createRoot} from "react-dom/client";
 import "./style.css";
 import {MirrorSetup, IndexingCard, type Setup} from "./mirror-setup";
 import {NamespaceSettings} from "./namespace-settings";
+import {Maintenance} from "./maintenance";
 import {InstanceBrand, type Instance} from "./instance-brand";
 import {KnowledgeCloud} from "./knowledge-cloud";
 import {Spotlight} from "./spotlight";
@@ -97,6 +98,7 @@ function App() {
     {indexing && <IndexingCard request={request} onReady={async()=>{await load();setIndexing(false)}} onRetry={()=>{setIndexing(false);setShowSetup(true)}}/>}
     {status.projection_state === "unavailable" && <section><h2>Knowledge is safe</h2><p>Canonical source evidence remains intact</p><p>A derived projection is unavailable. Search will report its own available coverage.</p></section>}
     {notice && <p role="alert">{notice}</p>}{mapNotice && <p role="status">{mapNotice}</p>}
+    {daemonState === "connected" && !indexing && <Maintenance request={request} onChanged={()=>void load()}/>}
     {status.repositories.some(r => r.active) && <label>Active repository<select value={repo} onChange={e => void load(e.target.value)}>{status.repositories.filter(r => r.active).map(r => <option key={r.id} value={r.id}>{r.id}</option>)}</select></label>}
     <form onSubmit={search}><label>Query<input value={query} onChange={e => setQuery(e.target.value)}/></label><button disabled={busy}>{busy ? "Searching…" : "Search"}</button></form>
     <QueryFeedback result={result}/>{result?.entities.length ? <ul aria-label="Query results">{result.entities.map(entity => <li key={entity.handle}><button onClick={() => void inspect(entity)}>{entity.label} · {entity.path}</button></li>)}</ul> : null}
@@ -107,7 +109,7 @@ function App() {
       <h2>Relationships</h2><ul>{projection.edges.map(edge => <li key={edge.handle}>{edge.predicate} · {edge.confidence.toFixed(2)} · {edge.derivation}</li>)}</ul></section>
     </>}</div><aside aria-label="Evidence inspector"><h2>{selected?.label || "Select an entity"}</h2>
       {selected && <p>{selected.repository}/{selected.path} · generation {selected.generation} · lines {selected.span.start_line}–{selected.span.end_line}</p>}
-      {evidence && <><p>Captured commit: {evidence.git_commit} · SHA256: {evidence.sha256}</p><p>Excerpt generation {evidence.generation} · lines {evidence.start_line}–{evidence.end_line}{evidence.truncated ? " · bounded excerpt" : ""}</p><pre>{evidence.lines.join("\n")}</pre></>}
+      {evidence && <><p>{evidence.working_tree?"Working-tree snapshot · Git HEAD:":"Captured commit:"} {evidence.git_commit} · SHA256: {evidence.sha256}</p><p>Excerpt generation {evidence.generation} · lines {evidence.start_line}–{evidence.end_line}{evidence.truncated ? " · bounded excerpt" : ""}</p><pre>{evidence.lines.join("\n")}</pre></>}
     </aside></div>
     <Spotlight open={spotlight} close={() => setSpotlight(false)} search={queryRequest} select={inspect}/>
   </main>;

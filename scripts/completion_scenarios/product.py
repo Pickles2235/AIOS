@@ -5,7 +5,9 @@ implementation milestone expands its probes with adjacent fault/race tests;
 final acceptance also requires installed native/manual evidence and review.
 """
 from contextlib import contextmanager
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
+from datetime import datetime
 import io
 import http.cookiejar
 import json
@@ -15,6 +17,7 @@ import platform
 import plistlib
 import selectors
 import shutil
+import sqlite3
 import subprocess
 import tempfile
 import time
@@ -31,6 +34,9 @@ FAULTS = ('stage_binary', 'stage_state', 'migration', 'activation', 'health', 'c
 PLANTED = ('alice.private@example.invalid', 'sk-test-PLANTED_SECRET_936',
            '/Users/planted-private/source', 'https://planted-private.invalid/repo',
            'PLANTED_QUERY_TEXT_936', 'PLANTED_SOURCE_TEXT_936')
+
+def time_from_json(value):
+    return datetime.fromisoformat(value.replace('Z', '+00:00')).timestamp()
 
 
 def source_fingerprint(root):
@@ -182,8 +188,10 @@ class ProductScenarios(unittest.TestCase):
         return self.cli('install', '--package', package, '--root', root,
                         '--service-label', label, '--json')
 
-    def configure(self, api, source, mode='local'):
+    def configure(self, api, source, mode='local', rules=None):
         body = {'mode': mode}
+        if rules is not None:
+            body['rules'] = rules
         if mode == 'local':
             body['local_repositories'] = [{'id': 'fixture', 'path': str(source)}]
         else:
@@ -331,31 +339,216 @@ class ProductScenarios(unittest.TestCase):
         (source / 'src/New.java').write_text('class NewWorker {}\n')
         (source / 'ignored').mkdir()
         (source / 'ignored/Secret.java').write_text('class IgnoreWorker {}\n')
+        (source / 'excluded.dat').write_bytes(bytes(2 << 20))
+        (source / 'excluded.link').symlink_to(self.root / 'never-open')
         before = source_fingerprint(source)
         with self.server() as (api, data, origin):
-            self.configure(api, source)
+            self.configure(api, source, rules={'fixture':{'exclude':['excluded.*']}})
             found = api('/api/v1/query', {'repository': 'fixture', 'text': 'DirtyWorker'})
             self.check(found['status'] == 'found', 'tracked dirty evidence captured')
+            excerpt=api('/api/v1/evidence',{'evidence':found['entities'][0]['evidence'],'before':0,'after':0,'max_lines':10})
+            self.check(excerpt['working_tree'] and 'DirtyWorker' in '\n'.join(excerpt['lines']),
+                       'canonical dirty evidence discloses working-tree provenance')
             found = api('/api/v1/query', {'repository': 'fixture', 'text': 'NewWorker'})
             self.check(found['status'] == 'found', 'eligible untracked evidence captured')
             found = api('/api/v1/query', {'repository': 'fixture', 'text': 'IgnoreWorker'})
             self.check(found['status'] != 'found', 'ignored untracked excluded')
+            self.wait_job(api, 'fixture', lambda j: bool(j['active_generation']))
             self.check(api('/api/v1/repositories')['repositories'][0]['provenance'] == 'working_tree',
                        'working-tree provenance disclosed')
         self.check(source_fingerprint(source) == before, 'dirty capture never writes source')
+
+    def wait_job(self, api, repository, predicate, timeout=30):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            for job in api('/api/v1/jobs')['jobs']:
+                if job['repository'] == repository and predicate(job):
+                    return job
+            time.sleep(.1)
+        self.check(False, 'bounded actual maintained repository outcome')
 
     def test_durable_scheduler_recovery(self):
         source = fixture(self.root)
         with self.server() as (api, data, origin):
             self.configure(api, source)
+            first = self.wait_job(api, 'fixture', lambda j: j['state'] == 'idle' and bool(j['active_generation']))
+            identity = api('/api/v1/instance')['id']
             jobs = api('/api/v1/jobs')
             self.check(jobs['mirror_interval_seconds'] == 900, '15-minute default scheduling')
             self.check(jobs['durable'] and jobs['retry_max_attempts'] > 0, 'durable bounded retry policy')
             api('/api/v1/repositories/check-now', {'repository': 'fixture'}, expected=202)
-            self.check(api('/api/v1/jobs')['coalescing'], 'jobs coalesce')
+            self.wait_job(api, 'fixture', lambda j: j['state'] == 'idle' and j['runs'] > first['runs'])
+            self.check(api('/api/v1/jobs')['coalescing'] and jobs['queue_capacity'] == 100
+                       and jobs['worker_capacity'] == 1, 'bounded coalescing policy')
+            initial_catalog = api('/api/v1/status')['active_catalog_revision']
+            (source / 'src/Worker.java').write_text('class WatchedWorker {}\n')
+            before = source_fingerprint(source)
+            watched = self.wait_job(api, 'fixture', lambda j: j['active_generation'] != first['active_generation'] and j['state'] == 'idle')
+            self.check(watched['reason'] == 'workspace_edit' and watched['changed_files'] == 1,
+                       'actual OS watch activates one-file delta')
+            self.check(api('/api/v1/status')['active_catalog_revision'] != initial_catalog,
+                       'watched canonical generation changes')
+            self.check(api('/api/v1/query', {'repository': 'fixture', 'text': 'WatchedWorker'})['status'] == 'found',
+                       'real changed evidence queryable')
+            self.check(source_fingerprint(source) == before, 'watch indexing never writes source')
+        # No watcher is running for this edit. Actual process restart must repair it.
+        (source / 'src/Worker.java').write_text('class RestartWorker {}\n')
+        before = source_fingerprint(source)
         with self.server(data) as (api, data, origin):
             self.check(api('/api/v1/jobs')['restored'], 'scheduler state restored after real restart')
-        self.check(False, 'PENDING task05: observe changed generations, retry exhaustion, coalescing and per-repo isolation under injected faults')
+            repaired = self.wait_job(api, 'fixture', lambda j: j['active_generation'] != watched['active_generation'] and j['state'] == 'idle')
+            self.check(repaired['reason'] == 'restart_reconcile' and repaired['changed_files'] == 1,
+                       'real restart repairs missed edits with actual delta')
+            self.check(api('/api/v1/instance')['id'] == identity, 'restart preserves identity')
+            self.check(api('/api/v1/query', {'repository': 'fixture', 'text': 'RestartWorker'})['status'] == 'found',
+                       'restart repair produces actual searchable evidence')
+        self.check(source_fingerprint(source) == before, 'restart indexing never writes source')
+
+    def test_direct_continuous_edits_and_projection_repair(self):
+        source=fixture(self.root)
+        with self.server() as (api,data,origin):
+            self.configure(api,source)
+            first=self.wait_job(api,'fixture',lambda j:j['state']=='idle' and bool(j['active_generation']))
+            api('/api/v1/jobs/configure',expected=405)
+            api('/api/v1/repositories/check-now',{'repository':'fixture'},expected=403,authenticated=False)
+            api('/api/v1/repositories/check-now',{'repository':'unapproved'},expected=409)
+            wall_begin=time.time();begin=time.monotonic();observed=False;iteration=0
+            # Continuously edit faster than the production one-second quiet period.
+            while time.monotonic()-begin<6.5:
+                (source/'src/Worker.java').write_text(f'class ContinuousWorker{iteration} {{}}\n')
+                iteration+=1
+                job=next(j for j in api('/api/v1/jobs')['jobs'] if j['repository']=='fixture')
+                if job['runs']>first['runs']:
+                    if not observed:
+                        self.check(time_from_json(job['last_attempt'])-wall_begin<=6,
+                                   'actual continuous edits have bounded five-second maximum debounce')
+                    observed=True
+                time.sleep(.15)
+            self.check(observed,'actual capture starts under continuous edits')
+            (source/'src/Worker.java').write_text('class StableWatchedWorker {}\n')
+            before=source_fingerprint(source)
+            deadline=time.monotonic()+30
+            while time.monotonic()<deadline:
+                found=api('/api/v1/query',{'repository':'fixture','text':'StableWatchedWorker'})
+                if found['status']=='found':break
+                time.sleep(.1)
+            self.check(found['status']=='found','continuous edits settle into actual stable searchable evidence')
+            stable=self.wait_job(api,'fixture',lambda j:j['state']=='idle')
+            self.check(source_fingerprint(source)==before,'continuous capture does not modify source')
+            catalog=api('/api/v1/status')['active_catalog_revision']
+            # Inject a real owned projection transaction failure, not a response mock.
+            with sqlite3.connect(data/'index.db') as db:
+                db.execute("CREATE TRIGGER fixture_projection_fault BEFORE INSERT ON projection_builds WHEN NEW.projection_kind='graph' BEGIN SELECT RAISE(ABORT,'fixture projection fault'); END")
+            try:
+                (source/'src/Worker.java').write_text('class RepairedProjectionWorker {}\n')
+                before=source_fingerprint(source)
+                failed=self.wait_job(api,'fixture',lambda j:j['state']=='retry_wait')
+                self.check(failed['active_generation']==stable['active_generation'] and failed['stale'],
+                           'failed staged projection retains last-good maintained generation')
+                self.check(api('/api/v1/status')['active_catalog_revision']==catalog,
+                           'projection fault rolls back complete catalog activation')
+                self.check(api('/api/v1/query',{'repository':'fixture','text':'StableWatchedWorker'})['status']=='found',
+                           'concurrent reads serve prior knowledge during failed repair')
+                self.check(api('/api/v1/query',{'repository':'fixture','text':'RepairedProjectionWorker'})['status']!='found',
+                           'staged projection never leaks into queries')
+            finally:
+                with sqlite3.connect(data/'index.db') as db:db.execute('DROP TRIGGER fixture_projection_fault')
+            api('/api/v1/repositories/check-now',{'repository':'fixture'},expected=202)
+            repaired=self.wait_job(api,'fixture',lambda j:j['state']=='idle' and j['active_generation']!=stable['active_generation'])
+            self.check(not repaired.get('error') and repaired['changed_files']==1,
+                       'actual failed revision repairs with one-file delta')
+            self.check(api('/api/v1/query',{'repository':'fixture','text':'RepairedProjectionWorker'})['status']=='found',
+                       'repair promotes actual new evidence')
+            self.check(source_fingerprint(source)==before,'projection failure and repair never write source')
+
+    def test_mirror_retry_isolation_coalescing(self):
+        bad, good = fixture(self.root, 'offline'), fixture(self.root, 'healthy')
+        # Enough actual input to observe requests arriving during an update.
+        for i in range(600):
+            (good / f'facts-{i:04}.txt').write_text(f'fixture knowledge {i}\n')
+        git_env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM='1',
+                       GIT_AUTHOR_NAME='Fixture', GIT_AUTHOR_EMAIL='fixture@example.invalid',
+                       GIT_COMMITTER_NAME='Fixture', GIT_COMMITTER_EMAIL='fixture@example.invalid')
+        def commit(source):
+            for args in (('add', '.'), ('commit', '-qm', 'updated fixture')):
+                subprocess.run(['git', '-C', str(source), *args], env=git_env, check=True,
+                               capture_output=True, timeout=30)
+        commit(good)
+        before_bad = source_fingerprint(bad)
+        with self.server(env=git_env) as (api, data, origin):
+            api('/api/v1/onboarding/configure', {'mode':'mirror', 'repositories':[
+                {'id':'offline','url':str(bad),'ref':'refs/heads/main'},
+                {'id':'healthy','url':str(good),'ref':'refs/heads/main'}]})
+            api('/api/v1/onboarding/start', {}, expected=202)
+            baseline = self.wait_job(api, 'offline', lambda j: j['state'] == 'idle' and bool(j['active_generation']))
+            healthy = self.wait_job(api, 'healthy', lambda j: j['state'] == 'idle' and bool(j['active_generation']))
+            moved = bad.with_name('offline-unavailable')
+            bad.rename(moved)
+            try:
+                api('/api/v1/repositories/check-now', {'repository':'offline'}, expected=202)
+                failed = self.wait_job(api, 'offline', lambda j: j['state'] == 'retry_wait')
+                delay = (time_from_json(failed['next_attempt']) - time_from_json(failed['last_attempt']))
+                self.check(failed['attempts'] == 1 and delay >= 30 and failed['stale']
+                           and failed['active_generation'] == baseline['active_generation'],
+                           'offline retry retains last-good revision with actual backoff')
+                (good / 'src/Worker.java').write_text('class HealthyUpdatedWorker {}\n')
+                commit(good)
+                before_good = source_fingerprint(good)
+                with ThreadPoolExecutor(max_workers=16) as pool:
+                    list(pool.map(lambda _: api('/api/v1/repositories/check-now', {'repository':'healthy'}, expected=202), range(100)))
+                updated = self.wait_job(api, 'healthy', lambda j: j['state'] == 'idle' and j['active_generation'] != healthy['active_generation'])
+                self.check(updated['coalesced'] > healthy['coalesced'] and updated['requests'] >= healthy['requests']+100
+                           and updated['runs'] < healthy['runs']+100, 'actual request burst executes coalesced bounded work')
+                self.check(updated['changed_files'] in (0,1), 'unchanged repeated captures do not recompile source')
+                self.check(api('/api/v1/query', {'repository':'healthy','text':'HealthyUpdatedWorker'})['status'] == 'found',
+                           'offline member does not disable healthy changed evidence')
+                self.check(api('/api/v1/query', {'repository':'offline','text':'Worker'})['status'] == 'found',
+                           'failed member retains actual queryable last-good evidence')
+                second = self.wait_job(api, 'offline', lambda j: j['attempts'] >= 2, timeout=45)
+                self.check(second['attempts'] == 2 and second['state'] == 'retry_wait'
+                           and time_from_json(second['next_attempt'])-time_from_json(second['last_attempt']) >= 60,
+                           'actual second retry doubles backoff')
+                exhausted = self.wait_job(api, 'offline', lambda j: j['state'] == 'exhausted', timeout=440)
+                self.check(exhausted['attempts'] == 5 and exhausted['stale']
+                           and exhausted['active_generation'] == baseline['active_generation'],
+                           'actual product retry budget exhausts without losing known-good knowledge')
+                self.check(source_fingerprint(good) == before_good, 'mirror updates never modify healthy source')
+            finally:
+                moved.rename(bad)
+        self.check(source_fingerprint(bad) == before_bad, 'offline failures never modify source')
+        with self.server(data, env=git_env) as (api, data, origin):
+            restored = api('/api/v1/jobs')
+            failed = next(j for j in restored['jobs'] if j['repository'] == 'offline')
+            self.check(restored['restored'] and failed['state'] == 'exhausted' and failed['attempts'] == 5,
+                       'real restart preserves exhausted retry budget')
+            api('/api/v1/repositories/check-now', {'repository':'offline'}, expected=202)
+            self.wait_job(api, 'offline', lambda j: j['state'] == 'idle' and not j.get('error'))
+            self.check(api('/api/v1/query', {'repository':'offline','text':'Worker'})['status'] == 'found',
+                       'explicit retry repairs restored source')
+
+    def test_healthy_bootstrap_with_unavailable_member(self):
+        bad,good=fixture(self.root,'bad-bootstrap'),fixture(self.root,'good-bootstrap')
+        before_good=source_fingerprint(good);before_bad=source_fingerprint(bad)
+        with self.server() as (api,data,origin):
+            api('/api/v1/onboarding/configure',{'mode':'mirror','repositories':[
+                {'id':'bad','url':str(bad),'ref':'refs/heads/main'},
+                {'id':'good','url':str(good),'ref':'refs/heads/main'}]})
+            moved=bad.with_name('unavailable-bootstrap');bad.rename(moved)
+            try:
+                api('/api/v1/onboarding/start',{},expected=202)
+                healthy=self.wait_job(api,'good',lambda j:j['state']=='idle' and bool(j['active_generation']))
+                failed=self.wait_job(api,'bad',lambda j:j['state']=='retry_wait')
+                self.check(healthy['last_success'] and not failed['active_generation'],
+                           'initial source failure does not invent evidence or disable healthy bootstrap')
+                self.check(api('/api/v1/query',{'repository':'good','text':'Worker'})['status']=='found',
+                           'actual healthy partial bootstrap is searchable')
+                self.check(api('/api/v1/query',{'repository':'bad','text':'Worker'})['status']=='unknown',
+                           'never indexed unavailable member remains unknown')
+                self.check(api('/api/v1/onboarding')['state']=='maintaining',
+                           'live entry flow exposes healthy knowledge while failed sources retry')
+            finally:moved.rename(bad)
+        self.check(source_fingerprint(good)==before_good and source_fingerprint(bad)==before_bad,
+                   'partial bootstrap and failed source operations do not mutate sources')
 
     def test_remove_purge_rebuild(self):
         source = fixture(self.root)

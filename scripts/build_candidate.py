@@ -24,7 +24,7 @@ def package(stage, output, version, commit, system, architecture):
     files = {f'{prefix}/{p.relative_to(stage).as_posix()}': p for p in stage.rglob('*') if p.is_file()}
     manifest = {'schema_version': 1, 'version': version, 'source_commit': commit,
                 'platform': system, 'architecture': architecture, 'disk_schema': 1,
-                'knowledge_ir_format': 'knowledge-ir-v9',
+                'knowledge_ir_format': 'knowledge-ir-v10',
                 'compatible_from': [1], 'sha256': {name: digest_file(p)
                                                  for name, p in sorted(files.items())}}
     path = output / (prefix + '.zip')

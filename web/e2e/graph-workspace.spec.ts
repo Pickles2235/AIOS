@@ -1,5 +1,7 @@
 import {expect, test} from "@playwright/test";
 
+test.beforeEach(async({page})=>{await page.route("**/api/v1/jobs",route=>route.fulfill({json:{jobs:[],mirror_interval_seconds:900,durable:true}}))});
+
 test.beforeEach(async({page})=>{await page.route("**/api/v1/onboarding",route=>route.fulfill({json:{state:"unconfigured",completed_repositories:0}}));await page.route("**/api/v1/instance",route=>route.fulfill({json:{id:"instance",name:"AgentOS",seed_colour:"#5865f2"}}))});
 
 test("renders only canonical generation data and supports keyboard selection", async ({page}) => {
