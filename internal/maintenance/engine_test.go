@@ -18,6 +18,9 @@ func ownedTemp(t *testing.T) string {
 	if e != nil {
 		t.Fatal(e)
 	}
+	if e = os.Chmod(root, 0700); e != nil {
+		t.Fatal(e)
+	}
 	return root
 }
 func optionsForTest() Options {

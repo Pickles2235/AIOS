@@ -148,5 +148,8 @@ func canonicalTempDir(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err = os.Chmod(path, 0700); err != nil {
+		t.Fatal(err)
+	}
 	return path
 }
