@@ -19,6 +19,7 @@ function App() {
   const [showSetup, setShowSetup] = useState(false), [spotlight, setSpotlight] = useState(false), [instance, setInstance] = useState<Instance>(), [status, setStatus] = useState<Status>();
   const [repo, setRepo] = useState(""), [projection, setProjection] = useState<Projection>(), [selected, setSelected] = useState<Entity>(), [evidence, setEvidence] = useState<Excerpt>();
   const [query, setQuery] = useState(""), [result, setResult] = useState<QueryResult>(), [notice, setNotice] = useState(""), [mapNotice, setMapNotice] = useState(""), [busy, setBusy] = useState(false);
+  const [daemonState, setDaemonState] = useState<"connected" | "stopping" | "disconnected">("connected");
   const inspection = useRef(0), loading = useRef(0), searching = useRef(0);
   function clearSelection() {inspection.current++; setSelected(undefined); setEvidence(undefined); searching.current++; setResult(undefined); setBusy(false);}
   async function load(wanted?: string) {
@@ -39,6 +40,22 @@ function App() {
     const token = new URL(location.href).hash.match(/token=([^&]+)/)?.[1]; history.replaceState(null, "", location.pathname);
     request<{csrf_token: string}>("/api/v1/session", token ? {token} : undefined).then(session => {csrf = session.csrf_token; return load();}).catch(() => setNotice("This secure launch link or session has expired. Open a fresh local launch link."));
   }, []);
+  useEffect(() => {
+    if (!status || daemonState === "disconnected") return;
+    const timer = window.setInterval(() => {
+      void request<{csrf_token: string}>("/api/v1/session").then(session => {
+        csrf = session.csrf_token;
+        if (daemonState === "stopping") return request<{state: string}>("/api/v1/daemon/status").then(state => {
+          if (state.state === "failed") {setDaemonState("connected"); setNotice("Stop failed. The daemon is still connected. Run aios daemon status and stop from your login terminal.");}
+        });
+      }).catch(e => {if (e instanceof ApiError) {setNotice("Your session has expired. Open a fresh launch link with aios daemon open.");} else {setDaemonState("disconnected");}});
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [status, daemonState]);
+  async function stopDaemon() {
+    try {await request("/api/v1/daemon/stop", {}); setDaemonState("stopping");}
+    catch (e) {setNotice(`Unable to stop daemon: ${message(e)}`);}
+  }
   useEffect(() => {
     const key = (e: KeyboardEvent) => {if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k" && status) {e.preventDefault(); setSpotlight(value => !value);}};
     window.addEventListener("keydown", key); return () => window.removeEventListener("keydown", key);
@@ -68,7 +85,9 @@ function App() {
   const brand = instance && <InstanceBrand instance={instance} onSave={async value => setInstance(await request<Instance>("/api/v1/instance", value))}/>;
   return <main>{brand}<header><p>Read-only repository knowledge</p><h1>{status.projection_state === "no_active_generation" ? "No active generation" : "Knowledge map"}</h1>
     <button onClick={() => setSpotlight(true)}>Open Spotlight</button><small>⌘ / Ctrl K</small><button onClick={() => void load()}>Refresh</button><button onClick={() => setShowSetup(!showSetup)}>Repository setup</button>
+    <button disabled={daemonState !== "connected"} onClick={() => void stopDaemon()}>Stop daemon</button>
   </header>
+    {daemonState !== "connected" && <p role="alert">{daemonState === "stopping" ? "Stopping daemon… Waiting for disconnection." : "Daemon disconnected. Saved knowledge and configuration remain on this Mac. Run aios daemon start, then aios daemon open to reconnect."}</p>}
     {status.projection_state === "no_active_generation" && <p>No repository checkout has been changed.</p>}
     {(showSetup || status.projection_state === "no_active_generation") && <MirrorSetup request={request} onReady={load}/>}
     {status.projection_state === "unavailable" && <section><h2>Knowledge is safe</h2><p>Canonical source evidence remains intact</p><p>A derived projection is unavailable. Search will report its own available coverage.</p></section>}

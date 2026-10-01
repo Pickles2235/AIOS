@@ -85,3 +85,8 @@ $(addprefix completion-,$(COMPLETION_PRODUCT_GATES)): build
 completion-milestone:
 	@test -n "$(COMPLETION_MILESTONE)" -a -n "$(COMPLETION_GATE)" || (echo "COMPLETION_MILESTONE and COMPLETION_GATE are required" >&2; exit 2)
 	python3 scripts/completion_driver.py "$(COMPLETION_GATE)" --milestone "$(COMPLETION_MILESTONE)"
+
+.PHONY: candidate-package
+candidate-package:
+	@test -n "$(VERSION)" -a -n "$(OUTPUT_DIR)" || (echo "VERSION and OUTPUT_DIR required" >&2; exit 2)
+	python3 scripts/build_candidate.py --version "$(VERSION)" --output-dir "$(OUTPUT_DIR)"

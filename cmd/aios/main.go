@@ -15,11 +15,15 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/store"
 	"github.com/AdamNi-7080/AIOS/internal/webui"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 )
 
 func main() {
-	if err := run(context.Background(), os.Args[1:]); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	if err := run(ctx, os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
@@ -29,6 +33,10 @@ func run(ctx context.Context, args []string) error {
 		return usageError()
 	}
 	switch args[0] {
+	case "install", "uninstall":
+		return runInstallation(ctx, args)
+	case "daemon":
+		return runDaemon(ctx, args[1:])
 	case "local":
 		if len(args) < 2 || args[1] != "ingest" {
 			return usageError()

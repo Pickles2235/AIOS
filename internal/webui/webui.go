@@ -12,13 +12,16 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/knowledge"
+	"github.com/AdamNi-7080/AIOS/internal/semantic"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
 
@@ -34,6 +37,8 @@ type Server struct {
 	db                                *store.Store
 	setup                             Setup
 	jobCancel                         context.CancelFunc
+	stopDaemon                        func() error
+	stopState                         string
 }
 
 func token() string {
@@ -68,7 +73,23 @@ func New(cfg catalog.Config, db *store.Store, listener net.Listener) (*Server, e
 	}
 	return s, nil
 }
-func (s *Server) URL() string { return s.origin + "/#token=" + s.capability }
+func (s *Server) URL() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.origin + "/#token=" + s.capability
+}
+func (s *Server) FreshURL() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.capability = token()
+	return s.origin + "/#token=" + s.capability
+}
+func (s *Server) Close() error { s.cancelJob(); return s.listener.Close() }
+func (s *Server) SetStopDaemon(stop func() error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.stopDaemon = stop
+}
 func (s *Server) authorised(r *http.Request, csrf bool) bool {
 	// Browsers omit Origin on ordinary same-origin GETs. Only state-changing
 	// request shapes require Origin plus CSRF; every route remains session bound.
@@ -114,6 +135,65 @@ func decode(r *http.Request, v any) error {
 }
 func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
+	case "/api/v1/runtime":
+		if r.Method != http.MethodGet || !s.authorised(r, false) {
+			fail(w, 403, "authorised session required")
+			return
+		}
+		_, javaErr := exec.LookPath("javac")
+		_, nodeErr := exec.LookPath("node")
+		available, reason := semantic.RuntimeAvailability()
+		jsonBody(w, map[string]any{"bundled_assets": map[string]any{"ui": true, "embedding_model": semantic.ModelIdentity, "embedding_runtime_available": available, "embedding_runtime_reason": reason}, "compiler_coverage": map[string]any{"structural": "bundled Tree-sitter Java/Kotlin/JavaScript/TypeScript; unsupported input is disclosed", "java_jdk_detected": javaErr == nil, "node_detected": nodeErr == nil, "semantic_compilers": "optional; JDK or Node plus a configured TypeScript module; detection is not successful compilation"}})
+		return
+	case "/api/v1/daemon/status":
+		if r.Method != http.MethodGet || !s.authorised(r, false) {
+			fail(w, 403, "authorised session required")
+			return
+		}
+		s.mu.Lock()
+		state := s.stopState
+		managed := s.stopDaemon != nil
+		s.mu.Unlock()
+		if state == "" {
+			state = "running"
+		}
+		jsonBody(w, map[string]any{"state": state, "managed": managed})
+		return
+	case "/api/v1/daemon/stop":
+		if r.Method != http.MethodPost || !s.authorised(r, true) {
+			fail(w, 403, "valid origin/session/CSRF required")
+			return
+		}
+		var in struct{}
+		if decode(r, &in) != nil {
+			fail(w, 400, "invalid stop request")
+			return
+		}
+		s.mu.Lock()
+		stop := s.stopDaemon
+		s.mu.Unlock()
+		if stop == nil {
+			fail(w, 409, "foreground UI has no managed daemon; stop its terminal process")
+			return
+		}
+		s.mu.Lock()
+		if s.stopState == "stopping" {
+			s.mu.Unlock()
+			fail(w, 409, "stop already requested")
+			return
+		}
+		s.stopState = "stopping"
+		s.mu.Unlock()
+		jsonBody(w, map[string]any{"stopping": true, "restart": "aios daemon start; then aios daemon open"})
+		go func() {
+			time.Sleep(200 * time.Millisecond)
+			if stop() != nil {
+				s.mu.Lock()
+				s.stopState = "failed"
+				s.mu.Unlock()
+			}
+		}()
+		return
 	case "/api/v1/session":
 		if r.Method == http.MethodGet {
 			if !s.authorised(r, false) {

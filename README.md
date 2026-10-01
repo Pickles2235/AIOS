@@ -6,6 +6,11 @@ implementation is in progress: the [completion contract](.codex/completion/PRODU
 and [baseline gap map](.codex/completion/BASELINE-MAP.md) distinguish requirements
 from delivered behaviour. No private repository estate or LLM connection is required.
 
+Per-user daemon lifecycle and ZIP installation are now under verification. Build
+an engineering ZIP with `make candidate-package VERSION=1.0.0-dev OUTPUT_DIR=/owned/path`
+on Apple Silicon; see the [installation guide](docs/USER-GUIDE.md). This is not
+candidate-ready until the full completion gates and independent review pass.
+
 The current engine compiles 1–100 approved Git repository mirrors or clean local
 Git workspaces into canonical Knowledge IR. Linux and other platforms are development
 smoke environments; they do not verify the supported Apple Silicon product.
