@@ -90,3 +90,9 @@ completion requirements, not claims that all features are currently implemented.
 See [the repository-local Codex harness](.codex/README.md) for repeatable setup,
 validation, a dependency-ordered product task queue, persistent plans, and an
 optional one-task CLI launcher. Start with `make harness-test`.
+
+### Repository management
+
+Open **Manage repositories** in the local UI to approve another source in the configured Direct or Mirror mode, change include/exclude scope, retry source access, or force a fresh compilation. Repository health shows active and attempted revisions, last success and next check. A whole **Rebuild knowledge base** keeps identity and approved configuration, and serves last-good knowledge until every replacement generation validates and activates together. A failed build keeps the previous catalog.
+
+**Remove** asks for confirmation and cancels active work before purging that repository's owned knowledge, staged/retired history, snapshots and managed mirror. Shared derived caches and source-bearing migration backups are discarded. The original Git workspace is preserved. To withdraw an ID, use Remove before omitting it from the batch setup. If cleanup cannot complete, a durable removal record pauses evidence reads and maintenance; correct the owned storage issue and use **Finish removal**, or restart to retry recovery. Removed repositories cannot be retried until explicitly approved again.

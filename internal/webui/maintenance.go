@@ -39,7 +39,11 @@ func (s *Server) startMaintenance() {
 	}
 	s.mu.Lock()
 	setup := s.setup
+	pendingRemoval := s.removing != ""
 	s.mu.Unlock()
+	if pendingRemoval || (len(setup.LocalRepositories) == 0 && len(setup.Repositories) == 0) {
+		return
+	}
 	if setup.State == "unconfigured" || setup.State == "configured" || setup.State == "syncing" || setup.State == "ingesting" {
 		return
 	}
@@ -213,6 +217,12 @@ func (s *Server) maintenanceAPI(w http.ResponseWriter, r *http.Request) {
 		status := maintenance.Status{Jobs: []maintenance.Job{}, MirrorIntervalSeconds: 900, RetryMaximumAttempts: 5, QueueCapacity: 100, WorkerCapacity: 1, QuietSeconds: 1, MaximumDebounceSeconds: 5, PersistenceError: s.maintenanceError}
 		if engine != nil {
 			status = engine.Status()
+		}
+		s.mu.Lock()
+		managementError := s.managementError
+		s.mu.Unlock()
+		if managementError != "" {
+			status.PersistenceError = managementError
 		}
 		if r.URL.Path == "/api/v1/repositories" {
 			rows := []map[string]any{}

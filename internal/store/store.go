@@ -950,7 +950,7 @@ func ensureIREntity(ctx context.Context, tx *sql.Tx, id, repo, kind, identity, a
 }
 func catalogFingerprint(ctx context.Context, tx *sql.Tx, catalogRevision string) (string, error) {
 	var fingerprint string
-	err := tx.QueryRowContext(ctx, `SELECT group_concat(generation_id, ',') FROM (SELECT generation_id FROM catalog_revision_members WHERE catalog_revision_id=? ORDER BY generation_id)`, catalogRevision).Scan(&fingerprint)
+	err := tx.QueryRowContext(ctx, `SELECT COALESCE(group_concat(generation_id, ','),'') FROM (SELECT generation_id FROM catalog_revision_members WHERE catalog_revision_id=? ORDER BY generation_id)`, catalogRevision).Scan(&fingerprint)
 	return fingerprint, err
 }
 

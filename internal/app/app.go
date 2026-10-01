@@ -91,7 +91,7 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 				return result, err
 			}
 		}
-		if previousErr == nil && len(changes) == 0 && previousMetadata.Root == repo.Root && previousMetadata.Git == before && previousMetadata.ExtractorVersions == snapshot.ExtractorVersions && sameCoverage(previousCoverage, coverage) {
+		if !fullRebuild(ctx) && previousErr == nil && len(changes) == 0 && previousMetadata.Root == repo.Root && previousMetadata.Git == before && previousMetadata.ExtractorVersions == snapshot.ExtractorVersions && sameCoverage(previousCoverage, coverage) {
 			generation, activeErr := db.ActiveGeneration(ctx, repo.ID)
 			if activeErr != nil {
 				return result, fmt.Errorf("read active generation %s: %w", repo.ID, activeErr)
@@ -105,7 +105,7 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 		changedRepositories = append(changedRepositories, repo.ID)
 		var symbols []model.Symbol
 		var edges []model.Edge
-		if previousErr == nil {
+		if previousErr == nil && !fullRebuild(ctx) {
 			oldSymbols, oldEdges, inputErr := db.PreviousInputs(ctx, repo.ID)
 			if inputErr != nil {
 				return result, fmt.Errorf("read active inputs %s: %w", repo.ID, inputErr)
@@ -157,7 +157,7 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 			parsed[f.Path] = true
 		}
 		for _, d := range previousMetadata.CompilerDiagnostics {
-			if !parsed[d.Path] {
+			if !fullRebuild(ctx) && !parsed[d.Path] {
 				diagnostics = append(diagnostics, d)
 			}
 		}

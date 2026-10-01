@@ -158,7 +158,7 @@
         "core",
         "web"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "plan": ".codex/completion/plans/06-repo-management.md",
       "completion_commit": null,
       "review": null,

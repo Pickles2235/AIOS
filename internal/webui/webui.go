@@ -40,6 +40,9 @@ type Server struct {
 	db                                *store.Store
 	setup                             Setup
 	jobCancel                         context.CancelFunc
+	jobDone                           chan struct{}
+	removing                          string
+	managementError                   string
 	stopDaemon                        func() error
 	stopState                         string
 	activity                          []ActivityEvent
@@ -86,6 +89,10 @@ func New(cfg catalog.Config, db *store.Store, listener net.Listener) (*Server, e
 	}
 	s := &Server{db: db, dataDir: filepath.Dir(db.Path()), listener: listener, origin: "http://" + listener.Addr().String(), capability: token(), read: knowledge.New(cfg, db)}
 	if e = s.restoreSetup(cfg); e != nil {
+		_ = listener.Close()
+		return nil, e
+	}
+	if e = s.restoreRemoval(); e != nil {
 		_ = listener.Close()
 		return nil, e
 	}
@@ -178,6 +185,9 @@ func decode(r *http.Request, v any) error {
 }
 func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
+	case "/api/v1/repositories/add", "/api/v1/repositories/remove", "/api/v1/repositories/rules", "/api/v1/repositories/retry", "/api/v1/repositories/rebuild", "/api/v1/repositories/purge-status":
+		s.managementAPI(w, r)
+		return
 	case "/api/v1/jobs", "/api/v1/jobs/configure", "/api/v1/repositories", "/api/v1/repositories/check-now":
 		s.maintenanceAPI(w, r)
 		return
@@ -308,6 +318,13 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 			fail(w, 403, "authorised same-origin session required")
 			return
 		}
+		s.mu.Lock()
+		pending := s.removing != ""
+		s.mu.Unlock()
+		if pending {
+			fail(w, 503, "Repository removal is recovering; projections resume after owned data cleanup.")
+			return
+		}
 		repo := r.URL.Query().Get("repo")
 		if repo == "" {
 			fail(w, 400, "repo is required")
@@ -323,6 +340,13 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 	case "/api/v1/entity", "/api/v1/neighbors", "/api/v1/evidence", "/api/v1/query":
 		if r.Method != http.MethodPost || !s.authorised(r, true) {
 			fail(w, 403, "valid origin, session, and CSRF token required")
+			return
+		}
+		s.mu.Lock()
+		pendingRemoval := s.removing != ""
+		s.mu.Unlock()
+		if pendingRemoval {
+			fail(w, 503, "Repository removal is recovering; evidence reads resume after owned data cleanup.")
 			return
 		}
 	default:

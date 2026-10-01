@@ -551,19 +551,117 @@ class ProductScenarios(unittest.TestCase):
                    'partial bootstrap and failed source operations do not mutate sources')
 
     def test_remove_purge_rebuild(self):
-        source = fixture(self.root)
-        before = source_fingerprint(source)
-        with self.server() as (api, data, origin):
-            self.configure(api, source)
-            identity = api('/api/v1/instance')['id']
-            api('/api/v1/repositories/rebuild', {'repository': 'fixture'}, expected=202)
-            self.check(api('/api/v1/instance')['id'] == identity, 'rebuild preserves identity')
-            api('/api/v1/repositories/remove', {'repository': 'fixture'})
-            self.check(api('/api/v1/status')['repositories'] == [], 'removed repository no longer active')
-            self.check(api('/api/v1/repositories/purge-status?repository=fixture')['owned_records'] == 0,
-                       'full owned knowledge/history/cache/mirror purge')
-            api('/api/v1/repositories/retry', {'repository': 'fixture'}, expected=404)
-        self.check(source_fingerprint(source) == before, 'purge preserves source bytes and Git state')
+        for mode in ('local', 'mirror'):
+            source = fixture(self.root, 'removed-' + mode)
+            survivor = fixture(self.root, 'survivor-' + mode)
+            added = fixture(self.root, 'added-' + mode)
+            before = [source_fingerprint(p) for p in (source, survivor, added)]
+            data = self.root / ('management-' + mode)
+            def member(id, path):
+                return {'id': id, 'path': str(path)} if mode == 'local' else {
+                    'id': id, 'url': str(path), 'ref': 'refs/heads/main'}
+            def wait_build(api):
+                deadline = time.monotonic() + 30
+                while time.monotonic() < deadline:
+                    state = api('/api/v1/onboarding')
+                    if state['state'] in ('ready', 'failed', 'interrupted'):
+                        self.check(state['state'] == 'ready', 'actual rebuild validates before promotion')
+                        return
+                    time.sleep(.05)
+                self.check(False, 'bounded rebuild completion')
+            with self.server(data) as (api, _, origin):
+                key = 'local_repositories' if mode == 'local' else 'repositories'
+                api('/api/v1/onboarding/configure', {'mode': mode, key: [
+                    member('removed', source), member('survivor', survivor)]})
+                api('/api/v1/onboarding/start', {}, expected=202)
+                wait_build(api)
+                self.wait_job(api, 'survivor', lambda j: j['state'] == 'idle')
+                identity = api('/api/v1/instance')['id']
+                first = {r['id']: r['generation'] for r in api('/api/v1/status')['repositories']}
+                old_handle = api('/api/v1/query', {'repository': 'removed', 'text': 'Worker'})['entities'][0]['handle']
+                api('/api/v1/repositories/rebuild', {'repository': 'removed'}, expected=202)
+                wait_build(api)
+                second = {r['id']: r['generation'] for r in api('/api/v1/status')['repositories']}
+                self.check(first['removed'] != second['removed'] and first['survivor'] == second['survivor'],
+                           'force recompiles unchanged selected bytes; survivor generation stays intact')
+                api('/api/v1/repositories/rebuild', {}, expected=202)
+                # Queries during replacement must find complete last-good or new evidence.
+                with ThreadPoolExecutor(max_workers=4) as pool:
+                    reads = list(pool.map(lambda _: api('/api/v1/query', {'repository': 'survivor', 'text': 'Worker'}), range(12)))
+                self.check(all(r['status'] == 'found' for r in reads), 'concurrent reads remain coherent under whole KB rebuild')
+                wait_build(api)
+                third = {r['id']: r['generation'] for r in api('/api/v1/status')['repositories']}
+                self.check(all(third[id] != second[id] for id in second), 'whole KB freshly compiles every approved input')
+                self.check(api('/api/v1/instance')['id'] == identity, 'rebuild preserves identity')
+                api('/api/v1/repositories/add', {
+                    'local_repository' if mode == 'local' else 'mirror_repository': member('added', added),
+                    'rules': {'exclude': ['src/client.ts']}}, expected=202)
+                self.wait_job(api, 'added', lambda j: j['state'] == 'idle' and bool(j['active_generation']))
+                self.check(api('/api/v1/query', {'repository': 'added', 'text': 'Worker'})['status'] == 'found',
+                           'actual add compiles independent member')
+                self.check(api('/api/v1/query', {'repository': 'added', 'text': 'requestOrder'})['status'] != 'found',
+                           'add obeys approved excludes')
+                old_added = next(r['generation'] for r in api('/api/v1/status')['repositories'] if r['id'] == 'added')
+                api('/api/v1/repositories/rules', {'repository': 'added', 'rules': {'exclude': ['src/Worker.java']}}, expected=202)
+                self.wait_job(api, 'added', lambda j: j['state'] == 'idle' and j['active_generation'] != old_added)
+                self.check(api('/api/v1/query', {'repository': 'added', 'text': 'requestOrder'})['status'] == 'found',
+                           'scope edits compile newly included files')
+                api('/api/v1/repositories/retry', {'repository': 'added'}, expected=202)
+                api('/api/v1/onboarding/configure', {'mode': mode, key: [member('survivor', survivor)]}, expected=409)
+                # A real projection fault must roll back the entire replacement.
+                self.wait_job(api, 'added', lambda j: j['state'] == 'idle')
+                db = sqlite3.connect(data / 'index.db')
+                try:
+                    db.execute("CREATE TRIGGER management_projection_fault BEFORE INSERT ON projection_lookup_records BEGIN SELECT RAISE(ABORT,'injected projection failure'); END")
+                    db.commit()
+                    before_fault = api('/api/v1/status')['active_catalog_revision']
+                    api('/api/v1/repositories/rebuild', {}, expected=202)
+                    deadline = time.monotonic() + 30
+                    while time.monotonic() < deadline and api('/api/v1/onboarding')['state'] == 'ingesting':
+                        time.sleep(.05)
+                    self.check(api('/api/v1/onboarding')['state'] in ('failed', 'maintaining'), 'actual projection failure reported')
+                    self.check(api('/api/v1/status')['active_catalog_revision'] == before_fault,
+                               'failed replacement never changes active catalog')
+                    self.check(api('/api/v1/query', {'repository': 'survivor', 'text': 'Worker'})['status'] == 'found',
+                               'failed rebuild keeps last-good evidence')
+                finally:
+                    db.execute('DROP TRIGGER management_projection_fault'); db.commit(); db.close()
+                # Plant a valid owned shared backup to verify history bytes are discarded.
+                backup = data / 'index.ir-9-backup-management.db'
+                shutil.copyfile(data / 'index.db', backup); backup.chmod(0o600)
+                api('/api/v1/repositories/rebuild', {'repository': 'removed'}, expected=202)
+                api('/api/v1/repositories/remove', {'repository': 'removed'})
+                self.check(not backup.exists(), 'shared source-bearing migration backup purged')
+                self.check(all(r['id'] != 'removed' for r in api('/api/v1/status')['repositories']),
+                           'remove withdraws repository while replacement is in flight')
+                api('/api/v1/entity', {'handle': old_handle}, expected=409)
+                self.check(api('/api/v1/repositories/purge-status?repository=removed')['owned_records'] == 0,
+                           'full owned canonical/staged/history/snapshot/mirror purge verified')
+                api('/api/v1/repositories/retry', {'repository': 'removed'}, expected=404)
+                self.check(api('/api/v1/query', {'repository': 'survivor', 'text': 'Worker'})['status'] == 'found',
+                           'survivor still searchable after purge')
+            with self.server(data) as (api, _, origin):
+                self.check(api('/api/v1/instance')['id'] == identity, 'management restart retains identity')
+                self.check(all(j['repository'] != 'removed' for j in api('/api/v1/jobs')['jobs']),
+                           'durable restart cannot resurrect removed job')
+                self.check(api('/api/v1/repositories/purge-status?repository=removed')['owned_records'] == 0,
+                           'restart retains completed purge')
+                # Unsafe owned link leaves a durable withdrawal that actual next-start recovers.
+                link = data / 'snapshots' / 'survivor' / 'foreign-link'
+                link.symlink_to(survivor, target_is_directory=True)
+                api('/api/v1/repositories/remove', {'repository': 'survivor'}, expected=503)
+                self.check(api('/api/v1/onboarding')['pending_removal'] == 'survivor', 'failed physical purge keeps durable intent')
+                api('/api/v1/query', {'repository': 'survivor', 'text': 'Worker'}, expected=503)
+                link.unlink()
+            with self.server(data) as (api, _, origin):
+                self.check(not api('/api/v1/onboarding').get('pending_removal'), 'next process startup finishes actual removal recovery')
+                self.check(api('/api/v1/repositories/purge-status?repository=survivor')['owned_records'] == 0,
+                           'recovery purges retired history and owned assets')
+                api('/api/v1/repositories/remove', {'repository': 'added'})
+                self.check(api('/api/v1/status')['repositories'] == [], 'last repository removal publishes truthful empty knowledge')
+                self.check(api('/api/v1/jobs')['jobs'] == [], 'last repository removal purges persisted job history')
+            self.check([source_fingerprint(p) for p in (source, survivor, added)] == before,
+                       'add, scope, retry, rebuild, failure, in-flight removal and crash recovery never write sources')
 
     def test_native_wake_reconciliation(self):
         self.native()

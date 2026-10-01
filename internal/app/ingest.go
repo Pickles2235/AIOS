@@ -57,7 +57,7 @@ func IngestMirrorCatalog(ctx context.Context, configPath, registryPath, dataDir 
 		if _, e = db.Discover(ctx, repositoryID, revision, fingerprint); e != nil {
 			return IndexResult{}, e
 		}
-		queue, e := db.SelectRevision(ctx, repositoryID, revision, fingerprint)
+		queue, e := db.SelectRepairRevision(ctx, repositoryID, revision, fingerprint)
 		if e != nil {
 			return IndexResult{}, e
 		}

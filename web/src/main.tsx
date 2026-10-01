@@ -4,6 +4,7 @@ import "./style.css";
 import {MirrorSetup, IndexingCard, type Setup} from "./mirror-setup";
 import {NamespaceSettings} from "./namespace-settings";
 import {Maintenance} from "./maintenance";
+import {RepositoryManagement} from "./repository-management";
 import {InstanceBrand, type Instance} from "./instance-brand";
 import {KnowledgeCloud} from "./knowledge-cloud";
 import {Spotlight} from "./spotlight";
@@ -99,6 +100,7 @@ function App() {
     {status.projection_state === "unavailable" && <section><h2>Knowledge is safe</h2><p>Canonical source evidence remains intact</p><p>A derived projection is unavailable. Search will report its own available coverage.</p></section>}
     {notice && <p role="alert">{notice}</p>}{mapNotice && <p role="status">{mapNotice}</p>}
     {daemonState === "connected" && !indexing && <Maintenance request={request} onChanged={()=>void load()}/>}
+    {daemonState === "connected" && <RepositoryManagement request={request} onChanged={()=>{setSpotlight(false);void load()}}/>}
     {status.repositories.some(r => r.active) && <label>Active repository<select value={repo} onChange={e => void load(e.target.value)}>{status.repositories.filter(r => r.active).map(r => <option key={r.id} value={r.id}>{r.id}</option>)}</select></label>}
     <form onSubmit={search}><label>Query<input value={query} onChange={e => setQuery(e.target.value)}/></label><button disabled={busy}>{busy ? "Searching…" : "Search"}</button></form>
     <QueryFeedback result={result}/>{result?.entities.length ? <ul aria-label="Query results">{result.entities.map(entity => <li key={entity.handle}><button onClick={() => void inspect(entity)}>{entity.label} · {entity.path}</button></li>)}</ul> : null}

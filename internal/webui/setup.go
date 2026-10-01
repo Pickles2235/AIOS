@@ -27,6 +27,7 @@ type Setup struct {
 	Active            catalog.Config            `json:"active_catalog"`
 	Rules             map[string]ScopeRules     `json:"rules,omitempty"`
 	ActiveMode        string                    `json:"active_mode,omitempty"`
+	PendingRemoval    string                    `json:"pending_removal,omitempty"`
 }
 
 func (s *Server) readService() *knowledge.Service { s.mu.Lock(); defer s.mu.Unlock(); return s.read }
@@ -57,7 +58,10 @@ func (s *Server) persistSetup() error {
 	if ce != nil {
 		return ce
 	}
-	return os.Rename(name, target)
+	if err = os.Rename(name, target); err != nil {
+		return err
+	}
+	return syncDirectory(s.dataDir)
 }
 func (s *Server) restoreSetup(cfg catalog.Config) error {
 	s.setup = Setup{State: "unconfigured", Active: cfg}
@@ -124,6 +128,7 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		s.mu.Lock()
 		v := s.setup
+		v.PendingRemoval = s.removing
 		s.mu.Unlock()
 		jsonBody(w, v)
 		return
@@ -168,6 +173,13 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		s.setupTransitionMu.Lock()
 		defer s.setupTransitionMu.Unlock()
+		s.mu.Lock()
+		if s.removing != "" || omitsApproved(s.setup, in.LocalRepositories, in.Repositories) {
+			s.mu.Unlock()
+			fail(w, 409, "Remove repositories using the explicit purge control before omitting their IDs from setup.")
+			return
+		}
+		s.mu.Unlock()
 		s.stopMaintenance()
 		s.mu.Lock()
 		defer s.mu.Unlock()
@@ -225,6 +237,7 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 		ctx = app.WithProgress(ctx, s.recordProgress)
 		s.jobCancel = cancel
+		s.jobDone = make(chan struct{})
 		s.setup.State = "syncing"
 		if mode == "local" {
 			s.setup.State = "ingesting"
@@ -234,6 +247,8 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		if err = s.persistSetup(); err != nil {
 			cancel()
 			s.jobCancel = nil
+			close(s.jobDone)
+			s.jobDone = nil
 			fail(w, 500, "unable to start setup")
 			return
 		}
@@ -259,35 +274,7 @@ func (s *Server) cancelJob() {
 }
 func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Registry, local ...[]adapter.LocalRepository) {
 	var retErr error
-	defer func() {
-		s.mu.Lock()
-		if retErr != nil {
-			s.setup.State = "failed"
-			s.setup.Error = "Build failed; the last active knowledge remains available. Validate the sources and retry."
-			var gitErr *mirror.GitError
-			if errors.As(retErr, &gitErr) {
-				s.setup.Error = gitErr.Remediation()
-			}
-			if ctx.Err() != nil {
-				s.setup.State = "interrupted"
-				s.setup.Error = "Setup interrupted; retry preserves the last active generation."
-			}
-		} else {
-			s.setup.State = "ready"
-			s.setup.Active = cfg
-			s.setup.ActiveMode = s.setup.Mode
-			s.read = knowledge.New(cfg, s.db)
-		}
-		if s.jobCancel != nil {
-			s.jobCancel()
-			s.jobCancel = nil
-		}
-		if err := s.persistSetup(); err != nil {
-			s.setup.Error = "Unable to persist setup status; inspect owned data permissions."
-		}
-		s.mu.Unlock()
-		s.startMaintenance()
-	}()
+	defer func() { s.finishSetup(ctx, cfg, retErr) }()
 	if len(local) > 0 && len(local[0]) > 0 {
 		_, retErr = app.IngestLocal(ctx, cfg, adapter.LocalRegistry{Version: 1, Repositories: local[0]}, s.dataDir, "")
 		if retErr == nil {
@@ -348,4 +335,38 @@ func localSetupConfig(entries []adapter.LocalRepository, dataDir string) (catalo
 		cfg.Sources = append(cfg.Sources, catalog.Source{Kind: model.SourceKindRepository, ID: entry.ID})
 	}
 	return cfg, catalog.Validate(cfg)
+}
+
+func (s *Server) finishSetup(ctx context.Context, cfg catalog.Config, retErr error) {
+	s.mu.Lock()
+	if retErr != nil {
+		s.setup.State = "failed"
+		s.setup.Error = "Build failed; the last active knowledge remains available. Validate the sources and retry."
+		var gitErr *mirror.GitError
+		if errors.As(retErr, &gitErr) {
+			s.setup.Error = gitErr.Remediation()
+		}
+		if ctx.Err() != nil {
+			s.setup.State = "interrupted"
+			s.setup.Error = "Setup interrupted; retry preserves the last active generation."
+		}
+	} else {
+		s.setup.State = "ready"
+		s.setup.Active = cfg
+		s.setup.ActiveMode = s.setup.Mode
+		s.read = knowledge.New(cfg, s.db)
+	}
+	if s.jobCancel != nil {
+		s.jobCancel()
+		s.jobCancel = nil
+	}
+	if err := s.persistSetup(); err != nil {
+		s.setup.Error = "Unable to persist setup status; inspect owned data permissions."
+	}
+	if s.jobDone != nil {
+		close(s.jobDone)
+		s.jobDone = nil
+	}
+	s.mu.Unlock()
+	s.startMaintenance()
 }

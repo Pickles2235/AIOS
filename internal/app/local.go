@@ -85,7 +85,7 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 		if e != nil {
 			return out, e
 		}
-		if len(queues) == 1 && queues[0].CurrentRevision == discovery.Revision && queues[0].PendingRevision == "" && queues[0].ManifestFingerprint == fingerprint && queues[0].State == "completed" {
+		if !fullRebuild(ctx) && len(queues) == 1 && queues[0].CurrentRevision == discovery.Revision && queues[0].PendingRevision == "" && queues[0].ManifestFingerprint == fingerprint && queues[0].State == "completed" {
 			selected[i].Root = discovery.Root
 			revisions[repo.ID] = discovery.Git
 			continue
