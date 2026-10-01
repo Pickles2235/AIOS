@@ -25,6 +25,10 @@ unexpected exit. The browser can close while work continues. Open obtains a fres
 one-use secure browser link through an owner-only local control socket. The URL is
 loopback only; there is no remote account or LLM connection. Keep launch links private.
 Use the browser's Stop daemon button or `"$AIOS_BIN" daemon stop`; start/open reconnects.
+For a browser you choose yourself, `"$AIOS_BIN" daemon link` prints a fresh private
+launch link. Do not paste this capability into logs or reports. Long data-directory
+paths use a hashed socket in an owner-only system temporary directory to respect
+macOS's Unix socket length limit; knowledge stays in the configured owned root.
 Stop unregisters the currently running service while retaining its login plist so
 it can restart on the next login. Uninstall removes that plist. A foreground
 developer `ui serve` session reports that it must be stopped in its terminal.

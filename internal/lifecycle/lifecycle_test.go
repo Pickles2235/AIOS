@@ -68,12 +68,16 @@ func TestControlFreshLinksStrictPayloadAndRestart(t *testing.T) {
 	if e != nil || !strings.Contains(state.URL, "#token=") {
 		t.Fatalf("open %+v %v", state, e)
 	}
-	info, e := os.Stat(filepath.Join(o.DataDir, "daemon.sock"))
+	controlPath, e := ControlPath(o.DataDir)
+	if e != nil {
+		t.Fatal(e)
+	}
+	info, e := os.Stat(controlPath)
 	if e != nil || info.Mode().Perm() != 0600 {
 		t.Fatal("insecure control socket")
 	}
 	for _, payload := range []string{`{"action":"status","extra":true}`, `{"action":"status"}{}`, `{"action":"unknown"}`, strings.Repeat("x", 2048), `{"action":"status"}` + strings.Repeat(" ", 1025) + `{}`} {
-		c, e := net.Dial("unix", filepath.Join(o.DataDir, "daemon.sock"))
+		c, e := net.Dial("unix", controlPath)
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -94,8 +98,7 @@ func TestControlFreshLinksStrictPayloadAndRestart(t *testing.T) {
 
 func TestPlanAndForeignServiceOwnership(t *testing.T) {
 	root := canonicalTemp(t)
-	t.Setenv("HOME", root)
-	o, e := Defaults(Options{Root: filepath.Join(root, "owned & instance"), Binary: "/private/aios", Label: "dev.aios.completion.fixture"})
+	o, e := Defaults(Options{home: root, Root: filepath.Join(root, "owned & instance"), Binary: "/private/aios", Label: "dev.aios.completion.fixture"})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -258,5 +261,55 @@ func TestLaunchAgentsSymlinkRejectedBeforeServiceMutation(t *testing.T) {
 	info, _ := os.Stat(valid)
 	if info.Mode().Perm() != 0755 {
 		t.Fatal("existing service directory chmodded")
+	}
+}
+
+func TestLongDataRootUsesOwnedShortSocketWithoutAliases(t *testing.T) {
+	root := canonicalTemp(t)
+	data := filepath.Join(root, strings.Repeat("long-data-", 15), "data")
+	path, e := ControlPath(data)
+	if e != nil || len(path) > 100 || strings.HasPrefix(path, data) {
+		t.Fatalf("unbounded control path %q %v", path, e)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	o := Options{Root: root, DataDir: data, Label: "dev.aios.completion.long-root"}
+	if e = ServeControl(ctx, o, func() State { return State{Running: true, InstanceID: "stable-long-root"} }, func() string { return "http://127.0.0.1:1/#token=fixture" }); e != nil {
+		t.Fatal(e)
+	}
+	s, e := Control(o, "status")
+	if e != nil || s.InstanceID != "stable-long-root" {
+		t.Fatalf("long root control failed %v", e)
+	}
+	info, e := os.Stat(filepath.Dir(path))
+	if e != nil || info.Mode().Perm() != 0700 || !owned(info) {
+		t.Fatal("short socket root is not owner-only")
+	}
+	other, _ := ControlPath(data + "-other")
+	if other == path {
+		t.Fatal("data roots collide")
+	}
+	if e = os.Chmod(filepath.Dir(path), 0755); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = Control(o, "status"); e == nil {
+		t.Fatal("shared fallback control parent trusted")
+	}
+	os.Chmod(filepath.Dir(path), 0700)
+	fake := filepath.Join(root, "fake-control")
+	os.Symlink(filepath.Dir(path), fake)
+	if validateControlPath(filepath.Join(fake, "control.sock")) == nil {
+		t.Fatal("symlink control parent trusted")
+	}
+	absent := data + "-unconfigured"
+	missing, _ := ControlPath(absent)
+	if _, e = Control(Options{Root: root, DataDir: absent}, "status"); e == nil {
+		t.Fatal("missing control accepted")
+	}
+	if _, e = os.Stat(filepath.Dir(missing)); !os.IsNotExist(e) {
+		t.Fatal("status created a control directory")
+	}
+	if cleanupControl(data) == nil {
+		t.Fatal("cleanup removed running control")
 	}
 }

@@ -4,6 +4,8 @@ package lifecycle
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -16,6 +18,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -26,6 +29,7 @@ var labelPattern = regexp.MustCompile(`^dev\.aios\.[a-zA-Z0-9.-]{1,100}$`)
 type Options struct {
 	Root, DataDir, Binary, Label string
 	Managed                      bool
+	home                         string // injected only within this package's ownership tests
 }
 type Plan struct {
 	Scope        string `json:"scope"`
@@ -44,7 +48,11 @@ type State struct {
 }
 
 func Defaults(o Options) (Options, error) {
-	home, err := os.UserHomeDir()
+	home := o.home
+	var err error
+	if home == "" {
+		home, err = os.UserHomeDir()
+	}
 	if err != nil {
 		return o, err
 	}
@@ -100,7 +108,10 @@ func MakePlan(o Options) (Plan, error) {
 	if err != nil {
 		return Plan{}, err
 	}
-	home, err := os.UserHomeDir()
+	home := o.home
+	if home == "" {
+		home, err = os.UserHomeDir()
+	}
 	if err != nil {
 		return Plan{}, err
 	}
@@ -374,7 +385,14 @@ func Control(o Options, action string) (State, error) {
 	if action != "status" && action != "open" {
 		return State{}, fmt.Errorf("invalid control action")
 	}
-	conn, err := net.DialTimeout("unix", filepath.Join(o.DataDir, "daemon.sock"), time.Second)
+	controlPath, err := ControlPath(o.DataDir)
+	if err != nil {
+		return State{}, err
+	}
+	if err = validateControlPath(controlPath); err != nil {
+		return State{}, err
+	}
+	conn, err := net.DialTimeout("unix", controlPath, time.Second)
 	if err != nil {
 		return State{Restart: "aios daemon start"}, err
 	}
@@ -393,6 +411,79 @@ func Control(o Options, action string) (State, error) {
 	return s, err
 }
 
+// ControlPath respects macOS's104-byte Unix socket path limit without creating
+// symlink aliases for knowledge directories. The fallback directory is owner-only.
+func ControlPath(data string) (string, error) {
+	abs, err := filepath.Abs(data)
+	if err != nil {
+		return "", err
+	}
+	p := filepath.Join(abs, "daemon.sock")
+	if len(p) <= 100 {
+		return p, nil
+	}
+	base, err := filepath.EvalSymlinks("/tmp")
+	if err != nil {
+		return "", err
+	}
+	h := sha256.Sum256([]byte(abs))
+	short := filepath.Join(base, "aios-control-"+strconv.Itoa(os.Getuid())+"-"+hex.EncodeToString(h[:12]), "control.sock")
+	if len(short) > 100 {
+		return "", fmt.Errorf("canonical temporary control path exceeds native socket limit")
+	}
+	return short, nil
+}
+
+func validateControlPath(path string) error {
+	dir := filepath.Dir(path)
+	real, e := filepath.EvalSymlinks(dir)
+	if e != nil || real != dir {
+		return fmt.Errorf("control parent must be canonical")
+	}
+	info, e := os.Lstat(dir)
+	if e != nil {
+		return e
+	}
+	if !info.IsDir() || !owned(info) || info.Mode().Perm() != 0700 {
+		return fmt.Errorf("control parent must be owner-only")
+	}
+	info, e = os.Lstat(path)
+	if e != nil {
+		return e
+	}
+	if info.Mode()&os.ModeSocket == 0 || !owned(info) || info.Mode().Perm() != 0600 {
+		return fmt.Errorf("control endpoint must be an owned owner-only socket")
+	}
+	return nil
+}
+
+func cleanupControl(data string) error {
+	path, err := ControlPath(data)
+	if err != nil {
+		return err
+	}
+	if _, err = os.Lstat(path); err == nil {
+		if err = validateControlPath(path); err != nil {
+			return err
+		}
+		if conn, e := net.DialTimeout("unix", path, 200*time.Millisecond); e == nil {
+			conn.Close()
+			return fmt.Errorf("cannot remove running daemon control")
+		}
+		if err = os.Remove(path); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	if filepath.Dir(path) != data {
+		if err = os.Remove(filepath.Dir(path)); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	return nil
+}
+
 // ServeControl uses filesystem access as the local control authority. Capability
 // launch links travel only over this owner-only socket; never a public HTTP API.
 func ServeControl(ctx context.Context, o Options, status func() State, open func() string) error {
@@ -403,7 +494,15 @@ func ServeControl(ctx context.Context, o Options, status func() State, open func
 	if err = PrepareDir(o.DataDir); err != nil {
 		return err
 	}
-	path := filepath.Join(o.DataDir, "daemon.sock")
+	path, err := ControlPath(o.DataDir)
+	if err != nil {
+		return err
+	}
+	if filepath.Dir(path) != o.DataDir {
+		if err = PrepareDir(filepath.Dir(path)); err != nil {
+			return err
+		}
+	}
 	if info, e := os.Lstat(path); e == nil {
 		if info.Mode()&os.ModeSocket == 0 {
 			return fmt.Errorf("control path is not an owned socket")
@@ -426,9 +525,18 @@ func ServeControl(ctx context.Context, o Options, status func() State, open func
 		listener.Close()
 		return err
 	}
-	go func() { <-ctx.Done(); listener.Close() }()
+	var once sync.Once
+	closeControl := func() {
+		once.Do(func() {
+			listener.Close()
+			if filepath.Dir(path) != o.DataDir {
+				_ = os.Remove(filepath.Dir(path))
+			}
+		})
+	}
+	go func() { <-ctx.Done(); closeControl() }()
 	go func() {
-		defer listener.Close()
+		defer closeControl()
 		for {
 			conn, e := listener.Accept()
 			if e != nil {

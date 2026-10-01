@@ -327,6 +327,9 @@ func Uninstall(ctx context.Context, o Options, preserve bool) error {
 	if err = Stop(ctx, o); err != nil {
 		return err
 	}
+	if err = cleanupControl(v.DataDir); err != nil {
+		return err
+	}
 	if b, e := os.ReadFile(p.PlistPath); e == nil {
 		if string(b) != p.Plist {
 			return fmt.Errorf("service plist belongs to a different installation")

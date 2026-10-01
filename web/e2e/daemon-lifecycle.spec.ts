@@ -1,6 +1,5 @@
 import {test, expect} from "@playwright/test";
 import {spawn, execFileSync, type ChildProcess} from "node:child_process";
-import {createConnection} from "node:net";
 import {mkdtempSync, realpathSync, rmSync, readFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join, resolve} from "node:path";
@@ -26,15 +25,8 @@ async function launch(root: string) {
   } catch (error) {await stop(child); throw error;}
 }
 async function fresh(root: string): Promise<string> {
-  return new Promise((done, fail) => {
-    const socket = createConnection(join(root, "data", "daemon.sock"));
-    let bytes = "";
-    socket.setTimeout(3000, () => {socket.destroy(); fail(new Error("Control timeout"));});
-    socket.on("connect", () => socket.end(JSON.stringify({action: "open"})));
-    socket.on("data", chunk => {bytes += chunk;});
-    socket.on("error", fail);
-    socket.on("end", () => {try {done(JSON.parse(bytes).url);} catch (e) {fail(e);}});
-  });
+  return JSON.parse(execFileSync(process.env.AIOS_UI_BINARY || resolve("../bin/aios"),
+    ["daemon", "link", "--root", root], {timeout: 5000}).toString()).url;
 }
 
 test("real headless daemon survives browser closure, restarts identity and stops from UI", async ({page, context}) => {

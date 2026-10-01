@@ -72,6 +72,12 @@ func runDaemon(ctx context.Context, args []string) error {
 		}
 		s.URL = ""
 		return writeJSON(s)
+	case "link":
+		s, e := lifecycle.Control(o, "open")
+		if e != nil {
+			return fmt.Errorf("daemon unavailable; start it before requesting a private launch link")
+		}
+		return writeJSON(s)
 	case "run":
 		return serveDaemon(ctx, o)
 	default:
