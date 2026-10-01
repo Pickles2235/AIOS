@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "tested_commit": "4161f0b9a28113f82fa1484527b2e867fe1e6642",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "passed": true,
+  "same_semantic_fingerprint": true,
+  "runs": [
+    {
+      "output": "/workspace/scratch/aios-baseline-acceptance-a/acceptance-report.json",
+      "report_sha256": "368b8a3168e62e0fd249ab91cf488de8c673c6fbcc2c0ee21f5de37922093db7",
+      "disposition": "accepted",
+      "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+      "cases_passed": 12,
+      "command": [
+        "make",
+        "acceptance-v1",
+        "ACCEPTANCE_OUTPUT=/workspace/scratch/aios-baseline-acceptance-a"
+      ],
+      "exit_code": 0
+    },
+    {
+      "output": "/workspace/scratch/aios-baseline-acceptance-b/acceptance-report.json",
+      "report_sha256": "964dbc7f4bd4083e7f9f852cdef300f2534d926060533fd65673332467f64093",
+      "disposition": "accepted",
+      "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+      "cases_passed": 12,
+      "command": [
+        "make",
+        "acceptance-v1",
+        "ACCEPTANCE_OUTPUT=/workspace/scratch/aios-baseline-acceptance-b"
+      ],
+      "exit_code": 0
+    }
+  ]
+}

@@ -19,7 +19,7 @@ Baseline: `2e24f0c` (fetched `origin/main`, 2026-10-01).
 
 ## Progress
 
-In progress. Read AGENTS, current/legacy harness contracts, queue, plan and code/tests.
+Portable implementation and validation finished. Read AGENTS, current/legacy harness contracts, queue, plan and code/tests.
 Implemented generic defaults/docs/CI and rebuilt live UI branding assets. Independent
 review session `/root/baseline_reviewer` is inspecting boundaries separately.
 
@@ -69,17 +69,27 @@ Final native proof remains mandatory for task15; no scoped Linux check proves it
 
 ## Independent review
 
-Actual separate reviewer: `/root/baseline_reviewer`; formal reviewed commit/report pending.
+Actual separate reviewer: `/root/baseline_reviewer`; report `.codex/completion/evidence/01-baseline-review.json`
+passes implementation `4161f0b9a28113f82fa1484527b2e867fe1e6642` with zero blocking findings.
 Reviewer already audited current code and flagged stale security/default/generator
 claims, now corrected. No self-review substituted for required independent review.
 
 ## Blockers
 
 CLI launcher authentication blocks the child process, not this existing coding session.
-Actual main publication and formal core/browser gates remain to verify. Native final
+Formal core/browser gates pass. Default Git push failed (no username/credential
+helper; LFS pre-push cannot authenticate). Existing `gh` is authenticated as the
+repository owner; checking per-command helper/exact Git API publication next. Native final
 hardware is unavailable; not an excuse to skip remaining portable implementation.
 
 ## Handoff
 
-Pending validated implementation SHA, formal receipts, corrected-commit review and
-verified main publication. Continue task02 after predecessor evidence permits it.
+Tested implementation: `4161f0b9a28113f82fa1484527b2e867fe1e6642` (includes baseline
+commit `0ddb3947c503eb9072feb0dc06f6897081a1ec9f`). Formal passing evidence:
+`.codex/completion/evidence/01-baseline-core.json`, `01-baseline-web.json`,
+`01-baseline-acceptance.json`. Two fresh acceptance runs each pass all 12 cases;
+fingerprint `f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea`.
+Core receipt runs `make harness-validate` (exit 0, 9.7s); web receipt runs
+`make harness-validate-web` (exit 0, 20.6s), 27 unit/16 browser cases. Both clean
+Linux x86_64 at the exact implementation commit. Separate review passes; publication pending;
+continue task02 only after predecessor evidence permits it.

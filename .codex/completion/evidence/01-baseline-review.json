@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "/root/baseline_reviewer",
+  "reviewed_commit": "4161f0b9a28113f82fa1484527b2e867fe1e6642",
+  "milestone": "01-baseline-contract",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "checks_performed": [
+    "Independently read AGENTS.md, PRODUCT.md, ACCEPTANCE.md, MISSION.md, REVIEWER.md and the baseline milestone plan; inspected implementation and tests before the implementation commit and reviewed the full corrected diff from 2e24f0c to 4161f0b9a28113f82fa1484527b2e867fe1e6642.",
+    "Audited all R01-R26 BASELINE-MAP.md rows against actual code and asserted that all referenced named tests exist. Confirmed explicit gaps for dirty/untracked Direct capture, credential helpers, durable scheduling, native lifecycle/namespace, upgrades, redaction, browser intent parity, volumetric UI and final installed-artifact acceptance.",
+    "Verified generic 1-100 inventory bounds, empty default include policy, explicit caller scope preservation, single-source example catalog and AgentOS default identity with saved identity/settings preservation. Independently ran five inventory generation tests and two public product contract tests successfully.",
+    "Independently ran go test for internal/catalog, store, planner, knowledge, mirror, adapter and webui on the corrected source: all passed. Inspected canonical generation/projection, source nonmutation, stale-handle, coverage and read-only browser/MCP boundaries; the implementation preserves those packages rather than replacing them.",
+    "Found the initial formal core failure caused by a regression test demanding obsolete No checks plan text; requested repair, reviewed the corrected fresh queue fixture semantics and independently reran all 14 completion harness tests successfully.",
+    "Verified the passing clean-product-tree scoped core receipt for the reviewed commit and its raw log SHA256. The executed make harness-validate gate includes Python contracts, Go tests/vet/race/build. Reviewed earlier failed receipt separately; it is not counted as passing evidence.",
+    "Verified the passing clean-product-tree web receipt for the reviewed commit and its raw log SHA256: unit tests, production UI build and 16 live browser E2E cases including real authenticated mirror/local fixture capture, source evidence, identity/restart and source nonmutation. Inspected the Make prerequisite that builds embedded production assets and the backend before E2E.",
+    "Checked that embedded HTML asset references exist, rebuilt production JavaScript contains AgentOS onboarding copy, and current UI/default/docs no longer contain Homefold branding. Inspected live React entry-point changes and existing browser test assertions; this review does not certify later polished volumetric/GPU requirements.",
+    "Verified two fresh hermetic acceptance reports cite the reviewed commit, each accepted all 12 cases, and share semantic fingerprint f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea. Reports truthfully mark Linux x86_64 with optional native vectors unavailable.",
+    "Ran git diff --check on the complete corrected diff successfully. Confirmed Apple Silicon-only product packaging in CI, explicit Linux developer-smoke labeling, optional generic reviewed-corpus validation and no new runtime LLM connection or weakened final gates."
+  ],
+  "nonblocking_findings": [
+    "Approval is limited to the baseline reconciliation milestone; assembled product readiness remains unproven and all mapped later implementation gates remain required.",
+    "No Darwin arm64 execution was available to this reviewer. Launchd, login Git authentication, namespaced URL routing, wake/power behavior, native vectors/GPU, installed upgrades and declared native scale proof remain pending final acceptance, as explicitly recorded by the implementer."
+  ],
+  "evidence": [
+    ".codex/completion/evidence/01-baseline-core.json",
+    ".codex/completion/evidence/01-baseline-web.json",
+    ".codex/completion/evidence/01-baseline-acceptance.json"
+  ]
+}

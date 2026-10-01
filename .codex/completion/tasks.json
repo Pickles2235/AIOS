@@ -18,10 +18,10 @@
       "gates": [
         "core"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/01-baseline-contract.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/01-baseline-review.json",
       "product_gates": [
         "core"
       ]

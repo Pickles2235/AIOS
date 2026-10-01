@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "gate": "core",
+  "milestone": "01-baseline-contract",
+  "tested_commit": "4161f0b9a28113f82fa1484527b2e867fe1e6642",
+  "clean_product_tree": true,
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "timestamp": 1790869409.6874807,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "harness-validate"
+      ],
+      "exit_code": 0,
+      "seconds": 9.698593616485596,
+      "log_sha256": "5ebb58a2c3858f07701c23e68e7b83f85343cd421ad88680c5f2c062ec7b286a"
+    }
+  ]
+}
