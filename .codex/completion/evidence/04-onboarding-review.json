@@ -32,6 +32,29 @@
     ".codex/completion/evidence/04-onboarding-native-step.json",
     "/workspace/scratch/aios-onboarding-evidence/start-4cab-core-0.log",
     "/workspace/scratch/aios-onboarding-evidence/start-4cab-web-0.log",
-    "/workspace/scratch/aios-onboarding-evidence/start-4cab-onboarding-0.log"
+    "/workspace/scratch/aios-onboarding-evidence/start-4cab-onboarding-0.log",
+    ".codex/completion/evidence/04-onboarding-native.json",
+    ".codex/completion/evidence/04-daemon-native.json",
+    ".codex/completion/evidence/04-onboarding-native-ci.json"
+  ],
+  "native_provenance_addenda": [
+    {
+      "verified_date_utc": "2026-10-01",
+      "session_id": "/root/baseline_reviewer",
+      "reviewed_commit": "4cab95f464761b26456b360197437f71153d5a07",
+      "supersedes": "The original review's pending completion/download status for run36919253078 and its current-source native reports. All later milestone15 final-candidate obligations and arbitrary-client compatibility limitations remain.",
+      "workflow_run": 36919253078,
+      "job_id": 110560882820,
+      "artifact_id": 11192101704,
+      "artifact_sha256": "455bfe8613ca8e4c8a7d701069c4e832a1e76dc59165660702f8b50c44f767ec",
+      "checks_performed": [
+        "Independently fetched completed workflow jobs: Apple Silicon job110560882820 concludes success, including installed onboarding, deterministic acceptance, native candidate first run and disposable launchd/ZIP daemon checks. Independently fetched artifact metadata11192101704 and verified the actual downloaded ZIP bytes against its GitHub SHA256455bfe8613ca8e4c8a7d701069c4e832a1e76dc59165660702f8b50c44f767ec.",
+        "Compared actual artifact onboarding-native.json and daemon-native.json with the retained evidence copies; they match exactly and bind tested source4cab95f464761b26456b360197437f71153d5a07, Darwinarm64 and passed:true. Onboarding attests actual external helper/TLS auth and mode-preserving auth failure, last-good evidence, real Chromium named-origin migration/recovery, CLI and UI Stop/restart, source nonmutation and owned delete-data cleanup. Daemon smoke attests checksummed ZIP install, headless launchd, space-containing paths, foreign-root Stop rejection, identity restart, native open and preserve-data uninstall; source inspection confirms final delete-data cleanup must also succeed.",
+        "Inspected actual artifact environment capture: macOS15.7.9 Darwinarm64,3CPUs and7516192768memory bytes, source4cab95f. Two fresh native and installed offline acceptance reports all accept14cases including bundled-vector routes and missing-vector fallback cases; both fresh semantic fingerprints match6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a. Installed binary capture records Mach-O arm64, clean Go VCS source4cab95f and SHA25672ea035dafb370bc6d9f61ec255f0a6e2eb1c378b9bee48c35fbb969bfd9aab7. The legacy first-run packaging flow is separately identified from the ZIP installed by the onboarding smoke, although both test the same source.",
+        "Independently fetched completed native job logs, observed22real browser cases passing and verified the retained native job log hash893304a0d657616e76df2d330bf0a927dbda9ef9c1c654d80134325714c17c3c against its CI receipt. No task05 source changes were reviewed or incorporated into this task04 provenance addendum."
+      ],
+      "final_candidate_approval": false,
+      "remaining_scope": "Full assembled final native gates on one release source/artifact, sustained/reference budgets, login/reboot, manual/GPU visual and accessibility checks, upgrade/rollback and full final packaging attribution remain milestone15 requirements. Current engineering milestone verdict and reviewed source are unchanged."
+    }
   ]
 }

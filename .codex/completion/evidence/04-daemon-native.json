@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "tested_commit": "4cab95f464761b26456b360197437f71153d5a07",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "purpose": "milestone_daemon_smoke",
+  "passed": true,
+  "checks": [
+    "checksummed_zip_install",
+    "native_headless_launchd",
+    "service_path_with_spaces",
+    "foreign_root_stop_rejected",
+    "native_stop_start_identity",
+    "native_browser_open",
+    "preserve_data_uninstall"
+  ]
+}

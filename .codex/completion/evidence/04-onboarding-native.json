@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "tested_commit": "4cab95f464761b26456b360197437f71153d5a07",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "purpose": "milestone_native_onboarding",
+  "passed": true,
+  "namespace_client": "real_chromium_browser",
+  "client_compatibility": "Default Python getaddrinfo previously rejected LocalOnly names; actual browser resolution is required here. Arbitrary HTTP client compatibility is not certified.",
+  "checks": [
+    "actual_launchd_external_helper_tls_auth",
+    "noninteractive_login_context",
+    "auth_failure_direct_remediation_mode_unchanged",
+    "auth_failure_retains_last_good",
+    "native_named_origin_authenticated",
+    "old_name_to_new_name_capability_migration",
+    "localhost_recovery",
+    "namespace_identity_restart",
+    "native_ui_stop_restart",
+    "source_nonmutation"
+  ]
+}

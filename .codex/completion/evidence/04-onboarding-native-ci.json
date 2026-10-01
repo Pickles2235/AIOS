@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "purpose": "milestone_native_onboarding_ci",
+  "tested_commit": "4cab95f464761b26456b360197437f71153d5a07",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "hardware": {
+    "os_version": "15.7.9",
+    "logical_cpus": 3,
+    "memory_bytes": 7516192768
+  },
+  "workflow_run": 36919253078,
+  "job_id": 110560882820,
+  "workflow_url": "https://github.com/Pickles2235/AIOS/actions/runs/36919253078",
+  "job_conclusion": "success",
+  "artifact_id": 11192101704,
+  "artifact_sha256": "455bfe8613ca8e4c8a7d701069c4e832a1e76dc59165660702f8b50c44f767ec",
+  "job_log_sha256": "893304a0d657616e76df2d330bf0a927dbda9ef9c1c654d80134325714c17c3c",
+  "native_reports": [
+    "04-onboarding-native.json",
+    "04-daemon-native.json"
+  ],
+  "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+  "fresh_acceptance_runs": 2,
+  "installed_offline_acceptance": "accepted",
+  "full_release_gates": false
+}
