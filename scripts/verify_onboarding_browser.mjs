@@ -37,14 +37,22 @@ try {
   await open(cli("daemon","link","--root",args.root,"--recovery").url);
   if(new URL(page.url()).hostname!=="localhost")throw new Error("recovery origin changed");
   if((await api("/api/v1/namespace")).namespace!==args.name+"-next")throw new Error("recovery renamed namespace");
-  stage="native_restart";
+  stage="native_restart_status";
   const identity=cli("daemon","status","--root",args.root).instance_id;
+  stage="native_restart_stop";
   cli("daemon","stop","--root",args.root);
+  stage="native_restart_start";
   if(cli("daemon","start","--root",args.root).instance_id!==identity)throw new Error("restart identity changed");
-  await open(cli("daemon","link","--root",args.root).url);
+  stage="native_restart_link";
+  const restartedLink=cli("daemon","link","--root",args.root).url;
+  stage="native_restart_named_origin";
+  await open(restartedLink);
+  stage="native_restart_hostname";
   if(new URL(page.url()).hostname!==args.name+"-next.local")throw new Error("restart fell back to recovery");
+  stage="native_restart_namespace";
   const restored=await api("/api/v1/namespace");
   if(!restored.active||!restored.native_dns_sd||restored.namespace!==args.name+"-next")throw new Error("native name not restored");
+  stage="native_restart_knowledge";
   if((await api("/api/v1/query",{repository:"fixture",text:"Worker"})).status!=="found")throw new Error("restart lost knowledge");
   process.stdout.write(JSON.stringify({passed:true,client:"real_chromium_browser",checks:["installed_named_origin_authenticated","old_name_to_new_name_capability_migration","localhost_recovery","active_native_namespace_identity_knowledge_restart"]})+"\n");
 } catch(error) {
