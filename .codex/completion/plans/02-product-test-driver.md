@@ -39,3 +39,5 @@ After formal checks/review and exact publication, continue 03-daemon-install. DR
 ## Formal evidence
 
 Tested source `ed3d3f3ce99dd6d45d1ad0d4bab90b7e0ddd911c`: passing core, web and scoped bootstrap receipts at `evidence/02-driver-{core,web,bootstrap}.json`. Live missing-privacy probe returns 1 with two actual failed scenarios; native install returns 1 with an explicit Linux hardware block. Both negative reports retained; neither claims product success. Raw logs remain `/workspace/scratch/aios-driver-evidence`. The first web gate lost its log after premature evidence movement; its receipt failed; rerun completed with valid receipt. Collect raw receipts outside the checkout before copying evidence, because Go VCS dirt includes evidence files.
+
+Publication: exact implementation and evidence commits ed3d3f3ce99dd6d45d1ad0d4bab90b7e0ddd911c and 049a024ae6306b224a1656aaabab43798ccd5400 verified reachable from fetched origin/main. Fast-forward Git API publication used existing configured gh auth, no force. Raw upload verification /workspace/scratch/aios-driver-publish.log. Mark complete only after verification.

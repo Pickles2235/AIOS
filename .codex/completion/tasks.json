@@ -43,9 +43,9 @@
       "gates": [
         "core"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/02-product-test-driver.md",
-      "completion_commit": null,
+      "completion_commit": "ed3d3f3ce99dd6d45d1ad0d4bab90b7e0ddd911c",
       "review": ".codex/completion/evidence/02-driver-review.json",
       "product_gates": [
         "core"
