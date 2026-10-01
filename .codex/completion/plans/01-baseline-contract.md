@@ -19,7 +19,7 @@ Baseline: `2e24f0c` (fetched `origin/main`, 2026-10-01).
 
 ## Progress
 
-Portable implementation and validation finished. Read AGENTS, current/legacy harness contracts, queue, plan and code/tests.
+Completed: portable implementation, real gates, independent review and exact publication verified. Read AGENTS, current/legacy harness contracts, queue, plan and code/tests.
 Implemented generic defaults/docs/CI and rebuilt live UI branding assets. Independent
 review session `/root/baseline_reviewer` is inspecting boundaries separately.
 
@@ -79,7 +79,13 @@ claims, now corrected. No self-review substituted for required independent revie
 CLI launcher authentication blocks the child process, not this existing coding session.
 Formal core/browser gates pass. Default Git push failed (no username/credential
 helper; LFS pre-push cannot authenticate). Existing `gh` is authenticated as the
-repository owner; checking per-command helper/exact Git API publication next. Native final
+repository owner. Per-command helper plus disabled unsupported LFS locking still
+returned upload HTTP 401. Used raw `gh api` Git object endpoints instead: uploaded
+exact blobs/trees/commits with original authors/committers/timestamps/messages,
+verified every object SHA, rechecked remote head and updated main with `force=false`.
+`git fetch origin main` verifies published `360be7ce0b4f3d1559a8f1327d8e71731ee78315`;
+reviewed source `4161f0b9a28113f82fa1484527b2e867fe1e6642` is its ancestor.
+No remaining portable milestone01 blocker. Native final proof remains pending. Native final
 hardware is unavailable; not an excuse to skip remaining portable implementation.
 
 ## Handoff
@@ -91,5 +97,8 @@ commit `0ddb3947c503eb9072feb0dc06f6897081a1ec9f`). Formal passing evidence:
 fingerprint `f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea`.
 Core receipt runs `make harness-validate` (exit 0, 9.7s); web receipt runs
 `make harness-validate-web` (exit 0, 20.6s), 27 unit/16 browser cases. Both clean
-Linux x86_64 at the exact implementation commit. Separate review passes; publication pending;
-continue task02 only after predecessor evidence permits it.
+Linux x86_64 at the exact implementation commit. Separate review and publication pass. Marked completed only after real fetched-main
+ancestry verification. Next: task02 executable product scenario driver. Preserve
+private logs/toolchains in workspace scratch; use the recorded PATH for local checks.
+Exact-Git publication helper is `/workspace/scratch/publish-aios-exact.py`; it refuses
+changed trunk/object-hash mismatches and never forces a ref update.

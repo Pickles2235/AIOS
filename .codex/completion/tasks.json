@@ -18,9 +18,9 @@
       "gates": [
         "core"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/01-baseline-contract.md",
-      "completion_commit": null,
+      "completion_commit": "4161f0b9a28113f82fa1484527b2e867fe1e6642",
       "review": ".codex/completion/evidence/01-baseline-review.json",
       "product_gates": [
         "core"
