@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentOS product scenario report",
+  "type": "object",
+  "required": ["schema_version", "gate", "milestone", "purpose", "tested_commit", "platform", "architecture", "native_required", "clean_product_tree", "passed", "scenarios"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "gate": {"enum": ["install", "onboarding", "maintenance", "upgrade", "privacy", "resources", "retrieval", "cloud", "benchmark", "scale", "release"]},
+    "milestone": {"type": ["string", "null"]},
+    "purpose": {"enum": ["product", "driver_fixture"]},
+    "tested_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "platform": {"type": "string"},
+    "architecture": {"type": "string"},
+    "native_required": {"type": "boolean"},
+    "clean_product_tree": {"type": "boolean"},
+    "passed": {"type": "boolean"},
+    "timestamp": {"type": "number"},
+    "blocked": {"type": "string"},
+    "dispatcher_error": {"type": "string"},
+    "error_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "binary": {
+      "type": "object",
+      "required": ["sha256", "source_commit", "vcs_modified"],
+      "properties": {
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "vcs_modified": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["test", "result", "seconds", "assertions"],
+        "properties": {
+          "test": {"type": "string", "pattern": "^test_"},
+          "result": {"enum": ["pass", "fail", "error", "blocked"]},
+          "seconds": {"type": "number", "minimum": 0},
+          "assertions": {"type": "integer", "minimum": 0},
+          "error_type": {"type": "string"},
+          "error_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "measurements": {"type": "array", "items": {"type": "object", "additionalProperties": {"type": "number"}}}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "allOf": [{
+    "if": {"properties": {"passed": {"const": true}}},
+    "then": {
+      "properties": {
+        "clean_product_tree": {"const": true},
+        "scenarios": {"minItems": 1, "items": {"properties": {"result": {"const": "pass"}, "assertions": {"minimum": 1}}}}
+      },
+      "not": {"anyOf": [{"required": ["blocked"]}, {"required": ["dispatcher_error"]}]}
+    }
+  }],
+  "additionalProperties": false
+}

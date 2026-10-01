@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "gates": {
+    "install": [
+      {
+        "test": "test_bundled_assets",
+        "requirements": [
+          "R02"
+        ],
+        "milestones": [
+          "03-daemon-install"
+        ]
+      },
+      {
+        "test": "test_daemon_lifecycle_plan",
+        "requirements": [
+          "R11"
+        ],
+        "milestones": [
+          "03-daemon-install"
+        ]
+      },
+      {
+        "test": "test_native_install_headless",
+        "requirements": [
+          "R02",
+          "R11"
+        ],
+        "milestones": [
+          "15-release-candidate"
+        ]
+      }
+    ],
+    "onboarding": [
+      {
+        "test": "test_onboarding_exclusive_mode",
+        "requirements": [
+          "R03"
+        ],
+        "milestones": [
+          "04-onboarding-namespace"
+        ]
+      },
+      {
+        "test": "test_branding_namespace_scope",
+        "requirements": [
+          "R03",
+          "R12"
+        ],
+        "milestones": [
+          "04-onboarding-namespace"
+        ]
+      },
+      {
+        "test": "test_build_staging_activity",
+        "requirements": [
+          "R04"
+        ],
+        "milestones": [
+          "04-onboarding-namespace"
+        ]
+      },
+      {
+        "test": "test_native_git_namespace",
+        "requirements": [
+          "R05",
+          "R12"
+        ],
+        "milestones": [
+          "15-release-candidate"
+        ]
+      }
+    ],
+    "maintenance": [
+      {
+        "test": "test_dirty_untracked_capture",
+        "requirements": [
+          "R07"
+        ],
+        "milestones": [
+          "05-maintained-repositories"
+        ]
+      },
+      {
+        "test": "test_durable_scheduler_recovery",
+        "requirements": [
+          "R06",
+          "R08"
+        ],
+        "milestones": [
+          "05-maintained-repositories"
+        ]
+      },
+      {
+        "test": "test_remove_purge_rebuild",
+        "requirements": [
+          "R09",
+          "R10"
+        ],
+        "milestones": [
+          "06-repo-management"
+        ]
+      },
+      {
+        "test": "test_native_wake_reconciliation",
+        "requirements": [
+          "R08"
+        ],
+        "milestones": [
+          "15-release-candidate"
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "test": "test_upgrade_compatibility",
+        "requirements": [
+          "R13"
+        ],
+        "milestones": [
+          "07-atomic-upgrades"
+        ]
+      },
+      {
+        "test": "test_upgrade_fault_rollback",
+        "requirements": [
+          "R13"
+        ],
+        "milestones": [
+          "07-atomic-upgrades"
+        ]
+      },
+      {
+        "test": "test_uninstall_preserve_delete",
+        "requirements": [
+          "R26"
+        ],
+        "milestones": [
+          "07-atomic-upgrades"
+        ]
+      },
+      {
+        "test": "test_native_supported_upgrade",
+        "requirements": [
+          "R13",
+          "R26"
+        ],
+        "milestones": [
+          "15-release-candidate"
+        ]
+      }
+    ],
+    "privacy": [
+      {
+        "test": "test_redaction_before_persistence",
+        "requirements": [
+          "R23"
+        ],
+        "milestones": [
+          "08-local-observability"
+        ]
+      },
+      {
+        "test": "test_diagnostic_archive_policy",
+        "requirements": [
+          "R24"
+        ],
+        "milestones": [
+          "08-local-observability"
+        ]
+      }
+    ],
+    "resources": [
+      {
+        "test": "test_resource_policy_fairness",
+        "requirements": [
+          "R14"
+        ],
+        "milestones": [
+          "09-resource-policy"
+        ]
+      },
+      {
+        "test": "test_native_power_load",
+        "requirements": [
+          "R14",
+          "R25"
+        ],
+        "milestones": [
+          "15-release-candidate"
+        ]
+      }
+    ],
+    "retrieval": [
+      {
+        "test": "test_investigation_history_copy",
+        "requirements": [
+          "R15",
+          "R16",
+          "R17"
+        ],
+        "milestones": [
+          "10-investigation-search"
+        ]
+      },
+      {
+        "test": "test_reviewed_gold_corpus",
+        "requirements": [
+          "R15"
+        ],
+        "milestones": [
+          "10-investigation-search"
+        ]
+      }
+    ],
+    "cloud": [
+      {
+        "test": "test_volumetric_browser",
+        "requirements": [
+          "R18",
+          "R19",
+          "R20"
+        ],
+        "milestones": [
+          "11-volumetric-cloud"
+        ]
+      },
+      {
+        "test": "test_contextual_modules_browser",
+        "requirements": [
+          "R21"
+        ],
+        "milestones": [
+          "12-contextual-modules"
+        ]
+      },
+      {
+        "test": "test_native_gpu_evidence",
+        "requirements": [
+          "R19",
+          "R20",
+          "R25"
+        ],
+        "milestones": [
+          "15-release-candidate"
+        ]
+      }
+    ],
+    "benchmark": [
+      {
+        "test": "test_benchmark_isolation_parity",
+        "requirements": [
+          "R22"
+        ],
+        "milestones": [
+          "13-benchmark-lab"
+        ]
+      },
+      {
+        "test": "test_benchmark_losses_unknown",
+        "requirements": [
+          "R22"
+        ],
+        "milestones": [
+          "13-benchmark-lab"
+        ]
+      }
+    ],
+    "scale": [
+      {
+        "test": "test_mixed_dense_fixtures",
+        "requirements": [
+          "R01",
+          "R25"
+        ],
+        "milestones": [
+          "14-scale-performance"
+        ]
+      },
+      {
+        "test": "test_native_scale_soak",
+        "requirements": [
+          "R25"
+        ],
+        "milestones": [
+          "15-release-candidate"
+        ]
+      }
+    ],
+    "release": [
+      {
+        "test": "test_release_manifest_checksums",
+        "requirements": [
+          "R02",
+          "R26"
+        ],
+        "milestones": [
+          "15-release-candidate"
+        ]
+      },
+      {
+        "test": "test_native_installed_candidate",
+        "requirements": [
+          "R02",
+          "R26"
+        ],
+        "milestones": [
+          "15-release-candidate"
+        ]
+      }
+    ]
+  }
+}

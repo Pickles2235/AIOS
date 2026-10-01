@@ -43,7 +43,7 @@
       "gates": [
         "core"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "plan": ".codex/completion/plans/02-product-test-driver.md",
       "completion_commit": null,
       "review": null,

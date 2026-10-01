@@ -76,3 +76,12 @@ harness-validate: harness-test
 	$(MAKE) build
 
 harness-validate-web: web-test web-build web-e2e
+
+COMPLETION_PRODUCT_GATES := install onboarding maintenance upgrade privacy resources retrieval cloud benchmark scale release
+.PHONY: $(addprefix completion-,$(COMPLETION_PRODUCT_GATES)) completion-milestone
+$(addprefix completion-,$(COMPLETION_PRODUCT_GATES)): build
+	python3 scripts/completion_driver.py $(patsubst completion-%,%,$@)
+
+completion-milestone:
+	@test -n "$(COMPLETION_MILESTONE)" -a -n "$(COMPLETION_GATE)" || (echo "COMPLETION_MILESTONE and COMPLETION_GATE are required" >&2; exit 2)
+	python3 scripts/completion_driver.py "$(COMPLETION_GATE)" --milestone "$(COMPLETION_MILESTONE)"
