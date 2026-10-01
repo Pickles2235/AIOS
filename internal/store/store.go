@@ -25,6 +25,17 @@ import (
 const DatabaseName = "index.db"
 const format = "knowledge-ir-v10"
 
+// Every pooled connection waits for short canonical read/write leases. SQLite's
+// busy handler may finish after context cancellation, but waits at most five
+// seconds; prolonged contention still fails without publishing partial state.
+func sqliteDSN(path string, readOnly bool) string {
+	query := url.Values{"_pragma": {"busy_timeout(5000)"}}
+	if readOnly {
+		query.Set("mode", "ro")
+	}
+	return "file:" + url.PathEscape(path) + "?" + query.Encode()
+}
+
 //go:embed schema.sql
 var schema string
 
@@ -271,7 +282,7 @@ func OpenWriter(dataDir string) (*Store, error) {
 			lock.close()
 			return nil, err
 		}
-		db, openErr := sql.Open("sqlite", path)
+		db, openErr := sql.Open("sqlite", sqliteDSN(path, false))
 		if openErr == nil {
 			db.SetMaxOpenConns(1)
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -300,7 +311,7 @@ func OpenWriter(dataDir string) (*Store, error) {
 		lock.close()
 		return nil, err
 	}
-	db, err := sql.Open("sqlite", path)
+	db, err := sql.Open("sqlite", sqliteDSN(path, false))
 	if err != nil {
 		lock.close()
 		return nil, err
@@ -363,7 +374,7 @@ func OpenReadOnly(dataDir string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	db, err := sql.Open("sqlite", "file:"+url.PathEscape(path)+"?mode=ro")
+	db, err := sql.Open("sqlite", sqliteDSN(path, true))
 	if err != nil {
 		return nil, err
 	}

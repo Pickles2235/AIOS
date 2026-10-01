@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -112,7 +111,7 @@ func backupMaintainedFormat(ctx context.Context, db *sql.DB, path string) error 
 	if closeErr != nil {
 		return closeErr
 	}
-	copy, err := sql.Open("sqlite", "file:"+url.PathEscape(temporary)+"?mode=ro")
+	copy, err := sql.Open("sqlite", sqliteDSN(temporary, true))
 	if err != nil {
 		return err
 	}
