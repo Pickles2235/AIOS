@@ -72,7 +72,7 @@ func TestControlFreshLinksStrictPayloadAndRestart(t *testing.T) {
 	if e != nil || info.Mode().Perm() != 0600 {
 		t.Fatal("insecure control socket")
 	}
-	for _, payload := range []string{`{"action":"status","extra":true}`, `{"action":"status"}{}`, `{"action":"unknown"}`, strings.Repeat("x", 2048)} {
+	for _, payload := range []string{`{"action":"status","extra":true}`, `{"action":"status"}{}`, `{"action":"unknown"}`, strings.Repeat("x", 2048), `{"action":"status"}` + strings.Repeat(" ", 1025) + `{}`} {
 		c, e := net.Dial("unix", filepath.Join(o.DataDir, "daemon.sock"))
 		if e != nil {
 			t.Fatal(e)

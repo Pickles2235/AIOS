@@ -2,6 +2,7 @@
 package lifecycle
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/xml"
@@ -439,7 +440,11 @@ func ServeControl(ctx context.Context, o Options, status func() State, open func
 				var in struct {
 					Action string `json:"action"`
 				}
-				decoder := json.NewDecoder(io.LimitReader(conn, 1025))
+				payload, e := io.ReadAll(io.LimitReader(conn, 1025))
+				if e != nil || len(payload) > 1024 {
+					return
+				}
+				decoder := json.NewDecoder(bytes.NewReader(payload))
 				decoder.DisallowUnknownFields()
 				if decoder.Decode(&in) != nil {
 					return

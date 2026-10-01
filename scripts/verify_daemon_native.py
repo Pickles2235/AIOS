@@ -66,6 +66,11 @@ def main():
                 cli(binary, 'uninstall', '--root', install, '--service-label', label, '--delete-data', '--json')
                 assert not install.exists()
     finally:
+        # An exception, including cleanup failure, must invalidate the retained
+        # artifact even if the earlier lifecycle assertions succeeded.
+        import sys
+        if sys.exc_info()[0] is not None:
+            report['passed'] = False
         args.output.write_text(json.dumps(report, indent=2) + '\n')
         args.output.chmod(0o600)
 
