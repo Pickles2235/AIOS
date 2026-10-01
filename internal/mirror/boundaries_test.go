@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 )
 
@@ -14,17 +15,26 @@ func TestLocalMirrorOwnsIndependentObjectFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 	run(t, source, "init", "-q", "--initial-branch=main")
+	// Native Git can launch background maintenance after commit. It is not
+	// part of this immutable object-inode fixture and must not race the walk.
+	run(t, source, "config", "gc.auto", "0")
+	run(t, source, "config", "maintenance.auto", "false")
 	if err = os.WriteFile(filepath.Join(source, "code.txt"), []byte("source object"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	run(t, source, "add", ".")
 	run(t, source, "-c", "user.name=fixture", "-c", "user.email=fixture@example.test", "commit", "-qm", "source")
 	var objects []string
+	objectName := regexp.MustCompile(`^[0-9a-f]{2}/[0-9a-f]{38}$`)
 	err = filepath.WalkDir(filepath.Join(source, ".git", "objects"), func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() {
+		rel, err := filepath.Rel(filepath.Join(source, ".git", "objects"), path)
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && objectName.MatchString(filepath.ToSlash(rel)) {
 			objects = append(objects, path)
 		}
 		return nil
