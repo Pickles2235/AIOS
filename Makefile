@@ -14,7 +14,7 @@ help:
 	@echo "make web-test Run web unit tests"
 	@echo "make web-e2e  Run browser UI regression tests"
 	@echo "make acceptance-v1 ACCEPTANCE_OUTPUT=/private/run Run hermetic V1 core acceptance"
-	@echo "make estate-acceptance-v1 ESTATE_CORPUS=/private/corpus.json ACCEPTANCE_OUTPUT=/private/run Run the private real-estate gate"
+	@echo "make estate-acceptance-v1 ESTATE_CORPUS=/private/corpus.json ACCEPTANCE_OUTPUT=/private/run Run optional reviewed-corpus validation"
 	@echo "make release VERSION=x.y.z OUTPUT_DIR=/private/releases Build minimal V1 archive"
 	@echo "make verify  Run formatting, vet, tests, race tests, and the normal build"
 
@@ -40,7 +40,8 @@ web-build:
 web-test:
 	npm --prefix web test
 
-web-e2e:
+web-e2e: web-build
+	$(MAKE) build
 	npm --prefix web run test:e2e
 
 acceptance-v1: build

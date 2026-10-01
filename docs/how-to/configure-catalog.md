@@ -49,8 +49,14 @@ This writes owner-only `catalog.json` and `mirrors.json` files beneath the data
 directory after confirming every remote/ref exists. `--skip-remote-check` is
 reserved for offline validation and is not a production bootstrap gate.
 
-AIOS clones and fetches only under its data directory; it never indexes local
-checkouts directly. Run synchronization from external cron every 15 minutes:
+Mirror mode clones and fetches only under its data directory. The existing Direct
+route captures clean committed local Git workspaces into immutable owned snapshots;
+compilation never reads mutable live files. Dirty/untracked capture and durable daemon
+scheduling are pending completion work. Include patterns are optional: the inventory
+generator has no language allowlist, and unsupported content remains explicit coverage.
+
+The current development CLI can synchronize mirrors from external cron every 15 minutes.
+This is manual tooling, not the planned daemon scheduler:
 
 ```sh
 */15 * * * * /absolute/path/aios mirrors sync --registry /private/agent-data/mirrors.json --data-dir /private/agent-data

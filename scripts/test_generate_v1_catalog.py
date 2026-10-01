@@ -27,17 +27,30 @@ class CatalogGenerationTest(unittest.TestCase):
         self.assertEqual(len(catalog["sources"]), 25)
         self.assertEqual(catalog["sources"][0]["kind"], "repository")
         self.assertEqual(registry["repositories"][0]["ref"], "refs/heads/main")
-        for extension in ("**/*.js", "**/*.jsx", "**/*.kt", "**/*.kts", "**/*.py"):
-            self.assertIn(extension, INCLUDE)
+        self.assertEqual(INCLUDE, [])
+        self.assertEqual(catalog["sources"][0]["include"], [])
         self.assertNotIn("root", catalog["sources"][0])
 
     def test_inventory_is_an_explicit_approval_guard(self):
-        with self.assertRaisesRegex(ValueError, "expected 25 approved repositories, found 24"):
-            build_outputs(inventory(24))
+        for count in (1, 3, 24, 25, 100):
+            with self.subTest(count=count):
+                catalog, registry = build_outputs(inventory(count))
+                self.assertEqual(len(catalog["sources"]), count)
+                self.assertEqual(len(registry["repositories"]), count)
+        for count in (0, 101):
+            with self.subTest(count=count), self.assertRaisesRegex(ValueError, "expected 1–100"):
+                build_outputs(inventory(count))
         value = inventory()
         value["repositories"][1]["id"] = value["repositories"][0]["id"]
         with self.assertRaisesRegex(ValueError, "duplicated"):
             build_outputs(value)
+
+    def test_explicit_scope_is_preserved_without_language_defaults(self):
+        value = inventory(1)
+        value["repositories"][0].update(include=["**/*.rs", "Cargo.toml"], exclude=["target/**"])
+        catalog, _ = build_outputs(value)
+        self.assertEqual(catalog["sources"][0]["include"], ["**/*.rs", "Cargo.toml"])
+        self.assertEqual(catalog["sources"][0]["exclude"], ["target/**"])
 
     def test_remote_ref_must_exist(self):
         with tempfile.TemporaryDirectory() as directory:

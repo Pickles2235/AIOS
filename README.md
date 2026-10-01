@@ -1,7 +1,14 @@
-# AIOS Repository Knowledge Engine
+# AgentOS V1 repository knowledge appliance
 
-This is a local-first, read-only repository knowledge engine. V1 compiles
-1–100 approved Git repository mirrors or clean local Git workspaces into canonical Knowledge IR.
+The approved product is a generic, local repository knowledge appliance for
+macOS Apple Silicon, with a headless per-user daemon and a browser UI. Its
+implementation is in progress: the [completion contract](.codex/completion/PRODUCT.md)
+and [baseline gap map](.codex/completion/BASELINE-MAP.md) distinguish requirements
+from delivered behaviour. No private repository estate or LLM connection is required.
+
+The current engine compiles 1–100 approved Git repository mirrors or clean local
+Git workspaces into canonical Knowledge IR. Linux and other platforms are development
+smoke environments; they do not verify the supported Apple Silicon product.
 
 It compiles an approved repository catalog into deterministic source, symbol,
 relationship, claim, and evidence records. It exposes them through bounded
@@ -43,8 +50,9 @@ make acceptance-v1 ACCEPTANCE_OUTPUT=/private/acceptance-run
 for later revision deltas. The acceptance target creates 25 local fixture
 remotes and runs the deterministic core on every supported platform; macOS
 arm64 additionally exercises the optional bundled vector runtime. Fixture
-acceptance proves the deterministic workflow, not readiness of the real
-25-repository estate; see [the acceptance handoff](docs/acceptance-handoff.md).
+acceptance proves the deterministic workflow. The assembled candidate requires all
+[completion gates](.codex/completion/ACCEPTANCE.md), including native installed-artifact
+evidence; see [the acceptance handoff](docs/acceptance-handoff.md).
 
 `serve` provides read-only `kb.*` MCP operations, including deterministic bounded
 query planning through `kb.query` and bounded architecture evidence through

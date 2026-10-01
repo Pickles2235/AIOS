@@ -18,7 +18,7 @@
       "gates": [
         "core"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "plan": ".codex/completion/plans/01-baseline-contract.md",
       "completion_commit": null,
       "review": null,

@@ -1,19 +1,10 @@
 {
   "version": 1,
   "sources": [
-    {"kind": "repository", "id": "repository-01", "include": ["**/*.ts", "**/*.tsx", "**/*.md", "package.json"], "exclude": ["coverage/**", "public/**"]},
-    {"kind": "repository", "id": "repository-02"}, {"kind": "repository", "id": "repository-03"},
-    {"kind": "repository", "id": "repository-04"}, {"kind": "repository", "id": "repository-05"},
-    {"kind": "repository", "id": "repository-06"}, {"kind": "repository", "id": "repository-07"},
-    {"kind": "repository", "id": "repository-08"}, {"kind": "repository", "id": "repository-09"},
-    {"kind": "repository", "id": "repository-10"}, {"kind": "repository", "id": "repository-11"},
-    {"kind": "repository", "id": "repository-12"}, {"kind": "repository", "id": "repository-13"},
-    {"kind": "repository", "id": "repository-14"}, {"kind": "repository", "id": "repository-15"},
-    {"kind": "repository", "id": "repository-16"}, {"kind": "repository", "id": "repository-17"},
-    {"kind": "repository", "id": "repository-18"}, {"kind": "repository", "id": "repository-19"},
-    {"kind": "repository", "id": "repository-20"}, {"kind": "repository", "id": "repository-21"},
-    {"kind": "repository", "id": "repository-22"}, {"kind": "repository", "id": "repository-23"},
-    {"kind": "repository", "id": "repository-24"}, {"kind": "repository", "id": "repository-25"}
+    {
+      "kind": "repository",
+      "id": "repository-01"
+    }
   ],
   "limits": {
     "max_file_bytes": 1048576,
@@ -21,5 +12,7 @@
     "max_total_bytes_per_repo": 268435456,
     "max_results": 100
   },
-  "vector": { "enabled": false }
+  "vector": {
+    "enabled": false
+  }
 }

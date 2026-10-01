@@ -21,36 +21,36 @@ runs have the same `semantic_fingerprint`. Timestamps, timings, generation IDs,
 and evidence handles are intentionally excluded from that fingerprint. Logs for
 failed commands are under the report directory's `logs` subdirectory.
 
-Fixture acceptance does not prove completeness or correctness of the real
-25-repository estate. Production readiness requires all of:
+Fixture acceptance proves only its generic 25-repository test corpus. Product
+catalogs accept 1–100 repositories; 25 is a benchmark size, never an installation
+prerequisite. The supported installable product is macOS Apple Silicon. Linux and
+other native targets provide developer smoke coverage only.
 
-- exactly 25 approved catalog entries with reviewed ownership and boundaries;
-- successful mirror sync at the intended revisions;
-- supported-language indexing and explicit coverage diagnostics;
-- healthy, generation-aligned required projections;
-- representative exact, lexical, graph, structural/path, vector, negative, and
-  architecture-slice checks with canonical evidence; and
-- a reviewed list of exclusions and unsupported content.
+Candidate readiness requires the full [completion acceptance contract](../.codex/completion/ACCEPTANCE.md):
+all native installed-artifact, lifecycle, UI, privacy, recovery, upgrade and scale
+gates at one tested revision, plus separate independent review. The hermetic engine
+gate alone cannot establish that readiness. No private or employer corpus is required.
+Missing coverage, ambiguity, budget exhaustion or projection gaps remain `unknown`;
+only complete supported coverage can establish `not_found`.
 
-Do not promote the production estate while any item is unverified. Missing
-coverage, ambiguity, budget exhaustion, or projection gaps must remain
-`unknown`; only complete supported coverage can establish `not_found`.
+## Optional reviewed-corpus validation
 
-## Private real-estate gate
-
-Keep the gold corpus outside the repository. It uses the benchmark fixture
-shape with exactly 25 repositories pinned to clean 40-character Git revisions
-and exactly 150 cases. Cases must be balanced at 30 each across exact,
-structural/locate, trace/cause, cross-repository/impact, and negative/unknown;
-every repository must be scoped by at least four cases.
+The historical `estate-acceptance-v1` target remains a generic opt-in regression
+tool. Keep the reviewed corpus outside the repository; it may use generic fixtures
+or voluntarily supplied repositories. It uses the benchmark fixture shape with
+25 repositories pinned to clean 40-character Git revisions and 150 cases, balanced
+at 30 each across exact, structural/locate, trace/cause, cross-repository/impact and
+negative/unknown; every repository is scoped by at least four cases. These fixed
+counts preserve this benchmark's useful thresholds; they do not constrain the product.
 
 ```sh
 make estate-acceptance-v1 \
-  ESTATE_CORPUS=/private/aios-v1-gold.json \
-  ACCEPTANCE_OUTPUT=/private/aios-v1-estate-run
+  ESTATE_CORPUS=/private/reviewed-gold.json \
+  ACCEPTANCE_OUTPUT=/private/reviewed-corpus-run
 ```
 
-The gate refuses dirty or revision-mismatched repositories, runs twice in
-separate data directories, checks the published thresholds, and requires an
-identical semantic fingerprint. Its report is privacy-safe: keep the private
-corpus and detailed benchmark reports under the controlled acceptance output.
+The gate refuses dirty or revision-mismatched repositories, runs twice in separate
+data directories, checks its existing thresholds and requires identical semantic
+fingerprints. Detailed reports stay in the owned output directory. Later Benchmark
+Lab work must report literal grep wins and wrong/unknown KB outcomes honestly;
+this legacy comparison gate is not a substitute for that product gate.

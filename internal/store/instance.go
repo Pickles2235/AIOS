@@ -107,7 +107,7 @@ func readInstance(dataDir string) (Instance, error) {
 		if _, err = rand.Read(b); err != nil {
 			return Instance{}, err
 		}
-		return Instance{ID: hex.EncodeToString(b), InstanceSettings: InstanceSettings{Name: "Homefold", SeedColour: "#5865f2"}}, nil
+		return Instance{ID: hex.EncodeToString(b), InstanceSettings: InstanceSettings{Name: "AgentOS", SeedColour: "#5865f2"}}, nil
 	}
 	if err != nil {
 		return Instance{}, err

@@ -31,7 +31,7 @@ The authenticated **Edit instance** form saves a name (1–80 printable characte
 a `#RRGGBB` seed colour, and an optional PNG/JPEG logo (256 KiB, up to 1024×1024).
 Remote URLs and SVG are rejected. An accessible initial represents a missing logo.
 Owner-only `instance.json` stores presentation metadata and a random stable ID,
-independent of canonical IR and projections. Existing data receives Homefold defaults
+independent of canonical IR and projections. Existing data receives AgentOS defaults
 on first UI launch; renames, restarts, ingestion, resets and rebuilds retain the ID.
 
 For first run, launch `aios ui serve --data-dir /absolute/owned-data` without

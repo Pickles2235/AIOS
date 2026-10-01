@@ -22,6 +22,8 @@ supported-negative, and unknown cases; negative-evidence accuracy; coverage
 completeness; and unknown rate. Treat a `not_found` as valid only when its
 coverage basis is complete. Results prove only their checked-in gold cases.
 
-For release readiness, use the private 150-case real-estate gate described in
-[`../acceptance-handoff.md`](../acceptance-handoff.md). The ordinary benchmark
-command does not by itself establish 25-repository readiness.
+An optional reviewed 25-repository, 150-case corpus can provide additional coverage;
+see [`../acceptance-handoff.md`](../acceptance-handoff.md). It may use generic fixtures
+or voluntarily supplied repositories. No private estate is a release prerequisite.
+The ordinary benchmark does not establish assembled-product readiness: the
+[completion acceptance contract](../../.codex/completion/ACCEPTANCE.md) defines that gate.

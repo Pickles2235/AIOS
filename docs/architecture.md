@@ -10,8 +10,9 @@ read-only owned snapshots first. Mutable user checkouts are never compilation in
 Every selection creates durable discovered, selected, source-delta, IR-staged,
 IR-activated, and projection/cache lifecycle events. Git tree/hash evidence is
 the authority for added, modified, renamed, and removed source; filesystem
-watchers are not authoritative. Per-repository queues serialize revisions while
-the catalog writer atomically activates a complete generation set.
+watchers are not authoritative. The catalog writer atomically activates a complete generation set. The existing
+in-memory reconciler invokes callbacks serially; durable background per-repository
+queues and daemon scheduling are pending completion work.
 
 Tree-sitter and optional JDK/TypeScript compiler helpers produce deterministic
 Java and TypeScript/TSX source facts. SQLite stores immutable Knowledge IR

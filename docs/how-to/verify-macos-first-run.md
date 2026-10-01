@@ -3,8 +3,10 @@
 Task 07 needs actual macOS arm64 evidence and operator observations. Linux tests,
 cross compilation and automated CI do not establish the complete manual first-run
 experience. Keep the task blocked until every required observation is recorded.
-Use a clean account or owned test directory and approved fixture repositories;
-production/private-estate readiness has its separate acceptance gate.
+This checklist belongs to the historical engine first-run task. It does not replace
+the expanded [installable-product acceptance](../../.codex/completion/ACCEPTANCE.md).
+Use a clean account or owned test directory and generic approved fixture repositories;
+no private estate is required.
 
 ## Native automated evidence
 
@@ -17,7 +19,7 @@ objects, then run `make harness-setup`. Review the candidate version; the CI-onl
 From a clean checkout of the reviewed commit:
 
 ```sh
-native_work=$(mktemp -d "$HOME/Library/Caches/homefold-native.XXXXXX")
+native_work=$(mktemp -d "$HOME/Library/Caches/aios-native.XXXXXX")
 native_work=$(cd "$native_work" && pwd -P)
 npm exec --prefix web -- playwright install chromium
 PLAYWRIGHT_CHANNEL=chromium ./scripts/verify-macos-first-run.sh \

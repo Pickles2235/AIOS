@@ -30,8 +30,8 @@ packages or change authentication. For browser tests, explicitly install the
 configured Chrome channel if absent: `cd web && npx playwright install chrome`.
 That command can require system package privileges. Acceptance outputs must be
 fresh, outside source repositories. Compare report `semantic_fingerprint` values.
-The private real-estate gate requires an external reviewed corpus; fixture results
-do not substitute for it. Linux cannot verify the Apple Silicon first-run UX.
+The optional reviewed-corpus gate uses supplied generic or user fixtures; it is
+not an installable-candidate prerequisite. Linux cannot verify the Apple Silicon first-run UX.
 
 ## Start one independent task
 

@@ -19,7 +19,7 @@ func TestInstanceLegacyPersistenceResetAndRebuild(t *testing.T) {
 	}
 	w.Close()
 	first, err := LoadInstance(dir)
-	if err != nil || first.Name != "Homefold" || first.ID == "" {
+	if err != nil || first.Name != "AgentOS" || first.ID == "" {
 		t.Fatalf("legacy default: %#v %v", first, err)
 	}
 	var b bytes.Buffer

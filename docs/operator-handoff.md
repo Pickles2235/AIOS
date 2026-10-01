@@ -2,11 +2,11 @@
 
 ## Release disposition
 
-The deterministic 25-repository fixture gate is the software acceptance gate.
-It does not assess the actual production repositories. Record production
-readiness separately using the checklist in
-[`acceptance-handoff.md`](acceptance-handoff.md); do not reuse fixture results as
-production evidence.
+The deterministic 25-repository fixture gate validates the current KB engine.
+Candidate readiness requires all [assembled-product gates](../.codex/completion/ACCEPTANCE.md)
+on the same Apple Silicon revision and installed artifact, plus independent review.
+No private repository estate is required. Optional reviewed corpora provide
+additional evidence only; do not present fixture results as universal correctness.
 
 ## Recovery
 
@@ -25,7 +25,9 @@ acceptance.
 
 ## Upgrade and rollback
 
-Install each archive into a new immutable directory and verify its adjacent
+Crash-safe binary/state upgrades are pending completion milestone 07. The current
+development archive has only a manual recovery procedure: install each archive into
+a new immutable directory and verify its adjacent
 `.sha256` file.
 Keep the prior binary and data directory until acceptance succeeds. Roll back
 by restoring both prior pointers; source repositories are never modified.

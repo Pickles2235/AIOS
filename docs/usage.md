@@ -1,8 +1,14 @@
 # Install and operate V1
 
-Requirements are Go 1.25, CGO with a C compiler, Git, Node/npm for rebuilding
-the UI, and Java/Node/TypeScript only when compiler-level coverage is desired.
-No runtime service is required.
+The supported installable product targets macOS Apple Silicon. Installer/launchd,
+headless lifecycle and transactional updates are pending completion milestones 03
+and 07; the commands here describe current development archives, not a finished installer.
+
+Building from source requires Go 1.25+, CGO with a C compiler, Git and Node/npm.
+A built archive bundles the UI and local assets; Go/npm/C tools are not runtime
+requirements. Machine Git is used for repository capture. Java/Node/TypeScript
+are optional compiler coverage, with explicit diagnostics when unavailable. No
+cloud service, Codex installation or LLM connection is a product dependency.
 
 Build a release archive:
 
@@ -12,8 +18,8 @@ npm ci --prefix web
 (cd /private/releases && shasum -a 256 -c aios-1.0.0-*.sha256)
 ```
 
-On Windows, run `scripts/build-v1-release.ps1 -Version 1.0.0 -OutputDir C:\releases`
-and verify the adjacent `.sha256` file with `Get-FileHash`.
+Other-platform archive scripts remain developer smoke tooling, not supported
+installable-product releases.
 
 Extract the archive into a new immutable installation directory. Keep the
 previous directory until acceptance succeeds, then point the operator's stable

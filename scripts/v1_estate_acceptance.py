@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and run the private 25-repository V1 effectiveness gate."""
+"""Validate and run the optional reviewed 25-repository V1 effectiveness gate."""
 
 from __future__ import annotations
 
@@ -39,9 +39,9 @@ def category(case: dict[str, Any]) -> str:
 def validate_corpus(corpus: dict[str, Any], source_root: Path | None = None) -> dict[str, int]:
     repositories, cases = corpus.get("repositories"), corpus.get("cases")
     if not isinstance(repositories, list) or len(repositories) != 25:
-        raise GateError("real-estate corpus must declare exactly 25 repositories")
+        raise GateError("reviewed corpus must declare exactly 25 repositories")
     if not isinstance(cases, list) or len(cases) != 150:
-        raise GateError("real-estate corpus must declare exactly 150 cases")
+        raise GateError("reviewed corpus must declare exactly 150 cases")
     repository_ids: set[str] = set()
     for repository in repositories:
         identifier, revision = repository.get("id"), repository.get("revision")

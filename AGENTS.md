@@ -52,8 +52,8 @@ Run `make harness-test` for harness changes and `make harness-validate` for Go,
 Python contracts, vet, race tests, and build. UI work also needs
 `make harness-validate-web`; ingestion/retrieval changes need the hermetic
 `make acceptance-v1 ACCEPTANCE_OUTPUT=/absolute/fresh/path` gate twice and equal
-semantic fingerprints. Native macOS/vector and private-estate checks need their
-actual environments. Record unrun checks and reasons; never claim them as passing.
+semantic fingerprints. Native macOS/vector checks need their actual environments. Reviewed-corpus
+checks are optional generic/user validation, not private-estate prerequisites. Record unrun checks and reasons; never claim them as passing.
 `make verify` formats the whole tree; prefer scoped gofmt during independent work.
 
 ## Independent work

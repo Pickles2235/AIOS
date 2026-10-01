@@ -1,5 +1,10 @@
 # Repository Knowledge Engine V1
 
+This reference describes implemented engine behaviour. The expanded Apple Silicon
+[product contract](../../.codex/completion/PRODUCT.md) and
+[gap map](../../.codex/completion/BASELINE-MAP.md) govern completion. MCP is an optional
+read-only integration, never required onboarding.
+
 V1 is a local, read-only repository knowledge engine. It indexes the approved
 catalogue into deterministic source, symbol, relationship, evidence, and claim
 records. Repositories remain inputs; all derived state is stored under the
@@ -159,7 +164,8 @@ reuse it after invalidation.
 
 ## Upgrade boundary
 
-The V1 canonical schema is incompatible with every prior derived database.
+The current engine rejects databases with a different canonical schema. The
+crash-safe supported-upgrade transaction is pending completion milestone 07.
 The command refuses an old `index.db`; remove or recreate the agent-owned
 `--data-dir`, then run mirror ingestion again. It does not migrate, alias, back up, or
 preserve legacy derived records. Indexing remains read-only against source
@@ -177,8 +183,8 @@ or interrupted work preserves the prior active catalog and projection builds.
 `projections rebuild --data-dir DATA` repairs derived state from the persisted
 IR without opening a repository. Stale or unavailable projections are rejected
 with a safe-unavailable diagnostic; callers may still resolve canonical source
-and evidence handles. Vector projection is a disabled local-only interface in
-V1, not an embeddings implementation or evidence source.
+and evidence handles. Vector projection is optional and disabled by default. On Apple Silicon it uses
+the bundled Nomic embedding runtime; candidate scores never constitute evidence.
 
 ## Precomputed high-value knowledge
 

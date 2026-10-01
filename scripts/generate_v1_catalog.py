@@ -13,15 +13,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-EXPECTED_REPOSITORIES = 25
+MAX_REPOSITORIES = 100
 ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,62}$")
-INCLUDE = [
-    "**/*.java", "**/*.kt", "**/*.kts",
-    "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.py",
-    "**/*.md", "**/*.adoc", "**/*.txt", "**/*.rst",
-    "**/*.json", "**/*.yaml", "**/*.yml", "**/*.toml",
-    "**/*.properties", "**/*.gradle", "**/*.xml",
-]
+# No estate/language allowlist: secure discovery reports unsupported coverage.
+INCLUDE = []
 EXCLUDE = [
     "**/*.min.js", "**/*.map", "**/package-lock.json",
     "**/npm-shrinkwrap.json", "**/generated/**",
@@ -70,15 +65,15 @@ def _ownership(repository: dict[str, Any]) -> list[dict[str, str]]:
     return result
 
 
-def build_outputs(inventory: dict[str, Any], expected: int = EXPECTED_REPOSITORIES) -> tuple[dict[str, Any], dict[str, Any]]:
+def build_outputs(inventory: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     if set(inventory) - {"version", "repositories", "compiler_runtime", "vector"}:
         raise ValueError("inventory contains unsupported fields")
     if inventory.get("version") != 1:
         raise ValueError("inventory version must be 1")
     repositories = inventory.get("repositories")
-    if not isinstance(repositories, list) or len(repositories) != expected:
+    if not isinstance(repositories, list) or not 1 <= len(repositories) <= MAX_REPOSITORIES:
         found = len(repositories) if isinstance(repositories, list) else 0
-        raise ValueError(f"expected {expected} approved repositories, found {found}")
+        raise ValueError(f"expected 1–{MAX_REPOSITORIES} approved repositories, found {found}")
     seen: set[str] = set()
     sources, mirrors = [], []
     for index, repository in enumerate(repositories):
