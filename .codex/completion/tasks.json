@@ -69,10 +69,10 @@
       "gates": [
         "core"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/03-daemon-install.md",
-      "completion_commit": null,
-      "review": null,
+      "completion_commit": "837f2c9ea58100d80b1562b825d9c3451b7c353d",
+      "review": ".codex/completion/evidence/03-daemon-review.json",
       "product_gates": [
         "core",
         "install"
