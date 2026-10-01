@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "purpose": "milestone_native_onboarding_ci_step",
+  "tested_commit": "4cab95f464761b26456b360197437f71153d5a07",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "workflow_run": 36919253078,
+  "job_id": 110560882820,
+  "workflow_url": "https://github.com/Pickles2235/AIOS/actions/runs/36919253078",
+  "step_name": "Verify native login Git authentication and namespace transitions",
+  "step_status": "completed",
+  "step_conclusion": "success",
+  "started_at": "2026-10-01T20:10:24Z",
+  "completed_at": "2026-10-01T20:11:57Z",
+  "observed_job_status": "in_progress",
+  "observed_job_conclusion": null,
+  "checks": [
+    "actual_disposable_checksumming_install_launchd_git_external_helper_tls_auth",
+    "actual_noninteractive_login_environment_and_mode_preserving_auth_failure",
+    "real_chromium_named_origin_and_namespace_migration",
+    "localhost_recovery",
+    "different_process_stable_identity_active_namespace_knowledge_restart",
+    "actual_native_UI_Stop_disconnection_and_restart",
+    "source_nonmutation",
+    "owned_delete_data_cleanup"
+  ],
+  "report_artifact": "pending_job_completion_and_verified_download",
+  "full_release_gates": false
+}

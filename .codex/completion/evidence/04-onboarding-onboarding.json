@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "onboarding",
+  "milestone": "04-onboarding-namespace",
+  "tested_commit": "4cab95f464761b26456b360197437f71153d5a07",
+  "clean_product_tree": true,
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "timestamp": 1790885323.6718335,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=04-onboarding-namespace",
+        "COMPLETION_GATE=onboarding"
+      ],
+      "exit_code": 0,
+      "seconds": 3.3644673824310303,
+      "log_sha256": "13760f40f6d9155de21c27013cf3c45b748cc585996a6b402a26c8b3d95317c1"
+    }
+  ]
+}

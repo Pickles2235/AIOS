@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "/root/baseline_reviewer",
+  "reviewed_commit": "4cab95f464761b26456b360197437f71153d5a07",
+  "milestone": "04-onboarding-namespace",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "checks_performed": [
+    "Read the repository review/mission instructions, PRODUCT.md, ACCEPTANCE.md and milestone04 plan. Independently reviewed the complete product diff from38d8bc87829d25ff26eedd458a950197e2345f4c through exact4cab95f464761b26456b360197437f71153d5a07. This approves the engineering milestone under the explicitly permitted native integration deferral, not candidate-ready release acceptance.",
+    "Verified clean-source core, web and scoped onboarding receipt source IDs, passing exit codes and each retained raw-log SHA256. Core covers Python/Go tests, vet, race and build; web reports27unit and22real browser cases across1440/2560. Scoped live report has four passing product scenarios with11,43,48 and74 assertions. Actual executable SHA2561b2f8d8b735bd9d481c7956401d029888f4ecce5884fb794e6c8e7823066ff37 matches that report and clean Go VCS revision4cab95f.",
+    "Verified both fresh acceptance report and caller-log hashes against retained raw files. Each run accepts all12cases over25repositories, with identical semantic fingerprint f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea. Final checked-in summary includes case IDs/statuses only; source-bearing handles, paths and detailed query results remain outside repository evidence.",
+    "Independently ran race checks covering mirror/localname/lifecycle/webui/app and the optional compiler using the installed external JDK21, plus final lifecycle/CLI race checks, Node/Python syntax and diff whitespace checks. No concurrent broad web gate was run by the reviewer.",
+    "Inspected strict global Direct/Mirror exclusivity, batch validation, real immutable local capture and approved mirror fetch previews, language detection, clearly labelled framework manifest presence and validated persisted include/exclude rules. Partial preview failures do not save approval or silently change mode. Source fingerprints and unchanged/same-revision scoped batch regressions preserve source nonmutation and catalog coherence.",
+    "Verified local generated/uploaded normalized logos, durable instance identity/name/seed colour and frontend persistence. Build immediately opens the main indexing view; empty knowledge renders no cloud. Activity derives from actual discovery/staging/activation callbacks, marks only activated evidence queryable, and exposes counts without fabricated entities. Interrupted staging tests query prior knowledge and cannot retrieve newly staged symbols before atomic activation.",
+    "Requested and verified static external Git configuration/CA pointers without persisting volatile SSH agent sockets or product credentials; explicit daemon credential diagnostics without startup/status/open Git execution; honest default-helper presence wording; actual external TLS credential-helper success and401 failure retaining last-good queryable knowledge and selected Mirror mode. Sanitized failures recommend explicit Direct selection. Unix process-group cancellation and bounded WaitDelay regressions prevent pipe-holding descendants from defeating deadlines.",
+    "Reviewed owned namespace leases, independent native DNS-SD ownership-conflict test, LocalOnly unique A/AAAA/TXT registration and complete native system-resolver loopback validation. HTTP listeners bind specifically127.0.0.1 and::1 on one explicit port with bounded accept fan-in; no wildcard/LAN listener. Namespace changes return a fresh private launch capability, collisions require human selection, unhealthy same-name retry releases its old lease, persisted unavailable names remain unchanged, and recovery localhost remains distinct from the native feature. Host, same-origin session and CSRF protections remain enforced.",
+    "Reviewed sealed snapshot deletion: stop lifetime barrier precedes owned-tree cleanup; ownership/no-symlink preflight occurs before directory unsealing, and foreign links/source contents remain untouched in adjacent regressions. Optional Java frontend rejects the Apple launcher stub without executing an installation dialog; structural extraction remains available.",
+    "Independently verified b83 native job failure logs and downloaded failure artifact11189189999 with SHA25684528c2431b80647c3e501af36c95f9227cd3e0a54e42ef59730d6a96fe483e0. Its actual report binds b83 and passed:false. Requested external shutdown completion and UI restart safeguards, then verified corrected external Stop waits for final lifetime lock release, UI uses request-only Stop without self-wait, Start checks loaded ownership before idempotent status and waits before bootstrap, and canceled control does not report Running. Native restart assertions require different PID, stable identity, active name and retained Worker evidence.",
+    "Independently fetched latest workflow run36919253078 and confirmed head SHA4cab95f464761b26456b360197437f71153d5a07. Apple Silicon job110560882820 reports the installed onboarding preflight completed SUCCESS. Inspected the executed source: owned checksummed ZIP/per-user launchd install, actual external helper/TLS authentication and failure isolation, real Chromium DNS/native hostname and capability/session flow without mocks or IP substitution, old-to-new origin migration, localhost recovery, CLI and actual UI Stop/restart, source nonmutation and delete-data cleanup must all succeed for that step to exit0. Full workflow and downloadable native report/artifact remain pending at issuance; no completed-workflow or hardware measurement claim is made."
+  ],
+  "nonblocking_findings": [
+    "Current-source native installed onboarding preflight is independently API-verified successful, but full run36919253078/job110560882820 and native report/artifact download with digest verification are pending. Retain and verify the actual report when the job finishes; any observed contradictory native failure must reopen this milestone.",
+    "Native addressing is certified here for the actual browser requirement. Earlier default Python getaddrinfo rejected LocalOnly names; arbitrary HTTP client compatibility remains explicitly uncertified. No static resolver substitution was used to obtain the browser pass.",
+    "All assembled native gates on one final source/artifact, reference hardware/budgets, login/reboot, manual/GPU accessibility and visual review, full packaging attribution, supported upgrade/rollback and final candidate acceptance remain later milestone15 obligations. Scoped receipts and this engineering approval do not constitute a candidate-ready or public-release approval."
+  ],
+  "evidence": [
+    ".codex/completion/evidence/04-onboarding-core.json",
+    ".codex/completion/evidence/04-onboarding-web.json",
+    ".codex/completion/evidence/04-onboarding-onboarding.json",
+    ".codex/completion/evidence/04-onboarding-acceptance.json",
+    ".codex/completion/evidence/04-onboarding-native-step.json",
+    "/workspace/scratch/aios-onboarding-evidence/start-4cab-core-0.log",
+    "/workspace/scratch/aios-onboarding-evidence/start-4cab-web-0.log",
+    "/workspace/scratch/aios-onboarding-evidence/start-4cab-onboarding-0.log"
+  ]
+}

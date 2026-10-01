@@ -100,10 +100,10 @@
         "core",
         "web"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/04-onboarding-namespace.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/04-onboarding-review.json",
       "product_gates": [
         "core",
         "web",
