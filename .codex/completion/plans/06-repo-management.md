@@ -41,3 +41,7 @@ None established; native requirements need actual hardware/CI.
 ## Handoff
 
 Persist implementation SHA, publication evidence and next work. Continue mission.
+
+Independent review found and reproduced an owned-source overlap defect at historical source11d54c: a local Mirror remote could be another owned mirror, and removing its provider would delete that approved source. Fixed before publication: canonical/symlink/file-URL/symmetric ancestor boundary checks before preview/configure/add and in shared Sync/maintenance; target-specific purge checks before removal intent protect legacy approvals while allowing the invalid dependent to be withdrawn first. A pending legacy intent has a protected same-ID/mode source-URL correction path; Build stays blocked until cleanup completes. Actual regression coverage includes provider HEAD preservation, alias rejection, pre-intent failure, dependent withdrawal, persisted restart recovery and corrected URL. All11d receipts are historical and superseded; rerun final clean-source gates on the corrected commit.
+
+Reviewer also reproduced Git local clone hardlinks changing source object nlink/ctime. Clone now explicitly uses --no-hardlinks; actual loose-object tests verify separate source/owned inodes, and the full process scenario compares source Git object nlink+ctime across add, polling, rebuild, purge and restart. Target-specific purge checks now cover Direct paths too, including aliases changed since approval.

@@ -47,13 +47,15 @@ func (s *Server) startMaintenance() {
 	if setup.State == "unconfigured" || setup.State == "configured" || setup.State == "syncing" || setup.State == "ingesting" {
 		return
 	}
-	if len(setup.Active.Sources) > 0 && setup.ActiveMode != setup.Mode {
+	if len(setup.Active.Sources) > 0 && sourceMode(setup.ActiveMode) != sourceMode(setup.Mode) {
 		s.maintenanceError = "Maintenance is paused until the selected source mode builds successfully; prior knowledge remains available."
 		return
 	}
 	cfg, _, err := setupConfig(setup.Repositories)
 	if setup.Mode == "local" {
 		cfg, err = localSetupConfigForMaintenance(setup.LocalRepositories)
+	} else if err == nil {
+		err = mirror.ValidateSourceBoundaries(mirror.Registry{Version: 1, Repositories: setup.Repositories}, s.dataDir)
 	}
 	if err == nil {
 		err = applyScope(&cfg, setup.Rules)

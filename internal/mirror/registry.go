@@ -124,6 +124,9 @@ func Sync(ctx context.Context, r Registry, dataDir string) ([]Synced, error) {
 	if err := Validate(r); err != nil {
 		return nil, err
 	}
+	if err := ValidateSourceBoundaries(r, dataDir); err != nil {
+		return nil, err
+	}
 	root, err := filepath.Abs(dataDir)
 	if err != nil {
 		return nil, err
@@ -142,7 +145,7 @@ func Sync(ctx context.Context, r Registry, dataDir string) ([]Synced, error) {
 	for _, x := range r.Repositories {
 		path := MirrorPath(root, x.ID)
 		if _, e := os.Lstat(path); os.IsNotExist(e) {
-			if _, e = git(ctx, "", "clone", "--mirror", x.URL, path); e != nil {
+			if _, e = git(ctx, "", "clone", "--mirror", "--no-hardlinks", "--", x.URL, path); e != nil {
 				return nil, fmt.Errorf("clone %s: %w", x.ID, e)
 			}
 		} else if e != nil {

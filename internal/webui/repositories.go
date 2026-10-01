@@ -87,6 +87,21 @@ func approvedIDs(setup Setup) []string {
 	}
 	return out
 }
+
+func approvedAssetSources(setup Setup) mirror.Registry {
+	reg := mirror.Registry{Version: 1, Repositories: append([]mirror.Repository(nil), setup.Repositories...)}
+	for _, entry := range setup.LocalRepositories {
+		reg.Repositories = append(reg.Repositories, mirror.Repository{ID: entry.ID, URL: entry.Path})
+	}
+	return reg
+}
+
+func sourceMode(mode string) string {
+	if mode == "local" {
+		return "local"
+	}
+	return "mirror"
+}
 func omitsApproved(setup Setup, local []adapter.LocalRepository, remote []mirror.Repository) bool {
 	ids := map[string]bool{}
 	for _, r := range local {
@@ -170,6 +185,12 @@ func (s *Server) finishRemoval(ctx context.Context) error {
 	s.mu.Lock()
 	id := s.removing
 	next := cloneSetup(s.setup)
+	if len(approvedIDs(next)) > 0 {
+		if err := mirror.ValidatePurgeSourceBoundaries(approvedAssetSources(next), s.dataDir, id); err != nil {
+			s.mu.Unlock()
+			return err
+		}
+	}
 	next.LocalRepositories = slices.DeleteFunc(next.LocalRepositories, func(r adapter.LocalRepository) bool { return r.ID == id })
 	next.Repositories = slices.DeleteFunc(next.Repositories, func(r mirror.Repository) bool { return r.ID == id })
 	delete(next.Rules, id)
@@ -309,7 +330,7 @@ func (s *Server) managementAPI(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, "finish pending repository removal first")
 		return
 	}
-	if len(setup.Active.Sources) > 0 && setup.ActiveMode != setup.Mode && r.URL.Path != "/api/v1/repositories/remove" && !global {
+	if len(setup.Active.Sources) > 0 && sourceMode(setup.ActiveMode) != sourceMode(setup.Mode) && r.URL.Path != "/api/v1/repositories/remove" && !global {
 		s.setupTransitionMu.Unlock()
 		fail(w, 409, "Build the whole selected source mode before managing individual repositories")
 		return
@@ -342,6 +363,13 @@ func (s *Server) managementAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.URL.Path == "/api/v1/repositories/remove" {
+		if len(approvedIDs(setup)) > 0 {
+			if err := mirror.ValidatePurgeSourceBoundaries(approvedAssetSources(setup), s.dataDir, in.Repository); err != nil {
+				s.setupTransitionMu.Unlock()
+				fail(w, 409, "An approved source overlaps owned purge paths. Correct its approved path or URL before removal; no assets were deleted.")
+				return
+			}
+		}
 		if pending == "" {
 			if err := writeRemoval(s.dataDir, in.Repository); err != nil {
 				s.setupTransitionMu.Unlock()
@@ -496,7 +524,7 @@ func (s *Server) addRepository(w http.ResponseWriter, r *http.Request) {
 	pending := s.removing
 	running := s.jobCancel != nil
 	s.mu.Unlock()
-	if pending != "" || running || (len(next.Active.Sources) > 0 && next.ActiveMode != next.Mode) {
+	if pending != "" || running || (len(next.Active.Sources) > 0 && sourceMode(next.ActiveMode) != sourceMode(next.Mode)) {
 		s.setupTransitionMu.Unlock()
 		fail(w, 409, "wait for Build or removal recovery")
 		return
@@ -531,6 +559,9 @@ func (s *Server) addRepository(w http.ResponseWriter, r *http.Request) {
 	}
 	next.Rules[id] = in.Rules
 	cfg, _, err := managementConfig(next)
+	if err == nil && next.Mode != "local" {
+		err = mirror.ValidateSourceBoundaries(mirror.Registry{Version: 1, Repositories: next.Repositories}, s.dataDir)
+	}
 	if err != nil {
 		s.setupTransitionMu.Unlock()
 		fail(w, 400, "invalid source, duplicate ID or scope; at most 100 repositories")

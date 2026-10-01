@@ -556,6 +556,9 @@ class ProductScenarios(unittest.TestCase):
             survivor = fixture(self.root, 'survivor-' + mode)
             added = fixture(self.root, 'added-' + mode)
             before = [source_fingerprint(p) for p in (source, survivor, added)]
+            object_metadata = {p: (p.stat().st_nlink, p.stat().st_ctime_ns)
+                               for repo in (source, survivor, added)
+                               for p in (repo / '.git/objects').rglob('*') if p.is_file()}
             data = self.root / ('management-' + mode)
             def member(id, path):
                 return {'id': id, 'path': str(path)} if mode == 'local' else {
@@ -576,6 +579,14 @@ class ProductScenarios(unittest.TestCase):
                 api('/api/v1/onboarding/start', {}, expected=202)
                 wait_build(api)
                 self.wait_job(api, 'survivor', lambda j: j['state'] == 'idle')
+                if mode == 'mirror':
+                    owned_remote = data / 'mirrors' / 'removed.git'
+                    owned_head = (owned_remote / 'HEAD').read_bytes()
+                    for value in (str(owned_remote), owned_remote.as_uri()):
+                        api('/api/v1/repositories/add', {'mirror_repository': {
+                            'id': 'unsafe', 'url': value, 'ref': 'refs/heads/main'}, 'rules': {}}, expected=400)
+                    self.check((owned_remote / 'HEAD').read_bytes() == owned_head,
+                               'owned local Mirror rejection preserves provider source before approval')
                 identity = api('/api/v1/instance')['id']
                 first = {r['id']: r['generation'] for r in api('/api/v1/status')['repositories']}
                 old_handle = api('/api/v1/query', {'repository': 'removed', 'text': 'Worker'})['entities'][0]['handle']
@@ -662,6 +673,9 @@ class ProductScenarios(unittest.TestCase):
                 self.check(api('/api/v1/jobs')['jobs'] == [], 'last repository removal purges persisted job history')
             self.check([source_fingerprint(p) for p in (source, survivor, added)] == before,
                        'add, scope, retry, rebuild, failure, in-flight removal and crash recovery never write sources')
+
+            self.check(all((p.stat().st_nlink, p.stat().st_ctime_ns) == value for p, value in object_metadata.items()),
+                       'Mirror clone/fetch/purge owns separate inodes and never changes source object link counts or ctime')
 
     def test_native_wake_reconciliation(self):
         self.native()

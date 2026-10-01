@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -404,5 +405,91 @@ func TestFullRebuildProjectionFailurePreservesCoherentLastGood(t *testing.T) {
 		if err != nil || q.Status != "found" {
 			t.Fatal("last-good query unavailable", id, q.Status, err)
 		}
+	}
+}
+
+func TestMirrorManagementRejectsOwnedSourcesBeforeApprovalOrPurge(t *testing.T) {
+	s, source, _ := managementServer(t, "mirror")
+	inside := mirror.MirrorPath(s.dataDir, "one")
+	before, err := os.ReadFile(filepath.Join(inside, "HEAD"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	alias := filepath.Join(t.TempDir(), "owned-alias")
+	if err = os.Symlink(inside, alias); err != nil {
+		t.Fatal(err)
+	}
+	for _, remote := range []string{inside, alias, (&url.URL{Scheme: "file", Path: inside}).String(), s.dataDir} {
+		r := mirror.Repository{ID: "unsafe", URL: remote, Ref: "refs/heads/main"}
+		if w := approvedRequest(t, s, "/api/v1/repositories/add", map[string]any{"mirror_repository": r, "rules": ScopeRules{}}); w.Code != 400 {
+			t.Fatalf("add accepted owned source %d %s", w.Code, w.Body)
+		}
+		if w := approvedRequest(t, s, "/api/v1/onboarding/configure", map[string]any{"mode": "mirror", "repositories": []mirror.Repository{{ID: "one", URL: remote, Ref: "refs/heads/main"}, {ID: "two", URL: remote, Ref: "refs/heads/main"}}}); w.Code != 400 {
+			t.Fatal("batch configure accepted owned source", w.Code)
+		}
+		if w := approvedRequest(t, s, "/api/v1/onboarding/preview", map[string]any{"mode": "mirror", "repositories": []mirror.Repository{r}}); w.Code != 400 {
+			t.Fatal("preview accepted owned source", w.Code)
+		}
+	}
+	// A legacy unsafe approval must fail closed before a durable removal or
+	// deletion of its source, even though old product versions allowed it.
+	s.mu.Lock()
+	s.setup.Repositories = append(s.setup.Repositories, mirror.Repository{ID: "legacy", URL: inside, Ref: "refs/heads/main"})
+	s.mu.Unlock()
+	if w := approvedRequest(t, s, "/api/v1/repositories/remove", map[string]string{"repository": "one"}); w.Code != 409 {
+		t.Fatal("purge deleted a legacy approved source", w.Code)
+	}
+	after, err := os.ReadFile(filepath.Join(inside, "HEAD"))
+	if err != nil || string(after) != string(before) {
+		t.Fatal("overlap rejection mutated approved source", err)
+	}
+	if _, err = os.Stat(filepath.Join(s.dataDir, removalJournal)); !os.IsNotExist(err) {
+		t.Fatal("rejected purge recorded intent")
+	}
+	if w := approvedRequest(t, s, "/api/v1/repositories/remove", map[string]string{"repository": "legacy"}); w.Code != 200 {
+		t.Fatalf("cannot retire legacy dependent before provider %d %s", w.Code, w.Body)
+	}
+	if _, err = os.Stat(filepath.Join(inside, "HEAD")); err != nil {
+		t.Fatal("retiring dependent deleted provider source", err)
+	}
+	// A saved legacy intent or changed alias after a crash also has an explicit
+	// recovery path: keep ID/mode approvals, correct its URL, then finish purge.
+	s.mu.Lock()
+	s.setup.Repositories = append(s.setup.Repositories, mirror.Repository{ID: "legacy", URL: inside, Ref: "refs/heads/main"})
+	err = s.persistSetup()
+	s.mu.Unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = writeRemoval(s.dataDir, "one"); err != nil {
+		t.Fatal(err)
+	}
+	restarted, err := New(catalog.Config{}, s.db, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restarted.Close()
+	restarted.session = "session"
+	restarted.csrf = "csrf"
+	if restarted.removing != "one" {
+		t.Fatal("unsafe pending intent lost")
+	}
+	restarted.mu.Lock()
+	fixed := cloneSetup(restarted.setup)
+	restarted.mu.Unlock()
+	for i := range fixed.Repositories {
+		if fixed.Repositories[i].ID == "legacy" {
+			fixed.Repositories[i].URL = source
+		}
+	}
+	w := approvedRequest(t, restarted, "/api/v1/onboarding/configure", map[string]any{"mode": "mirror", "repositories": fixed.Repositories})
+	if w.Code != 200 {
+		t.Fatalf("cannot correct URL during pending recovery %d %s", w.Code, w.Body)
+	}
+	if w = approvedRequest(t, restarted, "/api/v1/onboarding/start", struct{}{}); w.Code != 409 {
+		t.Fatal("pending removal permitted ingestion")
+	}
+	if w = approvedRequest(t, restarted, "/api/v1/repositories/remove", map[string]string{"repository": "one"}); w.Code != 200 {
+		t.Fatalf("corrected intent cannot recover %d %s", w.Code, w.Body)
 	}
 }

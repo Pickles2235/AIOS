@@ -124,6 +124,9 @@ func (s *Server) previewAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		cfg, _, err = setupConfig(in.Mirrors)
+		if err == nil {
+			err = mirror.ValidateSourceBoundaries(mirror.Registry{Version: 1, Repositories: in.Mirrors}, s.dataDir)
+		}
 	}
 	if err == nil {
 		err = applyScope(&cfg, in.Rules)

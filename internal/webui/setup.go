@@ -163,6 +163,9 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 			approved, validationErr = localSetupConfig(in.LocalRepositories, s.dataDir)
 		} else {
 			approved, _, validationErr = setupConfig(in.Repositories)
+			if validationErr == nil {
+				validationErr = mirror.ValidateSourceBoundaries(mirror.Registry{Version: 1, Repositories: in.Repositories}, s.dataDir)
+			}
 		}
 		if validationErr == nil {
 			validationErr = applyScope(&approved, in.Rules)
@@ -174,7 +177,7 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		s.setupTransitionMu.Lock()
 		defer s.setupTransitionMu.Unlock()
 		s.mu.Lock()
-		if s.removing != "" || omitsApproved(s.setup, in.LocalRepositories, in.Repositories) {
+		if omitsApproved(s.setup, in.LocalRepositories, in.Repositories) || (s.removing != "" && sourceMode(in.Mode) != sourceMode(s.setup.Mode)) {
 			s.mu.Unlock()
 			fail(w, 409, "Remove repositories using the explicit purge control before omitting their IDs from setup.")
 			return
@@ -214,6 +217,13 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		s.setupTransitionMu.Lock()
 		defer s.setupTransitionMu.Unlock()
+		s.mu.Lock()
+		pendingRemoval := s.removing != ""
+		s.mu.Unlock()
+		if pendingRemoval {
+			fail(w, 409, "Finish repository removal before starting a build. Corrected source approvals are saved.")
+			return
+		}
 		s.stopMaintenance()
 		s.mu.Lock()
 		defer s.mu.Unlock()
