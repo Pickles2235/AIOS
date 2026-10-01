@@ -1,5 +1,21 @@
 # Working on AIOS
 
+## Approved whole-product completion mission (2026-10-01)
+
+For the installable V1 completion mission, read `.codex/completion/PRODUCT.md`,
+`MISSION.md`, `ACCEPTANCE.md`, `tasks.json` and the selected milestone plan.
+The stakeholder explicitly authorises continuing through the entire finite backlog,
+full implementation decisions and separate independent reviewer agents/sessions.
+For this mission these instructions supersede the one-task stop/no-loop rule below
+and older estate-dependent acceptance or product-scope assumptions. They do not
+authorise runtime LLM features, weakening evidence/security, force-pushes or public
+release. The old queue and plans remain historical records. Use
+`scripts/completion_harness.py`; continue until assembled-product acceptance or a
+genuine external blocker. Native proof requires real Apple Silicon execution.
+Final release remains the stakeholder's decision. Existing trunk/preservation and
+truthful-check policies below still apply. Routine UX/API/schema/architecture
+decisions within the approved contract do not need renewed permission.
+
 Read this file, `.codex/README.md`, `.codex/tasks.json`, and the selected task's
 plan before editing. Current code, tests, and public documentation are the
 source of truth; queue entries describe future work, not implemented features.

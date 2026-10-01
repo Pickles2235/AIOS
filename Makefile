@@ -64,6 +64,8 @@ harness-setup:
 harness-test:
 	python3 scripts/codex_harness.py check
 	python3 -m unittest discover -s scripts -p 'test_codex_harness.py'
+	python3 scripts/completion_harness.py check
+	python3 -m unittest discover -s scripts -p 'test_completion_harness.py'
 
 harness-validate: harness-test
 	python3 -m unittest discover -s scripts -p 'test_*.py'

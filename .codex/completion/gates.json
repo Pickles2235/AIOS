@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "gates": {
+    "core": {
+      "commands": [
+        [
+          "make",
+          "harness-validate"
+        ]
+      ],
+      "native": false
+    },
+    "web": {
+      "commands": [
+        [
+          "make",
+          "harness-validate-web"
+        ]
+      ],
+      "native": false
+    },
+    "install": {
+      "commands": [
+        [
+          "make",
+          "completion-install"
+        ]
+      ],
+      "native": true
+    },
+    "onboarding": {
+      "commands": [
+        [
+          "make",
+          "completion-onboarding"
+        ]
+      ],
+      "native": true
+    },
+    "maintenance": {
+      "commands": [
+        [
+          "make",
+          "completion-maintenance"
+        ]
+      ],
+      "native": false
+    },
+    "upgrade": {
+      "commands": [
+        [
+          "make",
+          "completion-upgrade"
+        ]
+      ],
+      "native": true
+    },
+    "privacy": {
+      "commands": [
+        [
+          "make",
+          "completion-privacy"
+        ]
+      ],
+      "native": false
+    },
+    "resources": {
+      "commands": [
+        [
+          "make",
+          "completion-resources"
+        ]
+      ],
+      "native": true
+    },
+    "retrieval": {
+      "commands": [
+        [
+          "make",
+          "completion-retrieval"
+        ]
+      ],
+      "native": false
+    },
+    "cloud": {
+      "commands": [
+        [
+          "make",
+          "completion-cloud"
+        ]
+      ],
+      "native": true
+    },
+    "benchmark": {
+      "commands": [
+        [
+          "make",
+          "completion-benchmark"
+        ]
+      ],
+      "native": false
+    },
+    "scale": {
+      "commands": [
+        [
+          "make",
+          "completion-scale"
+        ]
+      ],
+      "native": true
+    },
+    "release": {
+      "commands": [
+        [
+          "make",
+          "completion-release"
+        ]
+      ],
+      "native": true
+    }
+  }
+}

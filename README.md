@@ -68,6 +68,12 @@ remains available.
 
 ## Development harness
 
+The approved installable V1 completion mission is described in
+[the whole-product harness](.codex/completion/README.md). It covers the generic
+Apple Silicon daemon, onboarding, maintained repositories, polished volumetric UI,
+Benchmark Lab, explicit atomic upgrades and local redacted diagnostics. These are
+completion requirements, not claims that all features are currently implemented.
+
 See [the repository-local Codex harness](.codex/README.md) for repeatable setup,
 validation, a dependency-ordered product task queue, persistent plans, and an
 optional one-task CLI launcher. Start with `make harness-test`.

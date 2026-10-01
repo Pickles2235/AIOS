@@ -1,0 +1,459 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "619c0b0bc83e956ed2e84225df2b01562b1f54cd",
+  "tasks": [
+    {
+      "id": "01-baseline-contract",
+      "title": "Reconcile current code and generic V1 contract",
+      "dependencies": [],
+      "requirements": [
+        "R01",
+        "R15"
+      ],
+      "acceptance": [
+        "Map every requirement to actual implementation/tests and gaps; preserve useful current IR/planner/generation code.",
+        "Remove obsolete estate identifiers/defaults from current tracked files and docs; optional acceptance is generic.",
+        "Align Apple Silicon product boundary and no LLM connection while preserving compatible read-only internals."
+      ],
+      "gates": [
+        "core"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/01-baseline-contract.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core"
+      ]
+    },
+    {
+      "id": "02-product-test-driver",
+      "title": "Implement executable assembled-product acceptance drivers",
+      "dependencies": [
+        "01-baseline-contract"
+      ],
+      "requirements": [
+        "R26"
+      ],
+      "acceptance": [
+        "Implement every completion-* Make target listed in ACCEPTANCE.md with real assertions and failure exits.",
+        "Native scenarios must fail or explicitly block on wrong hardware, never silently skip and pass.",
+        "Add JSON evidence/report schema, fixture generators and fault injection; tests initially expose missing product behaviours."
+      ],
+      "gates": [
+        "core"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/02-product-test-driver.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core"
+      ]
+    },
+    {
+      "id": "03-daemon-install",
+      "title": "Deliver daemon lifecycle and installable Apple Silicon package",
+      "dependencies": [
+        "02-product-test-driver"
+      ],
+      "requirements": [
+        "R02",
+        "R11"
+      ],
+      "acceptance": [
+        "Native per-user launchd install/start/stop/status/open works without browser or dev toolchains.",
+        "Bundled UI/model assets work offline; report optional external compiler coverage accurately.",
+        "Restart/login persists identity/state; UI Stop daemon reflects disconnection and restart instructions."
+      ],
+      "gates": [
+        "core"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/03-daemon-install.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "install"
+      ]
+    },
+    {
+      "id": "04-onboarding-namespace",
+      "title": "Complete onboarding, exclusive source modes and local namespace",
+      "dependencies": [
+        "03-daemon-install"
+      ],
+      "requirements": [
+        "R03",
+        "R04",
+        "R05",
+        "R12"
+      ],
+      "acceptance": [
+        "Validate batch sources and preview include/exclude/language scope; persist identity/logo/colour/namespace.",
+        "Collision suggestions require human selection; native namespaced browser origin and recovery localhost are secure.",
+        "Actual launchd Git credential environment tested; auth errors recommend Direct without switching.",
+        "Build enters main UI with empty cloud and real visibly staged progress; no queryable unvalidated state."
+      ],
+      "gates": [
+        "core",
+        "web"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/04-onboarding-namespace.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "web",
+        "onboarding"
+      ]
+    },
+    {
+      "id": "05-maintained-repositories",
+      "title": "Implement durable polling, debounced watches and safe repair",
+      "dependencies": [
+        "04-onboarding-namespace"
+      ],
+      "requirements": [
+        "R06",
+        "R07",
+        "R08"
+      ],
+      "acceptance": [
+        "15-minute configurable polling, Check now, bounded backoff, stale warnings, independent repo recovery.",
+        "Dirty/untracked Direct snapshots, ignore rules, one-second debounce with maximum wait, event loss and concurrent edit checks.",
+        "Wake/restart reconciles missed changes; query serves last good generations under failed/interrupted rebuilds.",
+        "Demonstrate delta-only work and no source modifications across success, cancellation and failure."
+      ],
+      "gates": [
+        "core"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/05-maintained-repositories.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "maintenance"
+      ]
+    },
+    {
+      "id": "06-repo-management",
+      "title": "Complete repository management and rebuild/purge lifecycle",
+      "dependencies": [
+        "05-maintained-repositories"
+      ],
+      "requirements": [
+        "R09",
+        "R10"
+      ],
+      "acceptance": [
+        "Add/remove/rules/retry/rebuild/health/revision surfaces wired to actual backend.",
+        "Removal cancels jobs and purges all owned facts/projections/history/cache/mirrors; no resurrection or source deletion.",
+        "KB rebuild retains identity/config and stages healthy replacement; concurrent queries remain consistent."
+      ],
+      "gates": [
+        "core",
+        "web"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/06-repo-management.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "web",
+        "maintenance"
+      ]
+    },
+    {
+      "id": "07-atomic-upgrades",
+      "title": "Implement crash-safe explicit update and uninstall",
+      "dependencies": [
+        "03-daemon-install"
+      ],
+      "requirements": [
+        "R13",
+        "R26"
+      ],
+      "acceptance": [
+        "Release compatibility manifest and supported upgrade fixture preserve identity/IR without repeat onboarding.",
+        "Interrupt/fail each install/migration/activation/health boundary; restore matching old binary/state and restart.",
+        "Atomic filesystem/disk-full/power-loss recovery covered with durable journal; no background self-update.",
+        "Uninstall stops jobs/service; preserve/delete choice operates only on owned data."
+      ],
+      "gates": [
+        "core"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/07-atomic-upgrades.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "upgrade"
+      ]
+    },
+    {
+      "id": "08-local-observability",
+      "title": "Deliver local OTEL and PII-redacted diagnostics",
+      "dependencies": [
+        "03-daemon-install"
+      ],
+      "requirements": [
+        "R23",
+        "R24"
+      ],
+      "acceptance": [
+        "Trace/query/ingest/job/upgrade correlation, bounded retention and local-only collectors.",
+        "Redaction before log/trace/metric persistence and bundle export; planted PII/secret/query/source fixtures do not leak.",
+        "Default redacted archive plus warned optional expanded dump; expanded still never emits raw secrets.",
+        "UI diagnostic details/export include versions, coverage, stages and timings without source content."
+      ],
+      "gates": [
+        "core"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/08-local-observability.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "privacy"
+      ]
+    },
+    {
+      "id": "09-resource-policy",
+      "title": "Implement resource-aware fair bounded background work",
+      "dependencies": [
+        "05-maintained-repositories",
+        "08-local-observability"
+      ],
+      "requirements": [
+        "R14",
+        "R25"
+      ],
+      "acceptance": [
+        "Native battery/load/idle policy transitions are real, testable and visible; heavy work deferred with eventual progress.",
+        "Bound memory/queues/workers/disk, cancellation and fairness; disk-full retains last good state.",
+        "Record measurement envelope and reference hardware before tuning; no invented performance assertions."
+      ],
+      "gates": [
+        "core"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/09-resource-policy.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "resources"
+      ]
+    },
+    {
+      "id": "10-investigation-search",
+      "title": "Complete Spotlight and portable investigation payload",
+      "dependencies": [
+        "06-repo-management"
+      ],
+      "requirements": [
+        "R15",
+        "R16",
+        "R17"
+      ],
+      "acceptance": [
+        "Question/symbol/path/log/event/route/config families have reviewed gold results and honest unknowns.",
+        "Slash/@ commands, keyboard/cancel/focus/history/clear plus stale/truncated/unsupported UI states tested.",
+        "Versioned compact Copy payload matches canonical UI evidence, source locations and generation/coverage metadata.",
+        "No external model calls; unsupported depth disclosed; source copy and diagnostic privacy remain distinct."
+      ],
+      "gates": [
+        "core",
+        "web"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/10-investigation-search.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "web",
+        "retrieval"
+      ]
+    },
+    {
+      "id": "11-volumetric-cloud",
+      "title": "Deliver polished truthful 3D cloud and semantic zoom",
+      "dependencies": [
+        "06-repo-management",
+        "10-investigation-search"
+      ],
+      "requirements": [
+        "R18",
+        "R19",
+        "R20"
+      ],
+      "acceptance": [
+        "Actual volumetric pan/rotate/zoom and estate-to-symbol aggregation; all nodes/edges/counts trace to KB membership.",
+        "Independent cloud legend/semantic colours; inspection and safe revision-aware editor/Finder/remote links.",
+        "Real staged build, promotion and deltas; query path highlights actual returned graph; no artificial causal claims.",
+        "Empty cloud, reduced motion, keyboard evidence alternative, context-loss recovery and dense visual QA."
+      ],
+      "gates": [
+        "core",
+        "web"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/11-volumetric-cloud.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "web",
+        "cloud"
+      ]
+    },
+    {
+      "id": "12-contextual-modules",
+      "title": "Finish contextual draggable operational UI",
+      "dependencies": [
+        "09-resource-policy",
+        "11-volumetric-cloud"
+      ],
+      "requirements": [
+        "R21"
+      ],
+      "acceptance": [
+        "Health/storage/performance/coverage/jobs/query/indexing modules show when relevant and expose truthful detail.",
+        "Persist positions, bound to viewport, accessible movement/reset; errors visible without clutter.",
+        "Live runtime event sequencing/reconnection coalesces updates without lost or fake activity."
+      ],
+      "gates": [
+        "web"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/12-contextual-modules.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "web",
+        "cloud"
+      ]
+    },
+    {
+      "id": "13-benchmark-lab",
+      "title": "Deliver honest Demo and My Knowledge Benchmark Lab",
+      "dependencies": [
+        "10-investigation-search",
+        "09-resource-policy"
+      ],
+      "requirements": [
+        "R22"
+      ],
+      "acceptance": [
+        "Demo fixtures isolated from user KB; own-repository known-answer cases persist and replay as regressions.",
+        "Same immutable snapshot for KB and grep; disclose baseline invocation, warm/cold/index cost and estimated token assumptions.",
+        "Publish correctness including losses/unknowns, source reads/context size/time and advanced metrics without favourable weighting.",
+        "Test cases where grep wins and KB is wrong; machine-readable per-query exports."
+      ],
+      "gates": [
+        "core",
+        "web"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/13-benchmark-lab.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "web",
+        "benchmark"
+      ]
+    },
+    {
+      "id": "14-scale-performance",
+      "title": "Validate 1\u2013100 repositories and large knowledge clouds",
+      "dependencies": [
+        "12-contextual-modules",
+        "13-benchmark-lab"
+      ],
+      "requirements": [
+        "R25"
+      ],
+      "acceptance": [
+        "Realistic mixed-language fixtures at 1/25/100 repos and dense symbol/edge datasets; cold/incremental/query budgets measured.",
+        "Native reference hardware: target 60fps and common warm sub-second queries; detail degrades gracefully and misses disclosed.",
+        "Long-run maintenance/restart/query soak, bounded storage/telemetry and false-absence correctness.",
+        "Review gold corpus independently: do not tune expected answers to observed implementation."
+      ],
+      "gates": [
+        "core",
+        "web"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/14-scale-performance.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "web",
+        "scale"
+      ]
+    },
+    {
+      "id": "15-release-candidate",
+      "title": "Assemble and independently review installed release candidate",
+      "dependencies": [
+        "07-atomic-upgrades",
+        "08-local-observability",
+        "14-scale-performance"
+      ],
+      "requirements": [
+        "R02",
+        "R26"
+      ],
+      "acceptance": [
+        "Run ALL final gates on native Apple Silicon at one product revision and against one checksummed candidate archive.",
+        "Independent final review checks all requirements, native UI evidence and installed artifact, including rollback.",
+        "Produce binary/ZIP, install/uninstall/update tooling, release manifest/notes, user guide, diagnostics and known limitations.",
+        "Candidate-ready only after accept passes; stakeholder release decision remains pending; no release publication."
+      ],
+      "gates": [
+        "core",
+        "web",
+        "install",
+        "onboarding",
+        "maintenance",
+        "upgrade",
+        "privacy",
+        "resources",
+        "retrieval",
+        "cloud",
+        "benchmark",
+        "scale",
+        "release"
+      ],
+      "status": "pending",
+      "plan": ".codex/completion/plans/15-release-candidate.md",
+      "completion_commit": null,
+      "review": null,
+      "product_gates": [
+        "core",
+        "web",
+        "install",
+        "onboarding",
+        "maintenance",
+        "upgrade",
+        "privacy",
+        "resources",
+        "retrieval",
+        "cloud",
+        "benchmark",
+        "scale",
+        "release"
+      ]
+    }
+  ]
+}

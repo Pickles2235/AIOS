@@ -1,5 +1,9 @@
 # Repository-local development harness
 
+For the approved installable-product mission use
+[the completion harness](completion/README.md). It supersedes this legacy
+single-task workflow for that mission; existing task history remains unchanged.
+
 This harness was built against `c285773` after inspecting code, tests, docs, and
 native CI. No installation ZIP was available. It changes development tooling only.
 
