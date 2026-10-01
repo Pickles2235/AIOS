@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -24,6 +25,8 @@ import (
 )
 
 const DefaultLabel = "dev.aios.daemon"
+
+var errDaemonLocked = errors.New("a daemon already owns this data directory")
 
 var labelPattern = regexp.MustCompile(`^dev\.aios\.[a-zA-Z0-9.-]{1,100}$`)
 
@@ -329,6 +332,24 @@ func Start(ctx context.Context, o Options) (State, error) {
 }
 
 func Stop(ctx context.Context, o Options) error {
+	if err := RequestStop(ctx, o); err != nil {
+		return err
+	}
+	o, err := Defaults(o)
+	if err != nil {
+		return err
+	}
+	if _, err = os.Lstat(o.DataDir); os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	return waitStopped(ctx, o)
+}
+
+// RequestStop unregisters only the verified owned job. The daemon's UI uses
+// this request-only boundary: it cannot wait for its own lifetime lock to close.
+func RequestStop(ctx context.Context, o Options) error {
 	if err := RequireNative(); err != nil {
 		return err
 	}
@@ -356,6 +377,32 @@ func Stop(ctx context.Context, o Options) error {
 		return err
 	}
 	return launchctl(ctx, "bootout", target(o))
+}
+
+// The control socket closes at cancellation, before DNS and database cleanup.
+// External stop/uninstall must wait for the final deferred lifetime lock too.
+func waitStopped(ctx context.Context, o Options) error {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	for {
+		lock, err := Lock(o.DataDir)
+		if err == nil {
+			_, controlErr := Control(o, "status")
+			closeErr := lock.Close()
+			if controlErr == nil {
+				return fmt.Errorf("daemon control remains active after service removal")
+			}
+			return closeErr
+		}
+		if !errors.Is(err, errDaemonLocked) {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("daemon shutdown did not complete: %w", ctx.Err())
+		case <-time.After(50 * time.Millisecond):
+		}
+	}
 }
 
 func checkServiceFile(o Options, p Plan) error {

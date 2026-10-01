@@ -38,11 +38,13 @@ try {
   if(new URL(page.url()).hostname!=="localhost")throw new Error("recovery origin changed");
   if((await api("/api/v1/namespace")).namespace!==args.name+"-next")throw new Error("recovery renamed namespace");
   stage="native_restart_status";
-  const identity=cli("daemon","status","--root",args.root).instance_id;
+  const beforeRestart=cli("daemon","status","--root",args.root);
+  const identity=beforeRestart.instance_id;
   stage="native_restart_stop";
   cli("daemon","stop","--root",args.root);
   stage="native_restart_start";
-  if(cli("daemon","start","--root",args.root).instance_id!==identity)throw new Error("restart identity changed");
+  const afterRestart=cli("daemon","start","--root",args.root);
+  if(afterRestart.instance_id!==identity||afterRestart.pid===beforeRestart.pid)throw new Error("restart identity or process invalid");
   stage="native_restart_link";
   const restartedLink=cli("daemon","link","--root",args.root).url;
   stage="native_restart_named_origin";

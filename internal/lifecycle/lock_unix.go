@@ -30,7 +30,10 @@ func Lock(data string) (*os.File, error) {
 	}
 	if err = syscall.Flock(fd, syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
 		f.Close()
-		return nil, fmt.Errorf("a daemon already owns this data directory")
+		if err == syscall.EWOULDBLOCK || err == syscall.EAGAIN {
+			return nil, errDaemonLocked
+		}
+		return nil, err
 	}
 	return f, nil
 }

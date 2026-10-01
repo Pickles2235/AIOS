@@ -142,7 +142,7 @@ func serveDaemon(ctx context.Context, o lifecycle.Options) error {
 	defer cancel()
 	if runtime.GOOS == "darwin" && o.Managed {
 		s.SetStopDaemon(func() error {
-			if e := lifecycle.Stop(context.Background(), o); e != nil {
+			if e := lifecycle.RequestStop(context.Background(), o); e != nil {
 				return e
 			}
 			cancel()
