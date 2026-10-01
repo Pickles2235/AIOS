@@ -37,7 +37,9 @@ def main():
             archive = next((root / 'package').glob('*.zip'))
             binary = ROOT / 'bin/aios'
             label = 'dev.aios.completion.native.' + str(os.getpid())
-            install = root / 'install'
+            # The default Application Support path contains a space. Exercise
+            # the actual launchctl argument parser with that boundary as well.
+            install = root / 'install with space'
             # Cleanup is registered before any native mutation and always uses
             # the same disposable root/label. No default live service is touched.
             try:
@@ -60,7 +62,7 @@ def main():
                 cli(binary, 'uninstall', '--root', install, '--service-label', label, '--preserve-data', '--json')
                 assert (install / 'data/instance.json').is_file() and not installed.exists()
                 report['passed'] = True
-                report['checks'] = ['checksummed_zip_install', 'native_headless_launchd', 'foreign_root_stop_rejected',
+                report['checks'] = ['checksummed_zip_install', 'native_headless_launchd', 'service_path_with_spaces', 'foreign_root_stop_rejected',
                                     'native_stop_start_identity', 'native_browser_open', 'preserve_data_uninstall']
             finally:
                 cli(binary, 'uninstall', '--root', install, '--service-label', label, '--delete-data', '--json')
