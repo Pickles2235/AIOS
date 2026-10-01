@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "gate": "maintenance",
+  "milestone": "05-maintained-repositories",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "native_required": false,
+  "timestamp": 1790893624.412631,
+  "passed": true,
+  "scenarios": [
+    {
+      "test": "test_dirty_untracked_capture",
+      "result": "pass",
+      "seconds": 1.01288170800035,
+      "assertions": 48
+    },
+    {
+      "test": "test_durable_scheduler_recovery",
+      "result": "pass",
+      "seconds": 3.480149627997889,
+      "assertions": 123
+    },
+    {
+      "test": "test_mirror_retry_isolation_coalescing",
+      "result": "pass",
+      "seconds": 452.94866648400057,
+      "assertions": 9191
+    },
+    {
+      "test": "test_direct_continuous_edits_and_projection_repair",
+      "result": "pass",
+      "seconds": 11.131192259999807,
+      "assertions": 225
+    },
+    {
+      "test": "test_healthy_bootstrap_with_unavailable_member",
+      "result": "pass",
+      "seconds": 1.083908226002677,
+      "assertions": 44
+    }
+  ],
+  "purpose": "product",
+  "tested_commit": "a19211f6e26d241fce3683690160acd72d1825eb",
+  "binary": {
+    "sha256": "e67193ca6fc58079b7f03f3979ee5992898c7c661aef5b772e520a8da3eea3f9",
+    "source_commit": "a19211f6e26d241fce3683690160acd72d1825eb",
+    "vcs_modified": false
+  },
+  "clean_product_tree": true
+}

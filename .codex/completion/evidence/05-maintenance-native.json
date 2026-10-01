@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "purpose": "verified_native_engineering_smoke_not_final_candidate",
+  "tested_commit": "a19211f6e26d241fce3683690160acd72d1825eb",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "passed": true,
+  "ci": {
+    "run_id": 36934207023,
+    "job_id": 110610520487,
+    "conclusion": "success"
+  },
+  "artifact": {
+    "id": 11198550372,
+    "path": "/workspace/attachments/81342190-b101-4185-80e8-862ab68a4854/maintenance-a192-native.zip",
+    "sha256": "96768d628fec5dd7f646f3059bbd1ab993d9f9ef92aa0c4e5398e7c97da45d11"
+  },
+  "installed_package_sha256": "953ea5dcc2c2e9b47cd82ec4ba499ede65714374345c7a36dc644d7712ae89c2",
+  "hardware": {
+    "macos": "15.7.9",
+    "cpu_count": 3,
+    "memory_bytes": 7516192768
+  },
+  "integration": {
+    "daemon": {
+      "passed": true,
+      "checks": [
+        "checksummed_zip_install",
+        "native_headless_launchd",
+        "service_path_with_spaces",
+        "foreign_root_stop_rejected",
+        "native_stop_start_identity",
+        "native_browser_open",
+        "preserve_data_uninstall"
+      ],
+      "report_sha256": "da06792a8b5014cc45f39ce75f040a2b2a69dd96ae4ee4c3a150764cdae17d14"
+    },
+    "onboarding": {
+      "passed": true,
+      "checks": [
+        "actual_launchd_external_helper_tls_auth",
+        "noninteractive_login_context",
+        "auth_failure_direct_remediation_mode_unchanged",
+        "auth_failure_retains_last_good",
+        "native_named_origin_authenticated",
+        "old_name_to_new_name_capability_migration",
+        "localhost_recovery",
+        "namespace_identity_restart",
+        "native_ui_stop_restart",
+        "source_nonmutation"
+      ],
+      "report_sha256": "9d91be75bd7d4633e6cb1c9fa26327327328d8d20ee8622b50bf551e3553fff3"
+    }
+  },
+  "acceptance_runs": [
+    {
+      "run": "native_baseline",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_unknown",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_canonical_fallback",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ],
+      "report_sha256": "bad7b6fb425f557f5f9b6a429c3aa3fbb3f8b60b0cec03344668dc31572b6a51"
+    },
+    {
+      "run": "fresh_a",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_unknown",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_canonical_fallback",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ],
+      "report_sha256": "ce11e681503067b1de476d701a02739c9ee4ab019f85cffab37a9b1387108ca3"
+    },
+    {
+      "run": "fresh_b",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_unknown",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_canonical_fallback",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ],
+      "report_sha256": "a834687b181fe4a8be8e6aa0c05cf647957d637e334974c0373dffcf3024dba2"
+    },
+    {
+      "run": "installed",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_unknown",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_canonical_fallback",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ],
+      "report_sha256": "b1962264f509f75fa2f4247a8fd786be4dbea7d0725d02fd70121a580195ff55"
+    }
+  ],
+  "pending_final_proof": [
+    "native_five_case_maintenance_gate",
+    "actual_native_sleep_wake",
+    "all_gates_one_final_installed_candidate",
+    "reference_hardware_scale_and_gpu_visual_qa",
+    "full_installed_upgrade_and_licensing"
+  ]
+}

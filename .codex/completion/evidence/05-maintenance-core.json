@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "core",
+  "milestone": "05-maintained-repositories",
+  "tested_commit": "a19211f6e26d241fce3683690160acd72d1825eb",
+  "clean_product_tree": true,
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "timestamp": 1790893151.815404,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=05-maintained-repositories",
+        "COMPLETION_GATE=core"
+      ],
+      "exit_code": 0,
+      "seconds": 68.11133623123169,
+      "log_sha256": "c15c3617a9cce2620622948891df5490d23bd0880044dd489914e4cc8532c0d9"
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "/root/baseline_reviewer",
+  "reviewed_commit": "a19211f6e26d241fce3683690160acd72d1825eb",
+  "milestone": "05-maintained-repositories",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "checks_performed": [
+    "Read AGENTS.md, MISSION.md, REVIEWER.md, PRODUCT.md, ACCEPTANCE.md and the milestone05 plan. Independently reviewed the product diff from 746c1a19b002fbdbb627f13a2197ba98d920938c through a19211f6e26d241fce3683690160acd72d1825eb. This is engineering milestone approval under the permitted native integration deferral, not final candidate acceptance.",
+    "Verified final core, web and frozen-binary maintenance receipt source IDs, clean-product flags, successful exit codes and retained raw-log SHA256 values. Web reports 27 unit tests and 26 live browser cases at 1440 and 2560 widths. The final scoped maintenance run passed in 469.84 seconds; its copied scenario report exactly matches the retained raw report and includes all five selected real product scenarios without skipped or synthetic cases.",
+    "Independently verified the frozen executable before and after the final gate: SHA256 e67193ca6fc58079b7f03f3979ee5992898c7c661aef5b772e520a8da3eea3f9, owner mode0500, Go VCS revision a19211f6e26d241fce3683690160acd72d1825eb and vcs.modified=false. Both driver provenance and actual scenarios use AIOS_COMPLETION_BINARY. Earlier mutable-bin maintenance evidence is historical and is not used for this approval.",
+    "Verified both fresh acceptance report hashes and caller-log hashes against retained raw files. Each accepts all12cases over25repositories at engine revision a19211f6e26d241fce3683690160acd72d1825eb; both semantic fingerprints equal f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea. The clean detached checkout executable has the same digest as the frozen gate binary. Checked-in summaries retain case IDs/statuses rather than source-bearing handles, paths or detailed query dumps.",
+    "Inspected scoped immutable Direct capture: ignores and configured exclusions apply before opening or eligible limits; os.Root confines reads, component symlinks and nonregular files are rejected, bounded double reads plus inode/ctime/metadata/Git/list validation detect mixed capture epochs. Owned snapshots are sealed and fsynced. Actual dirty/untracked/ignored/excluded and concurrent ABA-edit regressions preserve workspace bytes and Git index.",
+    "Inspected bounded durable per-repository scheduling, serialized fair selection, 15-minute configurable Mirror polling, explicit Check now, coalescing, one followup during running work, exponential retry deadlines, five-attempt exhaustion, independent healthy members and durable restart repair. Requested and verified the correction preserving future retry deadlines on restart. The final real offline scenario takes452.95seconds and covers30/60second backoff,100request burst coalescing, exhaustion, retained last-good queries, healthy updates and real process restart.",
+    "Reviewed actual OS directory watches, quiet-period and maximum debounce, bounded watch inventory, closed/error event-stream disclosure, periodic reconciliation and portable clock-gap repair. Independently ran race checks for real watch edits, lost streams, continuous edits and simulated clock gaps. Scoped browser/backend scenarios exercise production debounce, actual changed searchable evidence and real restart with edits made while stopped. Portable clock gaps do not establish native sleep/wake.",
+    "Reviewed atomic catalog activation with projections, exact delta finalization and selected ingestion-queue completion in one transaction; unchanged inputs complete their selections transactionally. Real projection and queue-completion fault tests keep the prior catalog, generation and queries. Requested and verified post-activation cancellation identity, fresh metadata/coverage epochs with unchanged analysis reused, and immutable A-to-B-to-A-to-B delta history.",
+    "Reviewed authoritative active-generation bindings and independent healthy bootstrap. Never-indexed unavailable members remain unknown; failed staged evidence is not queryable and source failures retain previous canonical knowledge. Reviewed canonical journal restoration before workers start and independently ran the actual new canonical activation/stale exhausted journal restoration plus persisted reopen regression.",
+    "Reviewed explicit knowledge-ir-v9 to v10 writer migration removing content uniqueness while retaining distinct evidence epochs. Writer lease, one connection, verified fsynced owner-only backup, transactional table replacement, foreign-key and integrity checks preserve prior IDs/facts. Independently ran populated upgrade and injected rollback race tests. This narrow database migration does not certify a complete installed binary/state upgrade.",
+    "Investigated the actual first a256 browser failure rather than accepting a successful rerun alone. A controlled reader lease exposed immediate SQLITE_BUSY. Independently verified the correction: all writer/migration connections wait at most5000ms; every pooled read and backup-verification connection uses100ms. Real contention, bounded canceled writer, pool configuration and held EXCLUSIVE write lease positive/negative/canceled query tests pass under race; locked reads cannot prove absence and known evidence recovers after unlock.",
+    "Independently ran targeted race checks on the corrected committed source covering store contention/migration, canonical restoration and exact held-write query budget behavior; earlier targeted capture/app/scheduler tests and actual watcher integration checks also passed. Verified final diff whitespace. The owned fixture chmod0700 correction changes only disposable test roots and does not weaken product ownership checks.",
+    "Reviewed live frontend health/polling/Check now wiring and actual final browser evidence. Also independently rendered an isolated real backend at historical c6f8802797c9f23f644d56396c9a46f76e9fe065 with1440x1000 viewport and reduced motion: keyboard disclosure and Check now invoke actual work, a real missing-source fault displays stale/retry remediation and retains the active generation, and the source index remains unchanged. Inspected healthy and failure screenshots. These historical UI artifacts do not constitute native GPU or final visual certification.",
+    "Independently fetched current-source native workflow36934207023: head SHA is a19211f6e26d241fce3683690160acd72d1825eb. Apple Silicon job110610520487 reports Go tests, vet, Python/UI tests, native authentication/namespace smoke, native deterministic acceptance and installed first-run step successful at inspection. The overall job/run and downloadable report remain pending at issuance; no completed-workflow, native450second maintenance, real wake or final hardware/artifact claim is made."
+  ],
+  "nonblocking_findings": [
+    "Full native scoped maintenance, real sleep/wake, launchd/login continuity and every assembled gate on one final source/artifact remain mandatory for task15. Current workflow steps are useful integration evidence, not final candidate-ready approval. Harvest the finished native reports/artifact with digest verification and reopen this milestone for any contradictory actual failure.",
+    "SQLite's busy handler may complete after context cancellation: writers have a measured bounded five-second delay and read-only connections a100ms handler. The actual one-second knowledge-query surface has adjacent locked-database regression coverage.",
+    "The full maintenance gate also includes task06 removal versus in-flight work, purge and rebuild; these are deliberately excluded from the five-case task05 scope and remain later obligations. Installed upgrade/rollback, privacy/resource policy and final visual/manual/GPU proof likewise remain later milestones.",
+    "For final artifact workflow robustness, recheck executable digest/VCS after scenario execution as well as before it. This review independently confirmed the isolated frozen executable was unchanged; the current driver itself checks binary provenance before the suite."
+  ],
+  "evidence": [
+    ".codex/completion/evidence/05-maintenance-core.json",
+    ".codex/completion/evidence/05-maintenance-web.json",
+    ".codex/completion/evidence/05-maintenance-gate.json",
+    ".codex/completion/evidence/05-maintenance-scenarios.json",
+    ".codex/completion/evidence/05-maintenance-acceptance.json",
+    "/workspace/scratch/aios-maintenance-evidence/core-a192-0.log",
+    "/workspace/scratch/aios-maintenance-evidence/web-a192-0.log",
+    "/workspace/scratch/aios-maintenance-evidence/maintenance-a192-frozen-0.log",
+    "/tmp/aios-product-evidence-68_v_z2k/maintenance.json",
+    "/workspace/scratch/aios-maintenance-evidence/aios-a192-frozen",
+    "/workspace/scratch/aios-maintenance-evidence/acceptance-a192-clean-first/acceptance-report.json",
+    "/workspace/scratch/aios-maintenance-evidence/acceptance-a192-clean-second/acceptance-report.json",
+    "/workspace/scratch/maintenance-independent-browser/review.json",
+    "/workspace/scratch/maintenance-independent-browser/healthy-keyboard-reduced-motion.png",
+    "/workspace/scratch/maintenance-independent-browser/stale-real-failure.png",
+    "https://github.com/Pickles2235/AIOS/actions/runs/36934207023"
+  ],
+  "native_provenance_addenda": [
+    {
+      "recorded_date_utc": "2026-10-01",
+      "reviewed_commit": "a19211f6e26d241fce3683690160acd72d1825eb",
+      "supersedes": "The workflow/report pending status recorded at initial review issuance; engineering verdict and reviewed source remain unchanged.",
+      "verification": [
+        "Independently fetched GitHub run 36934207023 and its jobs: source a19211f6e26d241fce3683690160acd72d1825eb, overall completed SUCCESS, Apple Silicon job 110610520487 completed SUCCESS with all steps successful. Linux developer smoke also completed successfully; skipped native-only Linux steps are not native evidence.",
+        "Independently fetched artifact metadata 11198550372 and hashed the downloaded ZIP bytes. GitHub and actual ZIP SHA256 both equal 96768d628fec5dd7f646f3059bbd1ab993d9f9ef92aa0c4e5398e7c97da45d11. Verified the safe 05-maintenance-native summary against actual archived reports.",
+        "Actual daemon and onboarding reports bind source a192 on Darwin arm64 and passed:true. Their SHA256 values and seven daemon/ten onboarding checks match the summary. These exercise owned checksummed ZIP/per-user launchd, installation paths containing spaces, foreign-root stop rejection, identity-preserving restart, browser open, preserve/delete cleanup, explicit external Git helper TLS authentication and 401 failure isolation, real named browser origin/capability migration, localhost recovery, CLI/UI restart and source nonmutation.",
+        "Independently verified all four actual native acceptance reports: baseline, two fresh runs and installed run each accept 14 cases at source a192, all cases pass and all fingerprints equal 6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a. Each report digest and minimized case/status list matches the checked-in safe summary.",
+        "Actual environment record identifies macOS 15.7.9 Darwin arm64, 3 CPUs and 7516192768 bytes RAM. Installed-binary record identifies Mach-O arm64, Go VCS a192/vcs.modified=false and binary SHA256 25e8b1bc140af075d01dd89121b120684945f7d288082987c17d9fe0c7c62689. The CI archive record reports package SHA256 953ea5dcc2c2e9b47cd82ec4ba499ede65714374345c7a36dc644d7712ae89c2; package bytes themselves are not included in this downloaded evidence ZIP.",
+        "Independently fetched native job logs: actual adapter/knowledge/maintenance/store tests and race checks passed, and 26 real browser cases passed. These are observed Apple Silicon checks. Real sleep/wake remains untested."
+      ],
+      "still_pending": [
+        "The five-case production maintenance gate, including approximately 450 seconds of real backoff, has not been executed natively; its complete frozen run is Linux evidence.",
+        "Real native sleep/wake and complete launchd/login maintenance continuity remain task15 obligations.",
+        "All assembled gates on one final installed source/artifact, installed upgrade/rollback, licensing, reference-hardware scale and manual/GPU visual acceptance remain pending. No final candidate-ready or public-release approval is made."
+      ],
+      "evidence": [
+        ".codex/completion/evidence/05-maintenance-native.json",
+        "/workspace/attachments/81342190-b101-4185-80e8-862ab68a4854/maintenance-a192-native.zip",
+        "https://github.com/Pickles2235/AIOS/actions/runs/36934207023"
+      ],
+      "recorded_at_utc": "2026-10-01 22:42:22 UTC"
+    }
+  ]
+}

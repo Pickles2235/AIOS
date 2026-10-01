@@ -130,7 +130,7 @@
       "gates": [
         "core"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/05-maintained-repositories.md",
       "completion_commit": null,
       "review": null,
