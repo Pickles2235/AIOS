@@ -60,3 +60,39 @@ test("Spotlight keyboard, truthful result states, cloud boundaries and stale evi
  }
  stale=true;await page.getByRole("button",{name:"Publish",exact:true}).click();await expect(page.getByRole("alert")).toContainText("Stale selection");await expect(page.getByLabel("Evidence inspector")).not.toContainText("func Publish");
 });
+
+test("completion refresh preserves current evidence and retires old views",async({page})=>{
+ let state="ingesting",generation="new",holdStatus=false,releaseStatus:()=>void=()=>{},statusStarted:()=>void=()=>{};
+ const entity=()=>({handle:`e-${generation}`,kind:"function",label:"Publish",repository:"repo",path:"src/a.go",generation,evidence:"v",confidence:.9,evidence_count:1,span:{start_line:1,end_line:1}});
+ await page.route("**/api/v1/session",r=>r.fulfill({json:{csrf_token:"csrf"}}));
+ await page.route("**/api/v1/onboarding",r=>r.fulfill({json:{state,completed_repositories:1}}));
+ await page.route("**/api/v1/activity",r=>r.fulfill({json:{events:[]}}));
+ await page.route("**/api/v1/status",async r=>{
+  const snapshot=generation;
+  if(holdStatus){holdStatus=false;statusStarted();await new Promise<void>(done=>{releaseStatus=done})}
+  await r.fulfill({json:{projection_state:"ready",repositories:[{id:"repo",generation:snapshot,active:true}]}});
+ });
+ await page.route("**/api/v1/projection?repo=repo",r=>r.fulfill({json:{repository:"repo",generation,nodes:[entity()],edges:[],truncated:false}}));
+ await page.route("**/api/v1/entity",r=>r.fulfill({json:entity()}));
+ await page.route("**/api/v1/evidence",r=>r.fulfill({json:{path:"src/a.go",generation,start_line:1,end_line:1,lines:["func Publish() {}"]}}));
+ await page.route("**/api/v1/query",r=>r.fulfill({json:{status:"found",entities:[entity()],trace:[],coverage:{complete:true,generations:[generation],repositories:["repo"]}}}));
+ await page.goto("/#token=test");await expect(page.getByLabel("Indexing activity")).toBeVisible();
+ // Capture the completion status before a promotion, then let newer evidence
+ // arrive before that response. The refresh must re-read instead of retiring it.
+ holdStatus=true;const started=new Promise<void>(done=>{statusStarted=done});state="ready";await started;
+ generation="promoted";await page.getByLabel("Query",{exact:true}).fill("Publish");await page.getByRole("button",{name:"Search",exact:true}).click();
+ await expect(page.getByLabel("Evidence inspector")).toContainText("generation promoted");releaseStatus();
+ await expect(page.getByLabel("Indexing activity")).not.toBeVisible();
+ await expect(page.getByLabel("Knowledge cloud",{exact:true})).toContainText("generation promoted");
+ await expect(page.getByLabel("Evidence inspector")).toContainText("func Publish() {}");
+ await expect(page.getByLabel("Query results")).toContainText("Publish");
+ await page.getByRole("button",{name:"Refresh",exact:true}).click();
+ await expect(page.getByLabel("Evidence inspector")).toContainText("func Publish() {}");
+ generation="retired-replacement";await page.getByRole("button",{name:"Refresh",exact:true}).click();
+ await expect(page.getByLabel("Knowledge cloud",{exact:true})).toContainText("generation retired-replacement");
+ await expect(page.getByLabel("Evidence inspector")).toContainText("Select an entity");await expect(page.getByLabel("Query results")).not.toBeVisible();
+ // Removing the final repository during a build must leave no polling card.
+ state="ingesting";await page.getByRole("button",{name:"Refresh",exact:true}).click();await expect(page.getByLabel("Indexing activity")).toBeVisible();
+ state="unconfigured";await page.route("**/api/v1/status",r=>r.fulfill({json:{projection_state:"no_active_generation",repositories:[]}}));
+ await page.getByRole("button",{name:"Refresh",exact:true}).click();await expect(page.getByLabel("Indexing activity")).not.toBeVisible();await expect(page.getByRole("heading",{name:"No active generation"})).toBeVisible();
+});

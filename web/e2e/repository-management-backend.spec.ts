@@ -43,6 +43,8 @@ for(const mode of ["local","mirror"])test(`real ${mode} repository add scope reb
     await expect(page.getByLabel("Evidence inspector")).toContainText("Select an entity");await expect(page.getByLabel("Evidence inspector")).not.toContainText("OriginalWorker");
     const purge=await page.evaluate(async()=>{const r=await fetch("/api/v1/repositories/purge-status?repository=fixture");return r.json()});expect(purge.owned_records).toBe(0);
     expect(await page.evaluate(async()=>(await(await fetch("/api/v1/instance")).json()).id)).toBe(identity);
+    await management.getByRole("button",{name:"Remove added",exact:true}).click();await management.getByRole("button",{name:"Confirm remove added",exact:true}).click();
+    await expect.poll(async()=>(await status()).repositories.length).toBe(0);await expect(page.getByLabel("Indexing activity")).not.toBeVisible();await expect(page.getByRole("heading",{name:"No active generation"})).toBeVisible();
     expect(readFileSync(join(source,"Worker.java"),"utf8")).toBe("class OriginalWorker {}\n");expect(readFileSync(join(added,"Worker.java"),"utf8")).toBe("class SecondWorker {}\n");for(const [i,p] of [source,added].entries())expect(readFileSync(join(p,".git","index"))).toEqual(before[i]);
   }finally{await stop(child);writable(root);rmSync(root,{recursive:true,force:true})}
 });

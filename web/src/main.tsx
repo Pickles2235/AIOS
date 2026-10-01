@@ -24,17 +24,26 @@ function App() {
   const [query, setQuery] = useState(""), [result, setResult] = useState<QueryResult>(), [notice, setNotice] = useState(""), [mapNotice, setMapNotice] = useState(""), [busy, setBusy] = useState(false);
   const [daemonState, setDaemonState] = useState<"connected" | "stopping" | "disconnected">("connected");
   const [indexing,setIndexing]=useState(false);
-  const inspection = useRef(0), loading = useRef(0), searching = useRef(0);
-  function clearSelection() {inspection.current++; setSelected(undefined); setEvidence(undefined); searching.current++; setResult(undefined); setBusy(false);}
+  const inspection = useRef(0), loading = useRef(0), searching = useRef(0), viewRevision=useRef(0);
+  const views=useRef<{repo:string;selected?:Entity;result?:QueryResult}>({repo:""}), inspecting=useRef<Entity>();views.current={repo,selected,result};
+  function clearSelection() {viewRevision.current++;inspection.current++; inspecting.current=undefined;views.current.selected=undefined;views.current.result=undefined;setSelected(undefined); setEvidence(undefined); searching.current++; setResult(undefined); setBusy(false);}
   async function load(wanted?: string) {
-    const id = ++loading.current; clearSelection(); setProjection(undefined); setNotice(""); setMapNotice("");
+    const id = ++loading.current; if(wanted&&wanted!==views.current.repo){clearSelection();setProjection(undefined)} setNotice(""); setMapNotice("");
     try {
-      const s = await request<Status>("/api/v1/status"), brand = await request<Instance>("/api/v1/instance");
-      if (id !== loading.current) return;
-      setStatus(s); setInstance(brand);
-      const setup=await request<Setup>("/api/v1/onboarding");if(id!==loading.current)return;
-      if(setup.state==="syncing"||setup.state==="ingesting")setIndexing(true);
-      const active = s.repositories.filter(r => r.active), next = active.find(r => r.id === (wanted || repo))?.id || active[0]?.id || "";
+      const [brand,setup]=await Promise.all([request<Instance>("/api/v1/instance"),request<Setup>("/api/v1/onboarding")]);
+      if(id!==loading.current)return;
+      // Validate the views against a status read started after those views. If
+      // an inspection or query changes while it is in flight, take a fresh read.
+      const viewAtRead=viewRevision.current;
+      const s=await request<Status>("/api/v1/status");if(id!==loading.current)return;
+      if(viewAtRead!==viewRevision.current)return load(wanted);
+      setStatus(s);setInstance(brand);setIndexing(setup.state==="syncing"||setup.state==="ingesting");
+      const active = s.repositories.filter(r => r.active), next = active.find(r => r.id === (wanted || views.current.repo))?.id || active[0]?.id || "";
+      const generations=new Map(active.map(r=>[r.id,r.generation])), current=views.current;
+      const referenced=[current.selected,inspecting.current,...(current.result?.entities||[])].filter((e):e is Entity=>!!e);
+      const activeGenerations=new Set(active.map(r=>r.generation));
+      if(next!==current.repo||referenced.some(e=>generations.get(e.repository)!==e.generation)||(current.result?.coverage?.generations||[]).some(g=>!activeGenerations.has(g)))clearSelection();
+      if(!next||projection?.generation!==generations.get(next))setProjection(undefined);
       setRepo(next);
       if (next) {
         try {const p = await request<Projection>(`/api/v1/projection?repo=${encodeURIComponent(next)}`); if (id === loading.current) setProjection(p);}
@@ -67,17 +76,18 @@ function App() {
     window.addEventListener("keydown", key); return () => window.removeEventListener("keydown", key);
   }, [status]);
   async function inspect(entity: Entity) {
-    const id = ++inspection.current; setSelected(undefined); setEvidence(undefined); setNotice("");
+    const id = ++inspection.current; viewRevision.current++;inspecting.current=entity; setSelected(undefined); setEvidence(undefined); setNotice("");
     try {
       const fresh = await request<Entity>("/api/v1/entity", {handle: entity.handle});
       const excerpt = await request<Excerpt>("/api/v1/evidence", {evidence: fresh.evidence, before: 2, after: 2, max_lines: 40});
-      if (id === inspection.current) {setSelected(fresh); setEvidence(excerpt);}
+      if (id === inspection.current) {viewRevision.current++;views.current.selected=fresh;setSelected(fresh); setEvidence(excerpt);}
     } catch (e) {if (id === inspection.current) setNotice(e instanceof ApiError && e.status === 409 ? "Stale selection: the active generation changed or this handle is unknown. Refresh and select current evidence." : `Evidence unavailable: ${message(e)}`);}
+    finally {if(id===inspection.current)inspecting.current=undefined}
   }
   const queryRequest = (text: string) => request<QueryResult>("/api/v1/query", {text, repository: repo, limit: 20});
   async function search(e: React.FormEvent) {
     e.preventDefault(); clearSelection(); const id = ++searching.current; setNotice(""); setBusy(true);
-    try {const r = await queryRequest(query); if (id !== searching.current) return; setResult(r); if (r.entities[0]) await inspect(r.entities[0]);}
+    try {const r = await queryRequest(query); if (id !== searching.current) return; viewRevision.current++;views.current.result=r;setResult(r); if (r.entities[0]) await inspect(r.entities[0]);}
     catch (e) {if (id === searching.current) setNotice(`Search unavailable: ${message(e)}`);}
     finally {if (id === searching.current) setBusy(false);}
   }
@@ -100,7 +110,7 @@ function App() {
     {status.projection_state === "unavailable" && <section><h2>Knowledge is safe</h2><p>Canonical source evidence remains intact</p><p>A derived projection is unavailable. Search will report its own available coverage.</p></section>}
     {notice && <p role="alert">{notice}</p>}{mapNotice && <p role="status">{mapNotice}</p>}
     {daemonState === "connected" && !indexing && <Maintenance request={request} onChanged={()=>void load()}/>}
-    {daemonState === "connected" && <RepositoryManagement request={request} onChanged={()=>{setSpotlight(false);void load()}}/>}
+    {daemonState === "connected" && <RepositoryManagement request={request} onChanged={()=>{setSpotlight(false);clearSelection();setProjection(undefined);void load()}}/>}
     {status.repositories.some(r => r.active) && <label>Active repository<select value={repo} onChange={e => void load(e.target.value)}>{status.repositories.filter(r => r.active).map(r => <option key={r.id} value={r.id}>{r.id}</option>)}</select></label>}
     <form onSubmit={search}><label>Query<input value={query} onChange={e => setQuery(e.target.value)}/></label><button disabled={busy}>{busy ? "Searching…" : "Search"}</button></form>
     <QueryFeedback result={result}/>{result?.entities.length ? <ul aria-label="Query results">{result.entities.map(entity => <li key={entity.handle}><button onClick={() => void inspect(entity)}>{entity.label} · {entity.path}</button></li>)}</ul> : null}
