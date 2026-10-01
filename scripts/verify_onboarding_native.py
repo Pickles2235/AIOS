@@ -88,7 +88,7 @@ def run(output, binary=None, package=None):
                     if browser.returncode != 0:
                         raise AssertionError(browser.stderr.strip()[:160])
                     browser_report = json.loads(browser.stdout)
-                    assert browser_report['passed'] and len(browser_report['checks']) == 4
+                    assert browser_report['passed'] and len(browser_report['checks']) == 5
                     assert source_fingerprint(source) == before
                     report['passed'] = True
                     report['namespace_client'] = browser_report['client']
@@ -96,7 +96,7 @@ def run(output, binary=None, package=None):
                     report['checks'] = ['actual_launchd_external_helper_tls_auth','noninteractive_login_context',
                         'auth_failure_direct_remediation_mode_unchanged','auth_failure_retains_last_good',
                         'native_named_origin_authenticated','old_name_to_new_name_capability_migration',
-                        'localhost_recovery','namespace_identity_restart','source_nonmutation']
+                        'localhost_recovery','namespace_identity_restart','native_ui_stop_restart','source_nonmutation']
                 finally:
                     for key,value in original.items():
                         if value is None: os.environ.pop(key,None)

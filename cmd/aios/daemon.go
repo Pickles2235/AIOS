@@ -155,7 +155,7 @@ func serveDaemon(ctx context.Context, o lifecycle.Options) error {
 		return mirror.CredentialStatus(ctx, runtime.GOOS == "darwin" && o.Managed && os.Getppid() == 1)
 	}
 	if err = lifecycle.ServeControlWithCredentials(ctx, o, func() lifecycle.State {
-		return lifecycle.State{Running: true, InstanceID: instance.ID, PID: os.Getpid(), Restart: "aios daemon start; aios daemon open"}
+		return lifecycle.State{Running: ctx.Err() == nil, InstanceID: instance.ID, PID: os.Getpid(), Restart: "aios daemon start; aios daemon open"}
 	}, s.FreshURL, credentials); err != nil {
 		return err
 	}

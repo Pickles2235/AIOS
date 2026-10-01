@@ -284,9 +284,6 @@ func Start(ctx context.Context, o Options) (State, error) {
 	if err != nil {
 		return State{}, err
 	}
-	if s, e := Control(o, "status"); e == nil && s.Running {
-		return s, nil
-	}
 	p, err := MakePlan(o)
 	if err != nil {
 		return State{}, err
@@ -300,7 +297,17 @@ func Start(ctx context.Context, o Options) (State, error) {
 	if loadErr == nil && !matchesLoadedService(loaded, o, p) {
 		return State{}, fmt.Errorf("loaded service label belongs to a different installation")
 	}
+	if loadErr == nil {
+		if s, e := Control(o, "status"); e == nil && s.Running {
+			return s, nil
+		}
+	}
 	if err = PrepareDir(o.Root); err != nil {
+		return State{}, err
+	}
+	// UI Stop disconnects before final DNS/database cleanup. Do not bootstrap
+	// a replacement while that verified installation still holds its lock.
+	if err = waitStopped(ctx, o); err != nil {
 		return State{}, err
 	}
 	if err = serviceDir(filepath.Dir(p.PlistPath), true); err != nil {

@@ -5,7 +5,22 @@ let input="";
 for await (const chunk of process.stdin) {input+=chunk;if(input.length>16384)throw new Error("bounded private input");}
 const args=JSON.parse(input);
 let stage="launch",browser;
-const cli=(...words)=>JSON.parse(execFileSync(args.binary,words,{encoding:"utf8",timeout:30000,stdio:["ignore","pipe","pipe"]}));
+let cliFailure="";
+const cli=(...words)=>{
+  try {return JSON.parse(execFileSync(args.binary,words,{encoding:"utf8",timeout:30000,stdio:["ignore","pipe","pipe"]}));}
+  catch(error){
+    const stderr=String(error.stderr??"").slice(0,16384);
+    const known=[
+      ["daemon did not become healthy","health_timeout"],
+      ["daemon shutdown did not complete","shutdown_timeout"],
+      ["belongs to a different installation","ownership_mismatch"],
+      ["control remains active","control_still_active"],
+      ["already owns this data directory","lifetime_lock_busy"],
+    ];
+    cliFailure=known.find(([text])=>stderr.includes(text))?.[1]??(error.code==="ETIMEDOUT"?"cli_timeout":"cli_boundary_failed");
+    throw error;
+  }
+};
 try {
   browser=await chromium.launch({headless:true});
   const page=await browser.newPage();
@@ -44,6 +59,7 @@ try {
   cli("daemon","stop","--root",args.root);
   stage="native_restart_start";
   const afterRestart=cli("daemon","start","--root",args.root);
+  stage="native_restart_identity";
   if(afterRestart.instance_id!==identity||afterRestart.pid===beforeRestart.pid)throw new Error("restart identity or process invalid");
   stage="native_restart_link";
   const restartedLink=cli("daemon","link","--root",args.root).url;
@@ -56,9 +72,21 @@ try {
   if(!restored.active||!restored.native_dns_sd||restored.namespace!==args.name+"-next")throw new Error("native name not restored");
   stage="native_restart_knowledge";
   if((await api("/api/v1/query",{repository:"fixture",text:"Worker"})).status!=="found")throw new Error("restart lost knowledge");
-  process.stdout.write(JSON.stringify({passed:true,client:"real_chromium_browser",checks:["installed_named_origin_authenticated","old_name_to_new_name_capability_migration","localhost_recovery","active_native_namespace_identity_knowledge_restart"]})+"\n");
+  stage="native_ui_stop";
+  await page.getByRole("button",{name:"Stop daemon",exact:true}).click();
+  await page.getByText("Daemon disconnected",{exact:false}).waitFor();
+  stage="native_ui_restart_start";
+  const uiRestart=cli("daemon","start","--root",args.root);
+  stage="native_ui_restart_identity";
+  if(uiRestart.instance_id!==identity||uiRestart.pid===afterRestart.pid)throw new Error("UI restart identity or process invalid");
+  stage="native_ui_restart_named_origin";
+  await open(cli("daemon","link","--root",args.root).url);
+  if(new URL(page.url()).hostname!==args.name+"-next.local")throw new Error("UI restart lost name");
+  stage="native_ui_restart_knowledge";
+  if(!(await api("/api/v1/namespace")).active||(await api("/api/v1/query",{repository:"fixture",text:"Worker"})).status!=="found")throw new Error("UI restart lost native knowledge");
+  process.stdout.write(JSON.stringify({passed:true,client:"real_chromium_browser",checks:["installed_named_origin_authenticated","old_name_to_new_name_capability_migration","localhost_recovery","active_native_namespace_identity_knowledge_restart","native_ui_stop_restart"]})+"\n");
 } catch(error) {
   // Browser errors can include launch URLs. Never persist their raw text.
-  process.stderr.write("Native browser verification failed at "+stage+"\n");
+  process.stderr.write("Native browser verification failed at "+stage+(cliFailure?" ("+cliFailure+")":"")+"\n");
   process.exitCode=1;
 } finally {if(browser)await browser.close();}
