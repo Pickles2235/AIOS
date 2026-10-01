@@ -78,21 +78,21 @@ def run(output, binary=None, package=None):
                     name = 'aios-auth-'+str(os.getpid())+'-'+str(time.time_ns())
                     selection = api('/api/v1/namespace',{'namespace':name})
                     assert selection['native_dns_sd'] and selection['local_only']
-                    named = authenticated_api(selection['launch_url'])
-                    assert named('/api/v1/status')['active_catalog_revision'] == active
-                    replacement = named('/api/v1/namespace',{'namespace':name+'-next'})
-                    renamed = authenticated_api(replacement['launch_url'])
-                    assert renamed('/api/v1/namespace')['namespace'] == name+'-next'
-                    renamed('/api/v1/status')
-                    recovery = authenticated_api(cli(installed,'daemon','link','--root',install,'--recovery')['url'])
-                    assert recovery('/api/v1/namespace')['namespace'] == name+'-next'
-                    identity = cli(installed,'daemon','status','--root',install)['instance_id']
-                    cli(installed,'daemon','stop','--root',install)
-                    assert cli(installed,'daemon','start','--root',install)['instance_id'] == identity
-                    restarted = authenticated_api(cli(installed,'daemon','link','--root',install)['url'])
-                    assert restarted('/api/v1/namespace')['namespace'] == name+'-next'
+                    # The namespace is a browser URL. Exercise the real installed
+                    # browser flow, including its actual macOS DNS resolver. No
+                    # hostname/IP substitutions or injected backend are used.
+                    browser = subprocess.run(['node',str(ROOT/'scripts/verify_onboarding_browser.mjs')],
+                        input=json.dumps({'launch_url':selection['launch_url'],'name':name,
+                                          'binary':str(installed),'root':str(install)}),
+                        text=True,capture_output=True,timeout=180)
+                    if browser.returncode != 0:
+                        raise AssertionError(browser.stderr.strip()[:160])
+                    browser_report = json.loads(browser.stdout)
+                    assert browser_report['passed'] and len(browser_report['checks']) == 4
                     assert source_fingerprint(source) == before
                     report['passed'] = True
+                    report['namespace_client'] = browser_report['client']
+                    report['client_compatibility'] = 'Default Python getaddrinfo previously rejected LocalOnly names; actual browser resolution is required here. Arbitrary HTTP client compatibility is not certified.'
                     report['checks'] = ['actual_launchd_external_helper_tls_auth','noninteractive_login_context',
                         'auth_failure_direct_remediation_mode_unchanged','auth_failure_retains_last_good',
                         'native_named_origin_authenticated','old_name_to_new_name_capability_migration',

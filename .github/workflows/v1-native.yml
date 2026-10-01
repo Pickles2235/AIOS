@@ -59,14 +59,16 @@ jobs:
           CGO_ENABLED: "1"
       - name: Verify native login Git authentication and namespace transitions
         if: matrix.target == 'macos-arm64'
-        run: python3 scripts/verify_onboarding_native.py --output "$RUNNER_TEMP/onboarding-native.json"
+        run: |
+          npm exec --prefix web -- playwright install chromium
+          python3 scripts/verify_onboarding_native.py --output "$RUNNER_TEMP/onboarding-native.json"
       - name: Run native deterministic acceptance
         run: python3 scripts/v1_acceptance.py --binary "$PWD/bin/aios" --output-dir "$RUNNER_TEMP/acceptance-v1"
       - name: Install native browser for Apple Silicon first-run checks
-        if: always() && matrix.target == 'macos-arm64'
+        if: matrix.target == 'macos-arm64'
         run: npm exec --prefix web -- playwright install chromium
       - name: Verify Apple Silicon candidate installation and first run
-        if: always() && matrix.target == 'macos-arm64'
+        if: matrix.target == 'macos-arm64'
         env:
           PLAYWRIGHT_CHANNEL: chromium
         run: ./scripts/verify-macos-first-run.sh --version 1.0.0-harness --output-dir "$RUNNER_TEMP/macos-first-run"
