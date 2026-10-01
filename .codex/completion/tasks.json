@@ -158,10 +158,10 @@
         "core",
         "web"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/06-repo-management.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/06-management-review.json",
       "product_gates": [
         "core",
         "web",

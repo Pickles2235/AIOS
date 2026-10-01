@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "/root/baseline_reviewer",
+  "reviewed_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
+  "milestone": "06-repo-management",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "recorded_at_utc": "2026-10-01 23:42:13 UTC",
+  "checks_performed": [
+    "Read AGENTS.md, MISSION.md, REVIEWER.md, PRODUCT.md, ACCEPTANCE.md and milestone06 plan. Independently reviewed the complete diff from 4f6ef6b17ce40956cf58b68d999662664ad36e1b through 4249522a36d52a1e4b3113306df242821c0cd5b7. Approval covers engineering requirements R09/R10 under the permitted native integration deferral; it is not final candidate acceptance.",
+    "Verified final core/web/maintenance receipts against exact source, clean-product flags, successful exit codes and retained raw-log SHA256 values. Core completed in18.58seconds; web in66.21seconds with27unit tests and32browser cases at1440/2560; scoped maintenance in15.61seconds. Checked-in scenario report exactly matches the raw report, selecting the real two-mode removal/purge/rebuild process scenario with807assertions and no skipped cases.",
+    "Verified both minimized acceptance summaries against actual private reports and caller-log SHA256 values. Both fresh runs accepted12cases over25repositories at exact4249522; every case passed, with matching semantic fingerprint f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea. Summaries retain case IDs/statuses, avoiding source-bearing handles, paths, excerpts and query dumps.",
+    "Independently checked clean GoVCS/full revision and actual executable digests. Frozen scenario/browser executable is owner mode0500, SHA256 a7245b130e7397e40fe1d47e83205eb0a6f1d7c9d7ab0e49f49daebe2bbed700, unchanged before/after reviewer browser checks. Hermetic acceptance executable SHA25636514fe9039a46dd08cac5b850eafc8da1d3529e5bf36d65606a11f29f6b6933 is separately identified, without trimpath, also vcs.modified=false at4249522. These distinct source-bound artifacts are recorded honestly.",
+    "Reviewed strict owner-only/fsynced removal intent preceding configuration withdrawal, canonical IR mutation and owned asset deletion. Pending recovery blocks evidence/projections and worker startup; cancellation waits for build completion and writer release. Startup repeats idempotent withdrawal/purge before scheduler restoration; missing approved jobs are durably removed, including the final repository. Inspected completion-channel ordering for transition-lock deadlocks and no late activation.",
+    "Reviewed transactional canonical purge: survivor catalog and required projections activate together, affected retired catalogs/projections/facts/entities/revisions/FTS/vector/cache/delta/queue history is removed, and failure rolls back last-good catalog. VACUUM runs under the writer lease. Owned snapshots, mirrors, shared derived caches, source-bearing migration backups and interrupted staging are removed through validated os.Root paths with ownership/link checks and directory fsync; source paths are never deletion arguments.",
+    "Reproduced historical11d54c owned-source overlap outside the product tree: an approved local Mirror could refer to another owned mirror, and withdrawing its provider deleted that approved source. Verified correction across shared Sync, preview/configure/add, maintenance startup and pre-intent purge boundaries: canonical aliases/file URLs/missing children/symmetric nesting reject overlap. Purge also protects Direct aliases changed since approval. Target-specific legacy recovery permits unsafe dependent removal first, rejects provider removal before intent, and allows protected same-ID/mode URL correction during persisted pending removal while Build remains409 until cleanup finishes.",
+    "Reproduced local Git clone hardlink source inode sharing and nlink/ctime changes. Verified --no-hardlinks and actual separate-inode regression, plus scenario before/after object nlink/ctime comparisons across clone, fetch, rebuild, purge and restart. Actual native6279 failure was a transient maintenance.lock misclassified as an object; final fixture disables automatic maintenance and selects nonempty real loose-object hash paths while preserving inode assertions. Independently observed final Apple Silicon Go tests passing.",
+    "Reviewed fresh full/scoped recompilation: unchanged analysis/compiler reuse is bypassed for selected inputs, untouched scoped members preserve active generations, whole-KB replacement stages every approved member and retains identity/config/last-good evidence until one validated catalog activation. Actual process tests cover concurrent last-good/new queries and injected SQLite projection failure with unchanged active catalog, then successful recovery.",
+    "Reviewed protected add/rules/retry/rebuild/remove/purge-status API dispatch, strict bounded JSON/IDs, global source-mode restrictions, approved-source limit, source containment, session/origin/CSRF requirements, and setup omission rejection preventing removal without purge. Actual scenario covers add, changed include/exclude selection, retry, in-flight cancellation/removal, stale handle409, zero owned records, survivor queries, process restart, failed linked-asset purge503 and next-process recovery, last-repository empty catalog and unchanged source fingerprints.",
+    "Diagnosed historicalf4e browser failure from retained trace: a new-generation query/entity/evidence succeeded before delayed IndexingCard completion load unconditionally cleared the valid result. Verified final generation-aware refresh, viewRevision status re-read for older-status/newer-evidence races, immediate clearing on management changes and retirement, and indexing reset after final removal. Deterministic delayed-status test retains current evidence and retires old views; real Direct/Mirror browser cases exercise actual controls and last-repository removal.",
+    "Ran independent final-source race checks: go test -race ./internal/mirror ./internal/store ./internal/webui ./internal/lifecycle with selected boundary, purge, management, force-rebuild, removal and sealed-asset tests, count1; all passed. Separately exercised the actual frozen4249 backend in Chromium at1440x1000 with reduced motion and keyboard management disclosure/cancel/confirm. Cancel retained real source evidence; confirmed final removal cleared evidence/cloud/build card, owned records became zero, identity remained stable and source bytes/Git index/object nlink+ctime were unchanged. Visually inspected both retained rendered screenshots. No product implementation files were edited by the reviewer.",
+    "Independently fetched current GitHub run36941818885 bound to exact4249522. Apple Silicon job110634843335 is in progress: Go tests/vet, Python/web units, embedded UI and native binary builds passed; native login/namespace preflight is running. Linux developer smoke completed successfully, with native-only skipped steps not counted as native proof. Historical failing6279 native run and f4e browser receipts are not passing final evidence."
+  ],
+  "nonblocking_findings": [
+    "Native full workflow/report artifact and installed lifecycle proof for4249522 remain pending at review issuance. Any later actual failure must reopen the engineering milestone. A dated source-bound native provenance addendum can record observed completed evidence.",
+    "Full assembled gates on one final installed artifact, native scoped management/maintenance continuity and real sleep/wake, upgrade/rollback, diagnostics/privacy, licensing, declared reference-hardware scale and manual/GPU UI acceptance remain task15 obligations. Portable browser/scenario evidence and preliminary native unit passes do not prove these. No candidate-ready or public-release approval is given."
+  ],
+  "evidence": [
+    ".codex/completion/evidence/06-management-core.json",
+    ".codex/completion/evidence/06-management-web.json",
+    ".codex/completion/evidence/06-management-maintenance.json",
+    ".codex/completion/evidence/06-management-scenarios.json",
+    ".codex/completion/evidence/06-management-acceptance.json",
+    "/workspace/scratch/repo-management-evidence/core-4249-0.log",
+    "/workspace/scratch/repo-management-evidence/web-4249-0.log",
+    "/workspace/scratch/repo-management-evidence/maintenance-4249-0.log",
+    "/tmp/aios-product-evidence-9lwu52l2/maintenance.json",
+    "/workspace/scratch/repo-management-evidence/aios-4249-frozen",
+    "/workspace/scratch/repo-management-evidence/acceptance-4249-first/acceptance-report.json",
+    "/workspace/scratch/repo-management-evidence/acceptance-4249-second/acceptance-report.json",
+    "/workspace/scratch/management-independent-browser-4249/review.json",
+    "/workspace/scratch/management-independent-browser-4249/confirm-cancel-keyboard.png",
+    "/workspace/scratch/management-independent-browser-4249/removed-empty-knowledge.png",
+    "https://github.com/Pickles2235/AIOS/actions/runs/36941818885"
+  ]
+}

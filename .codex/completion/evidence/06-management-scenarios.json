@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "gate": "maintenance",
+  "milestone": "06-repo-management",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "native_required": false,
+  "timestamp": 1790897924.0809844,
+  "passed": true,
+  "scenarios": [
+    {
+      "test": "test_remove_purge_rebuild",
+      "result": "pass",
+      "seconds": 15.30221799300125,
+      "assertions": 807
+    }
+  ],
+  "purpose": "product",
+  "tested_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
+  "binary": {
+    "sha256": "a7245b130e7397e40fe1d47e83205eb0a6f1d7c9d7ab0e49f49daebe2bbed700",
+    "source_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
+    "vcs_modified": false
+  },
+  "clean_product_tree": true
+}

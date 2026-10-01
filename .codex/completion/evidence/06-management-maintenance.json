@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "maintenance",
+  "milestone": "06-repo-management",
+  "tested_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
+  "clean_product_tree": true,
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "timestamp": 1790897939.5873578,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=06-repo-management",
+        "COMPLETION_GATE=maintenance"
+      ],
+      "exit_code": 0,
+      "seconds": 15.607794523239136,
+      "log_sha256": "f99140b5074d55d819cee43aa2d8c91c3df169abb32c41d808e09b3738f4b28f"
+    }
+  ]
+}

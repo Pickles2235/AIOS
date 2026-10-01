@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "purpose": "twice_fresh_deterministic_acceptance",
+  "tested_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "passed": true,
+  "frozen_scenario_binary": {
+    "sha256": "a7245b130e7397e40fe1d47e83205eb0a6f1d7c9d7ab0e49f49daebe2bbed700",
+    "source_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
+    "vcs_modified": false,
+    "trimpath": true
+  },
+  "hermetic_acceptance_binary": {
+    "sha256": "36514fe9039a46dd08cac5b850eafc8da1d3529e5bf36d65606a11f29f6b6933",
+    "source_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
+    "vcs_modified": false,
+    "trimpath": false
+  },
+  "runs": [
+    {
+      "run": "first",
+      "disposition": "accepted",
+      "repository_count": 25,
+      "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector_unavailable",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ],
+      "report_sha256": "2afb2322364d5c16aaa1bf9d37136f7f03142d3ca3ef2f0be0eb0730dbf8ff14",
+      "caller_log_sha256": "81eaf4af3093369187682f2e56a2ea130903ae06e3b6fe6e2186df7f50139dc7"
+    },
+    {
+      "run": "second",
+      "disposition": "accepted",
+      "repository_count": 25,
+      "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector_unavailable",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ],
+      "report_sha256": "3bea590ca679a74eca98500d4ccae3bb1255676e44d7834bb74dbd44312cbdb0",
+      "caller_log_sha256": "4b334d869a080fe5c6aeecf6a2d7b5a51d3d117cb5a83e337a090cc452e1e861"
+    }
+  ]
+}
