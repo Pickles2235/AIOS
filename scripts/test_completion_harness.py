@@ -22,6 +22,12 @@ class HarnessTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         shutil.copytree(ROOT / '.codex/completion', self.root / '.codex/completion')
+        # Queue progress is mutable evidence. Test a fresh fixture regardless of
+        # whether the real mission has pending, ready or published milestones.
+        data = h.read(self.root / h.BASE / 'tasks.json')
+        for task in data['tasks']:
+            task.update(status='pending', completion_commit=None, review=None)
+        h.write(self.root / h.BASE / 'tasks.json', data)
         self.git('init','-b','main')
         self.git('config','user.name','Harness Test')
         self.git('config','user.email','test@example.invalid')
@@ -151,7 +157,7 @@ class HarnessTests(unittest.TestCase):
         p=h.mission(self.root)
         self.assertIn('Continue through every eligible milestone',p)
         self.assertIn('SEPARATE reviewer',p)
-        self.assertIn('No checks', (self.root/h.BASE/'plans/01-baseline-contract.md').read_text())
+        self.assertIn('candidate acceptance',p)
 
 
 if __name__=='__main__':

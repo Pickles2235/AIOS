@@ -52,12 +52,20 @@ Final native proof remains mandatory for task15; no scoped Linux check proves it
 - First browser gate: exit 2 (12 passed/4 failed); real backend E2E could not spawn
   missing `bin/aios` because the web target did not build it. Fixed `web-e2e` to build
   production assets then backend; removed an unrelated absolute JDK PATH injection.
-- `PLAYWRIGHT_CHANNEL=chromium make harness-validate-web`: exit 0: 40 unit tests, production build and 16 browser E2E
+- `PLAYWRIGHT_CHANNEL=chromium make harness-validate-web`: exit 0: 27 unit tests, production build and 16 browser E2E
   (two viewports, real mirror/local capture, identity/restart, nonmutation, Spotlight); private log
   `/workspace/scratch/aios-baseline-web.log`. Chromium installed locally for E2E.
 - No native checks run: actual Darwin arm64 hardware is unavailable in this workspace.
   Native install/launchd/Git login/mDNS/wake/power/GPU/installed-upgrade and scale proof
   remain pending full final gates; portable work may continue per ACCEPTANCE.md.
+
+- First formal core receipt: fail (exit 2 in Make, receipt command exit 2). The
+  completion-harness prompt test assumed the mutable real plan always said "No checks";
+  replacing that with an actual mission-prompt assertion fixes the regression.
+  Isolated test queues now reset progress so later real completions do not contaminate
+  eligibility/publication fixtures. No product gate or requirement weakened.
+  Failed receipt/log retained at `/workspace/scratch/aios-baseline-core-first.json`
+  and `aios-baseline-core-first-0.log`; corrected commit formal gates pending.
 
 ## Independent review
 
