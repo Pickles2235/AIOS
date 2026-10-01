@@ -158,9 +158,9 @@
         "core",
         "web"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/06-repo-management.md",
-      "completion_commit": null,
+      "completion_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
       "review": ".codex/completion/evidence/06-management-review.json",
       "product_gates": [
         "core",
