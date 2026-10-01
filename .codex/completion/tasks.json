@@ -43,10 +43,10 @@
       "gates": [
         "core"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/02-product-test-driver.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/02-driver-review.json",
       "product_gates": [
         "core"
       ]

@@ -26,7 +26,7 @@ Linux x86_64 developer smoke: precommit `make harness-validate` passed; `PLAYWRI
 
 ## Independent review
 
-Separate session /root/baseline_reviewer identified binary/artifact provenance, privacy-byte inspection, flag-only assertions and cleanup gaps; corrected before formal review. Final report/commit pending.
+Separate session /root/baseline_reviewer identified binary/artifact provenance, privacy-byte inspection, flag-only assertions and cleanup gaps; corrected before formal review. PASS for ed3d3f3ce99dd6d45d1ad0d4bab90b7e0ddd911c; report evidence/02-driver-review.json. Reviewer independently repeated 13 tests, live missing-feature failure and native block, verified receipt/log digests. Approval is bootstrap only.
 
 ## Blockers
 
@@ -35,3 +35,7 @@ No portable driver blocker. Native full gates require actual Darwin arm64; no na
 ## Handoff
 
 After formal checks/review and exact publication, continue 03-daemon-install. DRIVER-COVERAGE.md specifies mandatory fault/race/native expansions before each owner can complete.
+
+## Formal evidence
+
+Tested source `ed3d3f3ce99dd6d45d1ad0d4bab90b7e0ddd911c`: passing core, web and scoped bootstrap receipts at `evidence/02-driver-{core,web,bootstrap}.json`. Live missing-privacy probe returns 1 with two actual failed scenarios; native install returns 1 with an explicit Linux hardware block. Both negative reports retained; neither claims product success. Raw logs remain `/workspace/scratch/aios-driver-evidence`. The first web gate lost its log after premature evidence movement; its receipt failed; rerun completed with valid receipt. Collect raw receipts outside the checkout before copying evidence, because Go VCS dirt includes evidence files.
