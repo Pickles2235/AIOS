@@ -100,9 +100,9 @@
         "core",
         "web"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/04-onboarding-namespace.md",
-      "completion_commit": null,
+      "completion_commit": "4cab95f464761b26456b360197437f71153d5a07",
       "review": ".codex/completion/evidence/04-onboarding-review.json",
       "product_gates": [
         "core",

@@ -37,4 +37,4 @@ None established; native requirements need actual hardware/CI.
 
 ## Handoff
 
-Ready for normal fast-forward publication of implementation4cab95f464761b26456b360197437f71153d5a07 plus scoped receipts/review. Mark completed only after actual fetched main contains source and independent review. Continue task05-maintained-repositories, implementing durable polling, watches and safe repair. Harvest current native CI report/artifact when available and retain its verified digest; full assembled native gates remain15.
+Implementation4cab95f464761b26456b360197437f71153d5a07 and independent review/receipts published as0a256bf75fad4f1373fa2f6384b92fe215bd66fd, verified by fetching actual GitHub main and recording its exact object locally. Marked completed only after source/review were reachable from fetched main. Continue task05-maintained-repositories, implementing durable polling, watches and safe repair. Harvest current native CI report/artifact when available and retain its verified digest; full assembled native gates remain15.
