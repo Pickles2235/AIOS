@@ -143,7 +143,7 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 		_, javaErr := exec.LookPath("javac")
 		_, nodeErr := exec.LookPath("node")
 		available, reason := semantic.RuntimeAvailability()
-		jsonBody(w, map[string]any{"bundled_assets": map[string]any{"ui": true, "embedding_model": semantic.ModelIdentity, "embedding_runtime_available": available, "embedding_runtime_reason": reason}, "compiler_coverage": map[string]any{"structural": "bundled Tree-sitter Java/Kotlin/JavaScript/TypeScript; unsupported input is disclosed", "java_jdk_detected": javaErr == nil, "node_detected": nodeErr == nil, "semantic_compilers": "optional; JDK or Node plus a configured TypeScript module; detection is not successful compilation"}})
+		jsonBody(w, map[string]any{"bundled_assets": map[string]any{"ui": true, "embedding_model": semantic.ModelIdentity, "embedding_runtime_available": available, "embedding_runtime_reason": reason}, "compiler_coverage": map[string]any{"structural": "bundled Tree-sitter Java/Kotlin/JavaScript/TypeScript; unsupported input is disclosed", "javac_command_detected": javaErr == nil, "node_detected": nodeErr == nil, "semantic_compilers": "optional; JDK or Node plus a configured TypeScript module; command presence does not certify an installed JDK or successful compilation"}})
 		return
 	case "/api/v1/daemon/status":
 		if r.Method != http.MethodGet || !s.authorised(r, false) {

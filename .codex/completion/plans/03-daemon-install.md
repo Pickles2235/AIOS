@@ -10,7 +10,7 @@ Requirements: R02, R11
 
 ## Decisions
 
-Retain embedded UI and local Nomic assets. Add per-user launchd lifecycle with an owned control socket for fresh one-use launch links, stable instance identity, safe ZIP installer and authenticated Stop daemon. Native launchd integration is deferred honestly to real Apple Silicon CI.
+Retain embedded UI and local Nomic assets. Add per-user launchd lifecycle with an owned control socket for fresh one-use launch links, stable instance identity, safe ZIP installer and authenticated Stop daemon. Native launchd integration is exercised through real Apple Silicon CI; full final gate and login proof remain task15 obligations.
 
 ## Progress
 
@@ -41,3 +41,11 @@ Persist implementation SHA, publication evidence and next work. Continue mission
 Per-user launchd plan, user-only install/start/stop/status/open, secure local UNIX control, stable owned identity and signal cleanup implemented. Foreground smoke is explicitly distinguished from managed launchd. ZIP builder/manifest/checksum/scripts/guide added; manual atomic upgrades remain task07; full licenses final15. Native smoke workflow exercises a disposable root/label with cleanup registered before mutation. Login-at-load is planned via actual plist but manual login proof and final native installed/GPU acceptance remain final15 requirements. No source workspace is a lifecycle output.
 
 Native CI first attempt: workflow36896016764, Apple Silicon job110483087639, source9a61a0e88543b71b5f1e8a824c58df4ff0936b97 failed a real Unix socket length limit under /private/var/folders. No native pass is claimed. Corrected product routes long canonical data paths through unique hashed owner-only short control directories, validates directory/socket ownership before read-only dialing, bounds the resulting path, cleans only empty per-instance directories, and rejects shared/symlink/missing endpoints. Added explicit long-root/routing/nonmutation regressions and private daemon link CLI. New exact-source native CI follows; final receipt collection must use that source. Earlier passing portable86dca9 receipts are historical after this product correction.
+
+## Corrected source evidence
+
+Reviewed/tested source: `5f96ef154df7cfef3bf043718a2f3b6adb4a78eb` (exact connector-created Git commit, locally reconstructed/hash verified; prior drafts preserved on branches). Fresh Linux core/web/scoped install receipts are retained in evidence/03-daemon-{core,web,install}-source.json. Core checks passed; web passed 27 unit and 20 live browser cases. Real developer ZIP inventory and SHA receipt: evidence/03-package-source.json; archive `/workspace/scratch/aios-daemon-package-final/aios-1.0.0-daemon-final-linux-amd64.zip`, SHA256 `09e181ae7db26ba87eea96b8a985f71bdeb0f7264bd36b28c74e98b52a228737`. Scoped install ran its actual extracted clean-source binary, not merely checkout output. Raw gate logs remain private at `/workspace/scratch/aios-daemon-evidence`.
+
+Native final-source workflow `36898649485`, Apple Silicon job `110491952812` is still running. Its real Go/Python/frontend tests have passed, including the corrected long-root socket test; launchd/package/browser checks pending. The disposable native install path includes a space, exercising real launchctl argument formatting. Separate reviewer independently checked source, receipts/log hashes, ZIP inventory, clean binary provenance and reran the scoped artifact probe; final report follows native results. No final release/candidate-ready claim.
+
+Reviewer native audit correction: report javac_command_detected, because macOS may provide only a launcher stub. Never invoke it to prompt a runtime download. Source revision and fresh receipts will follow this correction. Earlier receipts above remain historical until replaced.
