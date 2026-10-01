@@ -26,12 +26,13 @@ const DatabaseName = "index.db"
 const format = "knowledge-ir-v10"
 
 // Every pooled connection waits for short canonical read/write leases. SQLite's
-// busy handler may finish after context cancellation, but waits at most five
-// seconds; prolonged contention still fails without publishing partial state.
+// busy handler may finish after context cancellation; read waits are only 100ms
+// to preserve query budgets, while writers may wait up to five seconds.
 func sqliteDSN(path string, readOnly bool) string {
 	query := url.Values{"_pragma": {"busy_timeout(5000)"}}
 	if readOnly {
 		query.Set("mode", "ro")
+		query.Set("_pragma", "busy_timeout(100)")
 	}
 	return "file:" + url.PathEscape(path) + "?" + query.Encode()
 }

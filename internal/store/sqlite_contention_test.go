@@ -110,7 +110,7 @@ func TestBusyTimeoutAppliesToEveryReadConnection(t *testing.T) {
 	defer second.Close()
 	for _, conn := range []*sql.Conn{first, second} {
 		var got int
-		if err = conn.QueryRowContext(context.Background(), "PRAGMA busy_timeout").Scan(&got); err != nil || got != 5000 {
+		if err = conn.QueryRowContext(context.Background(), "PRAGMA busy_timeout").Scan(&got); err != nil || got != 100 {
 			t.Fatalf("connection timeout: %d %v", got, err)
 		}
 	}
