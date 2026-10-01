@@ -32,9 +32,9 @@ static aios_record *aios_register(const char *host, const void *owner, uint16_t 
  r->error=DNSServiceRegisterRecord(r->service,&r->record,kDNSServiceFlagsUnique,
  kDNSServiceInterfaceIndexLocalOnly,host,kDNSServiceType_A,kDNSServiceClass_IN,
  sizeof(address),&address,120,aios_reply,r);
- // Complete dual-stack system lookups without advertising an unreachable
- // IPv6-only listener. This mapped loopback address reaches the IPv4 socket.
- struct in6_addr mapped; inet_pton(AF_INET6,"::ffff:127.0.0.1",&mapped);
+ // Both address families reach loopback sockets on the same explicit port.
+ // Real ::1 also supports system clients that reject mapped AAAA addresses.
+ struct in6_addr mapped; inet_pton(AF_INET6,"::1",&mapped);
  if (!r->error) r->error=DNSServiceRegisterRecord(r->service,&r->ipv6,kDNSServiceFlagsUnique,
  kDNSServiceInterfaceIndexLocalOnly,host,kDNSServiceType_AAAA,kDNSServiceClass_IN,
  sizeof(mapped),&mapped,120,aios_reply,r);

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	platform "runtime"
 	"sort"
 	"strings"
 
@@ -21,8 +22,15 @@ func java(ctx context.Context, repo model.Repository, files []model.File, runtim
 		javac = filepath.Join(home, "bin", "javac")
 		javaBin = filepath.Join(home, "bin", "java")
 	}
-	if _, err := exec.LookPath(javac); err != nil {
+	javacPath, err := exec.LookPath(javac)
+	if err != nil {
 		return Result{}, fmt.Errorf("jdk compiler unavailable: %w", err)
+	}
+	// Apple's /usr/bin/javac is an installer/launcher, not a bundled JDK.
+	// A login daemon must retain structural extraction when no real frontend
+	// is configured, without opening an installation dialog in the background.
+	if platform.GOOS == "darwin" && javacPath == "/usr/bin/javac" {
+		return Result{}, fmt.Errorf("real JDK compiler unavailable; configure an external JDK for optional Java semantic coverage")
 	}
 	d, err := cache(dataDir, "java")
 	if err != nil {

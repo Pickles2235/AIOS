@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -59,7 +60,11 @@ func New(cfg catalog.Config, db *store.Store, listener net.Listener) (*Server, e
 	}
 	if listener == nil {
 		var e error
-		listener, e = net.Listen("tcp4", "127.0.0.1:0")
+		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+			listener, e = listenDualLoopback()
+		} else {
+			listener, e = net.Listen("tcp4", "127.0.0.1:0")
+		}
 		if e != nil {
 			return nil, e
 		}

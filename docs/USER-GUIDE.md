@@ -57,7 +57,8 @@ be authenticated. Authentication failure explains how to retry or explicitly cho
 Direct mode while leaving your selected mode unchanged.
 
 Choose a local namespace yourself. Native macOS registers a DNS-SD name only on
-this Mac, resolves it to loopback and uses an explicit HTTP port. Collision suggestions
+this Mac, resolves it to IPv4/IPv6 loopback and uses an explicit HTTP port shared by
+127.0.0.1 and ::1 listeners. No wildcard or LAN listener is opened. Collision suggestions
 are never saved until you select one. Changing the name navigates with a fresh private
 launch link. `"$AIOS_BIN" daemon link --recovery` obtains a localhost link if the name
 is unavailable. Saved names are retained on restart; unavailable registration is
