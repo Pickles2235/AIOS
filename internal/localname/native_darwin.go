@@ -3,7 +3,8 @@
 package localname
 
 /*
-#cgo LDFLAGS: -ldns_sd
+// macOS exports DNSService APIs through the default libSystem linkage.
+// Modern SDKs do not provide a separately linkable libdns_sd stub.
 #include <dns_sd.h>
 #include <stdlib.h>
 #include <stdint.h>
