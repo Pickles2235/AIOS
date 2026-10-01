@@ -130,10 +130,10 @@
       "gates": [
         "core"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/05-maintained-repositories.md",
-      "completion_commit": null,
-      "review": null,
+      "completion_commit": "a19211f6e26d241fce3683690160acd72d1825eb",
+      "review": ".codex/completion/evidence/05-maintenance-review.json",
       "product_gates": [
         "core",
         "maintenance"
