@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "source_commit": "6619f662ad87a8b88719e0eecd0c93d882766082",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "passed": true,
+  "clean_worktrees": true,
+  "equal_semantic_fingerprint": true,
+  "runs": [
+    {
+      "run": 1,
+      "report": "/workspace/scratch/upgrade-fixture-a-evidence/acceptance-1/acceptance-report.json",
+      "report_sha256": "77bd0bc859c830c8776a3dc7cf96bd5028166ca0f0bd965a3a7400133924b66e",
+      "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+      "cases": 12,
+      "repositories": 25,
+      "binary_sha256": "14192fecc243416e261806d21b080d9aa83c244b95e935be155cb5b42b66ec79",
+      "go_vcs_revision": "6619f662ad87a8b88719e0eecd0c93d882766082",
+      "go_vcs_modified": false,
+      "exit_code": 0,
+      "log_sha256": "aee0fbf0449d58cc676e2f91505785ba23e04669b92ea99f930227f65c3d875c"
+    },
+    {
+      "run": 2,
+      "report": "/workspace/scratch/upgrade-fixture-a-evidence/acceptance-2/acceptance-report.json",
+      "report_sha256": "a8f2161c9d176a6f715fbea0aa632176e97a3c582695b34b949d7d81e1d566be",
+      "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+      "cases": 12,
+      "repositories": 25,
+      "binary_sha256": "66ce23399ba07b3bd60f50340101941be268a392558eafc8b9e70ce920a5ff32",
+      "go_vcs_revision": "6619f662ad87a8b88719e0eecd0c93d882766082",
+      "go_vcs_modified": false,
+      "exit_code": 0,
+      "log_sha256": "da52fa190544137f06cf60dc5554156beaf8bed18817e8792c5c544490b39843"
+    }
+  ]
+}

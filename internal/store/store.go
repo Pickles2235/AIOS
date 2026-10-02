@@ -989,10 +989,11 @@ func buildProjectionSet(ctx context.Context, tx *sql.Tx, catalogRevision, reason
 	}
 	for _, kind := range kinds {
 		now := time.Now().UTC().Format(time.RFC3339Nano)
-		buildID := "pb-" + digest(kind, catalogRevision, fingerprint, now)
+		builderVersion := projectionBuilderVersion(kind)
+		buildID := "pb-" + digest(kind, builderVersion, catalogRevision, fingerprint, now)
 		// Persist the private build first: projection rows carry a real foreign
 		// key, but it is not eligible for reads until the pointer update below.
-		if _, err = tx.ExecContext(ctx, `INSERT INTO projection_builds(projection_build_id,projection_kind,projection_schema_version,catalog_revision_id,source_ir_fingerprint,builder_name,builder_version,input_fingerprint,projection_fingerprint,created_at,activated_at,state,record_counts,validation_summary,rebuild_reason) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, buildID, kind, "v1", catalogRevision, fingerprint, "store-ir-projection-builder", "v1", fingerprint, "", now, nil, "staged", `{}`, `{"valid":false,"state":"staged"}`, reason); err != nil {
+		if _, err = tx.ExecContext(ctx, `INSERT INTO projection_builds(projection_build_id,projection_kind,projection_schema_version,catalog_revision_id,source_ir_fingerprint,builder_name,builder_version,input_fingerprint,projection_fingerprint,created_at,activated_at,state,record_counts,validation_summary,rebuild_reason) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, buildID, kind, "v1", catalogRevision, fingerprint, "store-ir-projection-builder", builderVersion, fingerprint, "", now, nil, "staged", `{}`, `{"valid":false,"state":"staged"}`, reason); err != nil {
 			return err
 		}
 		state, counts, err := buildProjectionRows(ctx, tx, kind, buildID, catalogRevision, reason)
@@ -1002,7 +1003,7 @@ func buildProjectionSet(ctx context.Context, tx *sql.Tx, catalogRevision, reason
 		if err = validateProjectionRows(ctx, tx, kind, buildID, catalogRevision); err != nil {
 			return fmt.Errorf("validate %s projection: %w", kind, err)
 		}
-		projectionFingerprint := digest(kind, "v1", fingerprint, counts)
+		projectionFingerprint := digest(kind, builderVersion, fingerprint, counts)
 		validation := `{"valid":true}`
 		if state == "disabled" {
 			validation = `{"valid":true,"disabled":true}`
@@ -1133,6 +1134,9 @@ func buildProjectionRows(ctx context.Context, tx *sql.Tx, kind, buildID, revisio
 }
 
 func validateProjectionRows(ctx context.Context, tx *sql.Tx, kind, buildID, revision string) error {
+	if kind == "lookup" {
+		return validateLookupCompleteness(ctx, tx, buildID, revision)
+	}
 	if kind == "vector" || kind == "cache" || kind == "lexical" {
 		return nil
 	}

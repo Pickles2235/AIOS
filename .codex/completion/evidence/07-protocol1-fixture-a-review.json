@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "/root/upgrade_reviewer",
+  "reviewed_commit": "6619f662ad87a8b88719e0eecd0c93d882766082",
+  "reviewed_tree": "9a617ad70e2be0746910ffa6119cdbc9c7b4106d",
+  "reviewed_at": "2026-10-02T01:54:44.218658+00:00",
+  "verdict": "pass",
+  "approval_scope": "portable protocol1 engineering fixture A source freeze only",
+  "task07_completion_approved": false,
+  "candidate_ready": false,
+  "stakeholder_release_approved": false,
+  "native_upgrade_proven": false,
+  "fixture_is_historical_or_public_release": false,
+  "blocking_findings": [],
+  "checks_performed": [
+    "Read AGENTS.md, PRODUCT.md, ACCEPTANCE.md, REVIEWER.md and task07 plan; inspected exact 52-file commit and clean unchanged product HEAD/tree. Only completion evidence/plan metadata changed before writing this report.",
+    "Independently reproduced published-data, missing-data and killed-updater writer admission, malformed committed-journal admission and source mutation at update/uninstall. Reran all eleven independent top-level overlay tests on exact A under race: PASS, 10.215s.",
+    "Ran exact A private staged-validator/store upgrade/live read-only HTTP health tests under race with count=1: cmd 1.023s / store 2.238s / webui 2.968s, PASS.",
+    "Inspected stable canonical writer/root/lifetime authority, shared full journal validators, staged migration restriction, stop-before-snapshot ordering, matching binary/state rollback, retained stable recovery interpreter and protocol0 rejection before mutation.",
+    "Independently ingested genuinely changed canonical knowledge during committed normal startup before returning failure; committed cleanup retained that knowledge. Committed phase is authoritative and cannot roll back later accepted writes.",
+    "Verified persistent sibling uninstall authority, fsync of new directory ancestor chain/intent, original preserve/delete/service checksum binding and retries after partial root deletion. Independent removal of transient lock authority plus partial root deletion preserved resumable intent.",
+    "Verified source protections for full installation, external plist and durable sibling authority. Approvals refresh after Stop under writer/lifetime authority. Each previously reproduced overlap is rejected before mutation.",
+    "Inspected UI serve lifetime lease acquired while initial writer is held, health-only constructor/mutation refusal, owner-death writer/reset fence before mkdir/migration/reset, and private validate-state existing transaction slot/journal binding.",
+    "Verified actual Linux core, corrected Chromium web and scoped upgrade receipts bind exact A, clean unchanged product tree, successful command exits and actual raw log SHA256. Corrected web raw log records 27 unit and 32 live authenticated browser passes.",
+    "Verified scoped upgrade report records 92 portable transaction cases and 26 portable uninstall cases with native_lifecycle_proven=0. Inspected driver retaining explicit failure for full native A/B fault/disk-full/installed-controls gate.",
+    "Verified two fresh hermetic Linux runs: actual unmodified A executable GoVCS/digests, 12 passing cases, 25 repositories, all command exits0, accepted disposition and equal semantic fingerprint. Actual report and log SHA256 match.",
+    "Independently verified actual Linux ZIP bytes/all seven manifest inventory entries, frozen executable digest/GoVCS and actual frozen CLI upgrade inspect output against recorded manifest/inspection.",
+    "Inspected native engineering ZIP retention workflow. Independently fetched run 36952287178 jobs and Linux job 110667628492 raw logs: actual scope-poll SQLITE_BUSY failure; Apple Silicon job 110667628343 in progress. No entire-CI/native-package/upgrade PASS inferred."
+  ],
+  "nonblocking_findings": [
+    "PASS permits retaining a protocol engineering fixture source only. It does not complete task07 or certify actual supported native A/B upgrade; final candidate requirements remain mandatory.",
+    "A retains existing lookup builder v1 intentionally. Distinct B must deliver substantive lookup completeness/read-boundary correction, changed-projection compatibility tests and separate exact-source review before task07 approval.",
+    "Actual GitHub Linux developer-smoke job 110667628492 failed TestRepositoryAddAndScopeUseActualMaintainedBackend at repositories_test.go:338 SQLITE_BUSY. Its unchanged scope poll calls fatal activeID while earlier add polling tolerates bounded read errors. B must add bounded polling retry retaining final included/excluded assertions. This CI failure is not described as passing or waived for final gates.",
+    "Apple Silicon job 110667628343 was still running at observation. Actual native A ZIP bytes/provenance/installation and distinct B successful/failed/killed updates/restored A controls remain unverified in this report.",
+    "Portable service callbacks, synthetic executable bytes and externally killed updater processes do not prove native launchd rebinding, native actual migration/health, real exhausted-filesystem recovery or hardware power loss. Full gates remain required.",
+    "Initial local web attempt failed because configured Chrome was absent; corrected Chromium rerun passed. Failed receipt/log retained separately.",
+    "Complete transitive/native licensing, optional native helper/vector execution, privacy and final assembled product acceptance remain required later obligations."
+  ],
+  "verified_receipts": {
+    "core": {
+      "path": "/workspace/scratch/upgrade-fixture-a-evidence/core.json",
+      "sha256": "c088fa975d24749bbcebb2320cdf476e8089ea6abc2de5a5c741b0f3068f7cd4",
+      "log_sha256": "7470d33bbb93450e303af89dcfeab05cc67e3efe581cf094633bdfca1e8cc7cf",
+      "seconds": 126.99915671348572,
+      "platform": "Linux",
+      "architecture": "x86_64"
+    },
+    "web-chromium": {
+      "path": "/workspace/scratch/upgrade-fixture-a-evidence/web-chromium.json",
+      "sha256": "cd31b11a95de4e2c631ba6e15a8481962ef4ea791d9e93329e64b6b74dd10476",
+      "log_sha256": "be93ebd7a8a7c7ca4f8bfa6ca4e9154a1b6782c87621207fd2e80507c966bf1d",
+      "seconds": 58.265491247177124,
+      "platform": "Linux",
+      "architecture": "x86_64"
+    },
+    "upgrade": {
+      "path": "/workspace/scratch/upgrade-fixture-a-evidence/upgrade.json",
+      "sha256": "77d9565aa33517778e108cfcdde96c46da687a05acb6e1935b8f7b8b5f075e64",
+      "log_sha256": "b6f9416f06f53f4de3b78563c350c0b9f49df9050e20e0963b22cdd1ac06f8f9",
+      "seconds": 5.6583333015441895,
+      "platform": "Linux",
+      "architecture": "x86_64"
+    }
+  },
+  "hermetic_acceptance": {
+    "receipt_sha256": "0b64ab6dcdeb6e812e29cb52c83f683f5ed43bedd69dec18310fdbe64b2f0c68",
+    "cases_per_run": 12,
+    "repositories_per_run": 25,
+    "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+    "equal_fingerprints": true,
+    "runs": [
+      {
+        "report_sha256": "77bd0bc859c830c8776a3dc7cf96bd5028166ca0f0bd965a3a7400133924b66e",
+        "binary_sha256": "14192fecc243416e261806d21b080d9aa83c244b95e935be155cb5b42b66ec79",
+        "log_sha256": "aee0fbf0449d58cc676e2f91505785ba23e04669b92ea99f930227f65c3d875c"
+      },
+      {
+        "report_sha256": "a8f2161c9d176a6f715fbea0aa632176e97a3c582695b34b949d7d81e1d566be",
+        "binary_sha256": "66ce23399ba07b3bd60f50340101941be268a392558eafc8b9e70ce920a5ff32",
+        "log_sha256": "da52fa190544137f06cf60dc5554156beaf8bed18817e8792c5c544490b39843"
+      }
+    ]
+  },
+  "verified_engineering_artifact": {
+    "platform": "linux",
+    "architecture": "amd64",
+    "zip_sha256": "b68310ead11a612c5f97664da734bae84eaeccbdf2f0ecd2bef75a614841a829",
+    "zip_bytes": 13725045,
+    "executable_sha256": "18aaae55f4493460988d41151746ea2eb7558d49c1d6620ea41e0b3653af3526",
+    "executable_bytes": 31486480,
+    "source_commit": "6619f662ad87a8b88719e0eecd0c93d882766082",
+    "vcs_modified": false,
+    "manifest_update_protocol": 1,
+    "native": false,
+    "package_receipt_sha256": "add11572c8c405757d470897e4cf33a4bafe5d5c5b5b81cf6d93464f04ddf4a6"
+  },
+  "ci_observation": {
+    "run_id": 36952287178,
+    "apple_silicon_job_id": 110667628343,
+    "apple_silicon_status_observed": "in_progress",
+    "linux_job_id": 110667628492,
+    "linux_conclusion": "failure",
+    "linux_failure": "TestRepositoryAddAndScopeUseActualMaintainedBackend: repositories_test.go:338 SQLITE_BUSY",
+    "requires_B_poll_correction": true
+  },
+  "review_reproductions": [
+    "Published and temporarily absent logical data admitted writers before commit: reproduced failure, corrected stable authority and publication leases retested.",
+    "External updater SIGKILL at absent-data and health boundaries admitted writer/reset before recovery: reproduced failure, corrected durable fence retested without recreating data.",
+    "Late approval during daemon Stop, approved plist workspace and approved replaced-current workspace were mutated: reproduced failures, complete target validation/stopped approval refresh retested.",
+    "Minimal corrupt committed JSON admitted writer: reproduced failure, shared full validators retested. Positive committed ingest/cleanup independently verified.",
+    "New durable external authority accepted as Git source and received uninstall journal: reproduced failure, authority target validation retested.",
+    "Transient lock-directory deletion and partial root metadata/binary deletion: durable sibling uninstall intent independently resumed with original deletion choice.",
+    "TMPDIR independence, publication writer exclusion and read-only health controls independently checked; historical targeted race suites passed after corrections."
+  ],
+  "review_log_provenance": [
+    {
+      "name": "absent-data-writer-repro.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/absent-data-writer-repro.log",
+      "sha256": "f75ad77edf1679b8cc5b9be2f99651ed50d38c8129258442903fe588cc714dec",
+      "observed_result": "fail",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "all-current-review-overlays.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/all-current-review-overlays.log",
+      "sha256": "2599f36d2104c3ff05ba6089a17c72dd29925554585f57321a638334e81fec59",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "corrected-durable-authority-source-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/corrected-durable-authority-source-overlay.log",
+      "sha256": "a56c9a92b164467c16024b9973e83b7a88e0d92431075cd42cf063f03deb2b2d",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "corrected-durable-fence-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/corrected-durable-fence-overlay.log",
+      "sha256": "8a8fd56217161cfc7f828389ecbc351768fbd8327194e9ee536ecc7f69dfa423",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "corrected-fence-source-race.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/corrected-fence-source-race.log",
+      "sha256": "2f5b244dbeb9994a68700e63bb6f62056061a0928b7b606b4602717024b7d6c5",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "corrected-killed-writer-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/corrected-killed-writer-overlay.log",
+      "sha256": "b97a7fd965130d3ec51a720c73724a5c078d69ad1436d89031ac9622cd699582",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "corrected-uninstall-source-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/corrected-uninstall-source-overlay.log",
+      "sha256": "33f4a6c573bddbc000ce7be3cd65c9da27f3b8f98b0333aaf2d4e187d2f1e6c9",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "corrected-writer-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/corrected-writer-overlay.log",
+      "sha256": "13a39b58629ecd0e8c65c0af28f00de694f2ff76396eaad61a6ea6541aac7aee",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "durable-authority-source-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/durable-authority-source-overlay.log",
+      "sha256": "050568c8dea32c3dc084401b0bc1f865e92be93ec4b71f9a37c6a5dfa6402480",
+      "observed_result": "fail",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "durable-fence-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/durable-fence-overlay.log",
+      "sha256": "0a4492b98401e44f8c47a35b7797a73bee87650c8e3c990a5243e5f2f8a27d7e",
+      "observed_result": "fail",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "fixture-a-exact-health-validator.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/fixture-a-exact-health-validator.log",
+      "sha256": "a13cf569e25e6c45a42321ba0c4b4eed6873ad35e6abd4ea605c76bade9bb084",
+      "observed_result": "pass",
+      "source_scope": "exact fixture A; separately run independent count=1 tests"
+    },
+    {
+      "name": "fixture-a-exact-overlays.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/fixture-a-exact-overlays.log",
+      "sha256": "c8c77a5a24e674e74afc3a6276f610f9d0e28c5c7a38a8c81e07a01c57e8c639",
+      "observed_result": "pass",
+      "source_scope": "exact fixture A; separately run independent count=1 tests"
+    },
+    {
+      "name": "killed-writer-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/killed-writer-overlay.log",
+      "sha256": "0da703730634b18037a0801b7a226295a4b5ee76b4df870f7549cde12ebc0c9c",
+      "observed_result": "fail",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "portable-race.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/portable-race.log",
+      "sha256": "2ae0319f336f743be2adb391345d744c05756015df00c07a14655722f33d93e3",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "publication-writer-repro.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/publication-writer-repro.log",
+      "sha256": "56b0130a891f46d4f298fde91557369710c3ae077fca320ea3d36743198504ad",
+      "observed_result": "fail",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "stable-writer-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/stable-writer-overlay.log",
+      "sha256": "af2ba130ac97ce85a6e43502140754a2f3d3604508299db0ffbf8f834e356ea8",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "stable-writer-uninstall-race.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/stable-writer-uninstall-race.log",
+      "sha256": "01e796d77301bcbbb89419adfc453e1cd4e2ee10a6c6b10678c71812f709bd24",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "temp-lock-repro.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/temp-lock-repro.log",
+      "sha256": "5b9fa6bfaf9fc3d0615123142bb6df184d8ab2157d299a6d84792234a2b0e862",
+      "observed_result": "pass",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    },
+    {
+      "name": "uninstall-source-overlay.log",
+      "private_path": "/workspace/scratch/upgrade-independent-review/uninstall-source-overlay.log",
+      "sha256": "84a199a3f1d0f3a0d9b5fd81fd403ffef874c50c8e82da99473c92577ad31d67",
+      "observed_result": "fail",
+      "source_scope": "historical dirty-tree development observation; not a final-source receipt"
+    }
+  ],
+  "evidence_retention": "Raw logs/artifacts remain private in scratch. Repository report retains only bounded observations and SHA256, without raw source excerpts, capabilities or credentials."
+}

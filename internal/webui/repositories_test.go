@@ -335,11 +335,12 @@ func TestRepositoryAddAndScopeUseActualMaintainedBackend(t *testing.T) {
 	}
 	deadline = time.Now().Add(30 * time.Second)
 	for {
-		if activeID(t, s, "three") != old {
+		generation, readErr := s.db.ActiveGeneration(ctx, "three")
+		if readErr == nil && generation.ID != old {
 			break
 		}
 		if time.Now().After(deadline) {
-			t.Fatal("scope update did not replace canonical knowledge")
+			t.Fatal("scope update did not replace canonical knowledge", readErr)
 		}
 		time.Sleep(10 * time.Millisecond)
 	}

@@ -687,13 +687,22 @@ class ProductScenarios(unittest.TestCase):
         plan = self.cli('upgrade', 'inspect', '--package', package, '--json')
         self.check(plan['disk_schema'] and plan['compatible_from'], 'declared compatible upgrade path')
         self.check(plan['downloads'] is False and plan['preserve_identity'], 'explicit local update preserves state')
+        self.check(plan['update_protocol'] == 1 and 'knowledge-ir-v10' in plan['compatible_ir_formats'],
+                   'explicit protocol and canonical compatibility declared')
+        if getattr(self, 'completion_milestone', None) == '07-atomic-upgrades':
+            self.check(bool(os.environ.get('AIOS_COMPLETION_PRIOR_PACKAGE')), 'retained actual protocol1 A package required')
+            name = 'TestUpgradeActualProtocol1PackagesPreserveNonemptyKnowledge'
+            self.portable_transaction_tests([name], {name: 2}, build_tags='completionfixture')
 
-    def portable_transaction_tests(self, names, minimum_children):
+    def portable_transaction_tests(self, names, minimum_children, build_tags=None):
         # Real SQLite/filesystem/process-kill boundaries, with explicit portable
         # service callbacks. This cannot certify installed launchd execution.
         pattern = '^(' + '|'.join(names) + ')$'
-        result = subprocess.run(['go', 'test', '-json', './internal/lifecycle',
-                                 '-run', pattern, '-count=1'], cwd=SOURCE_ROOT,
+        command = ['go', 'test', '-json']
+        if build_tags:
+            command += ['-tags', build_tags]
+        command += ['./internal/lifecycle', '-run', pattern, '-count=1']
+        result = subprocess.run(command, cwd=SOURCE_ROOT,
                                 capture_output=True, text=True, timeout=240)
         self.check(result.returncode == 0, 'portable lifecycle transaction tests pass')
         events = [json.loads(line) for line in result.stdout.splitlines()]

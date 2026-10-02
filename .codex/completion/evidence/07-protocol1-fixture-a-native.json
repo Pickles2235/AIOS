@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "source_commit": "6619f662ad87a8b88719e0eecd0c93d882766082",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "native_job": {
+    "run_id": 36952287178,
+    "job_id": 110667628343,
+    "conclusion": "success",
+    "workflow_overall": "failure due Linux job transient SQLITE_BUSY polling test; corrected in candidate B"
+  },
+  "native_upgrade_proven": false,
+  "evidence_zip_sha256": "973b7fd7a2cee41def4de2350c5f57cd164e26c804aa0de9d12ad31d90cfe5b8",
+  "evidence_zip_private_path": "/workspace/attachments/d43e32e2-d675-490f-92ea-cb923542a678/protocol1-native-fixture-a-evidence.zip",
+  "native_engineering_acceptance": [
+    {
+      "entry": "_temp/acceptance-v1/acceptance-report.json",
+      "sha256": "7e1a673a00b464f4eb062aebe43345dabb3fad720bd716c0de99423230933af2",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "cases": 14,
+      "repositories": 25
+    },
+    {
+      "entry": "_temp/macos-first-run/acceptance-a/acceptance-report.json",
+      "sha256": "9d8b10984fc1b05074a6dd58a2bcf8baad9294275bd184ad521916c5490ae66d",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "cases": 14,
+      "repositories": 25
+    },
+    {
+      "entry": "_temp/macos-first-run/acceptance-b/acceptance-report.json",
+      "sha256": "428e42c85a8096465dcc927f81bb70fcf6d98b6a99ee4a11e747cd8979dcff72",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "cases": 14,
+      "repositories": 25
+    },
+    {
+      "entry": "_temp/macos-first-run/acceptance-installed/acceptance-report.json",
+      "sha256": "ebfd890decf65a93926218499e592229f321e5e828a41ab78bac00425f4ef70b",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "cases": 14,
+      "repositories": 25
+    }
+  ],
+  "installed_tar_binary_sha256": "63ae744527cbf62048cac2b8cb9483a737a77363ab68ffe881a826d9647e84f3",
+  "installed_tar_archive_sha256": "14c984950d8d276c08d51955524fee166383d5db5603c40db38d3e7aaddd7d57",
+  "installed_tar_bytes_retained": false,
+  "installed_tar_go_vcs": {
+    "revision": "6619f662ad87a8b88719e0eecd0c93d882766082",
+    "modified": false,
+    "toolchain": "go1.25.0"
+  },
+  "retained_actual_protocol1_zip_artifact": {
+    "artifact_id": 11205375980,
+    "run_id": 36952287178,
+    "name": "protocol1-native-fixture",
+    "bytes": 271909285,
+    "github_declared_archive_sha256": "eafd39dd81d7c33d26251e18e4c757264a8f313c5f0f5456d8e2997a113fa537",
+    "expires_at": "2026-12-31T01:43:21Z",
+    "local_bytes_retained": false,
+    "verification": "GitHub artifact metadata only; local executor file transfer refuses artifacts over32MiB. Native CI must download actual retained A ZIP and verify manifest/inventory/executable SHA/GoVCS before A/B upgrade proof."
+  },
+  "daemon": {
+    "passed": true,
+    "checks": [
+      "checksummed_zip_install",
+      "native_headless_launchd",
+      "service_path_with_spaces",
+      "foreign_root_stop_rejected",
+      "native_stop_start_identity",
+      "native_browser_open",
+      "preserve_data_uninstall"
+    ],
+    "report_sha256": "25c483abfd702bb5b1ebee15117a61b0f98944ab85baaa7941bb447c99509005",
+    "source_commit": "6619f662ad87a8b88719e0eecd0c93d882766082"
+  },
+  "onboarding": {
+    "passed": true,
+    "checks": [
+      "actual_launchd_external_helper_tls_auth",
+      "noninteractive_login_context",
+      "auth_failure_direct_remediation_mode_unchanged",
+      "auth_failure_retains_last_good",
+      "native_named_origin_authenticated",
+      "old_name_to_new_name_capability_migration",
+      "localhost_recovery",
+      "namespace_identity_restart",
+      "native_ui_stop_restart",
+      "source_nonmutation"
+    ],
+    "report_sha256": "c19f7633764dfc1c726cf07a1883c05e2025525a81d1ec8cfb6090e5f18b9ffe",
+    "source_commit": "6619f662ad87a8b88719e0eecd0c93d882766082"
+  }
+}

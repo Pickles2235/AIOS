@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "upgrade",
+  "milestone": "07-atomic-upgrades",
+  "tested_commit": "6619f662ad87a8b88719e0eecd0c93d882766082",
+  "clean_product_tree": true,
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "timestamp": 1790905579.527958,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=07-atomic-upgrades",
+        "COMPLETION_GATE=upgrade"
+      ],
+      "exit_code": 0,
+      "seconds": 5.6583333015441895,
+      "log_sha256": "b6f9416f06f53f4de3b78563c350c0b9f49df9050e20e0963b22cdd1ac06f8f9"
+    }
+  ]
+}

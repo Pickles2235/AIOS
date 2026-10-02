@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "source_commit": "6619f662ad87a8b88719e0eecd0c93d882766082",
+  "fixture_role": "protocol1 engineering compatibility fixture A; not historical/public release",
+  "platform": "Linux",
+  "architecture": "amd64",
+  "native_upgrade_proven": false,
+  "zip": "/workspace/scratch/upgrade-fixture-a-package/aios-1.0.0-protocol1-a-linux-amd64.zip",
+  "zip_sha256": "b68310ead11a612c5f97664da734bae84eaeccbdf2f0ecd2bef75a614841a829",
+  "zip_bytes": 13725045,
+  "executable": "/workspace/scratch/upgrade-fixture-a-evidence/frozen-aios",
+  "executable_sha256": "18aaae55f4493460988d41151746ea2eb7558d49c1d6620ea41e0b3653af3526",
+  "executable_bytes": 31486480,
+  "go_vcs": {
+    "-buildmode": "exe",
+    "-compiler": "gc",
+    "-trimpath": "true",
+    "DefaultGODEBUG": "cryptocustomrand=1,tlssecpmlkem=0,tracebacklabels=0,urlstrictcolons=0,x509sslcertoverrideplatform=0",
+    "CGO_ENABLED": "1",
+    "GOARCH": "amd64",
+    "GOOS": "linux",
+    "GOAMD64": "v1",
+    "vcs": "git",
+    "vcs.revision": "6619f662ad87a8b88719e0eecd0c93d882766082",
+    "vcs.time": "2026-10-02T01:40:28Z",
+    "vcs.modified": "false"
+  },
+  "manifest": {
+    "schema_version": 1,
+    "version": "1.0.0-protocol1-a",
+    "source_commit": "6619f662ad87a8b88719e0eecd0c93d882766082",
+    "platform": "linux",
+    "architecture": "amd64",
+    "disk_schema": 1,
+    "knowledge_ir_format": "knowledge-ir-v10",
+    "update_protocol": 1,
+    "compatible_ir_formats": [
+      "knowledge-ir-v10"
+    ],
+    "compatible_from": [
+      1
+    ],
+    "sha256": {
+      "aios-1.0.0-protocol1-a-linux-amd64/LICENSES.txt": "f8417e1d2e8df278cbdb512aa546865927cc73c8b798d2d40b9877ccfab6df0d",
+      "aios-1.0.0-protocol1-a-linux-amd64/RELEASE-NOTES.md": "ae26989b6fef7017a6c407ccf5b36d053592bd04a746749f57768d4a24ad826c",
+      "aios-1.0.0-protocol1-a-linux-amd64/USER-GUIDE.md": "45233356c7d35d8dfd2838392ecd918d33ca64a5716a0c6efd7b4d4fd5de0f59",
+      "aios-1.0.0-protocol1-a-linux-amd64/bin/aios": "18aaae55f4493460988d41151746ea2eb7558d49c1d6620ea41e0b3653af3526",
+      "aios-1.0.0-protocol1-a-linux-amd64/install.sh": "64cdf461c0d8ff46b1483ab196d37fea5b001a414ff8b25901bc8e5495a3ffff",
+      "aios-1.0.0-protocol1-a-linux-amd64/uninstall.sh": "c233ef837060cdd30ac4cb69e743d727f36864602b0fa0b93dd6efb6d3613f89",
+      "aios-1.0.0-protocol1-a-linux-amd64/update.sh": "b25fbd604f55f3dc49cd68af911a4f30e1e146d448186e1e0a40a814217d073b"
+    }
+  },
+  "inspection": {
+    "schema_version": 1,
+    "version": "1.0.0-protocol1-a",
+    "source_commit": "6619f662ad87a8b88719e0eecd0c93d882766082",
+    "platform": "linux",
+    "architecture": "amd64",
+    "disk_schema": 1,
+    "knowledge_ir_format": "knowledge-ir-v10",
+    "compatible_from": [
+      1
+    ],
+    "compatible_ir_formats": [
+      "knowledge-ir-v10"
+    ],
+    "update_protocol": 1,
+    "sha256": {
+      "aios-1.0.0-protocol1-a-linux-amd64/LICENSES.txt": "f8417e1d2e8df278cbdb512aa546865927cc73c8b798d2d40b9877ccfab6df0d",
+      "aios-1.0.0-protocol1-a-linux-amd64/RELEASE-NOTES.md": "ae26989b6fef7017a6c407ccf5b36d053592bd04a746749f57768d4a24ad826c",
+      "aios-1.0.0-protocol1-a-linux-amd64/USER-GUIDE.md": "45233356c7d35d8dfd2838392ecd918d33ca64a5716a0c6efd7b4d4fd5de0f59",
+      "aios-1.0.0-protocol1-a-linux-amd64/bin/aios": "18aaae55f4493460988d41151746ea2eb7558d49c1d6620ea41e0b3653af3526",
+      "aios-1.0.0-protocol1-a-linux-amd64/install.sh": "64cdf461c0d8ff46b1483ab196d37fea5b001a414ff8b25901bc8e5495a3ffff",
+      "aios-1.0.0-protocol1-a-linux-amd64/uninstall.sh": "c233ef837060cdd30ac4cb69e743d727f36864602b0fa0b93dd6efb6d3613f89",
+      "aios-1.0.0-protocol1-a-linux-amd64/update.sh": "b25fbd604f55f3dc49cd68af911a4f30e1e146d448186e1e0a40a814217d073b"
+    },
+    "downloads": false,
+    "preserve_identity": true
+  },
+  "post_scenario_executable_sha256": "18aaae55f4493460988d41151746ea2eb7558d49c1d6620ea41e0b3653af3526",
+  "executable_unchanged": true
+}

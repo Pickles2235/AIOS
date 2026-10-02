@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sort"
 	"strings"
@@ -19,17 +20,22 @@ type QueryFilter struct {
 // resolution. It intentionally does not consult FTS, so a lexical outage does
 // not prevent an authoritative exact answer.
 func (s *Store) ExactCandidates(ctx context.Context, query string, filter QueryFilter) ([]Candidate, error) {
-	if err := s.assertActiveVersion(ctx, filter); err != nil {
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
 		return nil, err
 	}
-	if err := s.requireProjection(ctx, "lookup"); err != nil {
+	defer tx.Rollback()
+	if err := assertActiveVersionUsing(ctx, tx, filter); err != nil {
+		return nil, err
+	}
+	if err := requireProjectionUsing(ctx, tx, "lookup"); err != nil {
 		return nil, err
 	}
 	where, args := canonicalWhere(filter)
 	q := `SELECT e.entity_id,e.generation_id,e.repo_id,e.kind,e.label,e.path,e.language,e.evidence_id,v.source_id,v.path,v.file_sha256,v.excerpt,v.start_byte,v.end_byte,v.start_line,v.start_column,v.end_line,v.end_column,COALESCE((SELECT MAX(c.confidence) FROM claims c WHERE c.subject_id=e.entity_id OR c.object_id=e.entity_id),1)
 		FROM projection_lookup_records p JOIN active_projection_builds a ON a.projection_build_id=p.projection_build_id JOIN entities e ON e.entity_id=p.entity_id JOIN evidence v ON v.evidence_id=p.evidence_id
 		WHERE a.projection_kind='lookup' AND (lower(e.label)=lower(?) OR lower(e.path)=lower(?))` + where + ` ORDER BY e.repo_id,e.path,e.entity_id`
-	rows, err := s.db.QueryContext(ctx, q, append([]any{query, query}, args...)...)
+	rows, err := tx.QueryContext(ctx, q, append([]any{query, query}, args...)...)
 	if err != nil {
 		return nil, err
 	}
@@ -382,6 +388,10 @@ func canonicalWhere(f QueryFilter) (string, []any) {
 }
 
 func (s *Store) assertActiveVersion(ctx context.Context, f QueryFilter) error {
+	return assertActiveVersionUsing(ctx, s.db, f)
+}
+
+func assertActiveVersionUsing(ctx context.Context, reader projectionReader, f QueryFilter) error {
 	if f.Version == "" {
 		return nil
 	}
@@ -392,7 +402,7 @@ func (s *Store) assertActiveVersion(ctx context.Context, f QueryFilter) error {
 		args = append(args, f.Repository)
 	}
 	var n int
-	if err := s.db.QueryRowContext(ctx, q, args...).Scan(&n); err != nil {
+	if err := reader.QueryRowContext(ctx, q, args...).Scan(&n); err != nil {
 		return err
 	}
 	if n == 0 {
@@ -408,18 +418,25 @@ func (s *Store) RequireProjection(ctx context.Context, kind string) error {
 }
 
 func (s *Store) requireProjection(ctx context.Context, kind string) error {
-	r, err := s.ActiveCatalogRevision(ctx)
-	if err != nil {
+	return requireProjectionUsing(ctx, s.db, kind)
+}
+
+func requireProjectionUsing(ctx context.Context, reader projectionReader, kind string) error {
+	var revision string
+	if err := reader.QueryRowContext(ctx, `SELECT catalog_revision_id FROM active_catalog_revision`).Scan(&revision); err != nil {
 		return fmt.Errorf("%s projection unavailable: no active IR catalog", kind)
 	}
-	var fingerprint, state string
-	err = s.db.QueryRowContext(ctx, `SELECT p.source_ir_fingerprint,p.state FROM active_projection_builds a JOIN projection_builds p ON p.projection_build_id=a.projection_build_id WHERE a.projection_kind=? AND p.catalog_revision_id=?`, kind, r.ID).Scan(&fingerprint, &state)
-	if err != nil || state != "ready" {
+	var build, fingerprint, state, builder, schema string
+	err := reader.QueryRowContext(ctx, `SELECT p.projection_build_id,p.source_ir_fingerprint,p.state,p.builder_version,p.projection_schema_version FROM active_projection_builds a JOIN projection_builds p ON p.projection_build_id=a.projection_build_id WHERE a.projection_kind=? AND p.catalog_revision_id=?`, kind, revision).Scan(&build, &fingerprint, &state, &builder, &schema)
+	if err != nil || state != "ready" || (kind == "lookup" && (builder != projectionBuilderVersion(kind) || schema != "v1")) {
 		return fmt.Errorf("%s projection unavailable for active IR catalog", kind)
 	}
 	var current string
-	if err = s.db.QueryRowContext(ctx, `SELECT group_concat(generation_id, ',') FROM (SELECT generation_id FROM catalog_revision_members WHERE catalog_revision_id=? ORDER BY generation_id)`, r.ID).Scan(&current); err != nil || current != fingerprint {
+	if err = reader.QueryRowContext(ctx, `SELECT COALESCE(group_concat(generation_id, ','),'') FROM (SELECT generation_id FROM catalog_revision_members WHERE catalog_revision_id=? ORDER BY generation_id)`, revision).Scan(&current); err != nil || current != fingerprint {
 		return fmt.Errorf("%s projection is stale for active IR catalog", kind)
+	}
+	if kind == "lookup" {
+		return validateLookupCompleteness(ctx, reader, build, revision)
 	}
 	return nil
 }

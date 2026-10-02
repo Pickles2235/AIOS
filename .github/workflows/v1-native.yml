@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   native-core:
@@ -78,6 +79,25 @@ jobs:
       - name: Retain native protocol1 engineering compatibility fixture
         if: matrix.target == 'macos-arm64'
         run: python3 scripts/build_candidate.py --version "1.0.0-protocol1-${GITHUB_SHA:0:12}" --output-dir "$RUNNER_TEMP/protocol1-fixture"
+      - name: Retrieve retained exact protocol1 fixture A
+        if: matrix.target == 'macos-arm64'
+        uses: actions/download-artifact@v4
+        with:
+          name: protocol1-native-fixture
+          run-id: 36952287178
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/protocol1-prior
+      - name: Verify actual native A/B package and nonempty state mechanics
+        if: matrix.target == 'macos-arm64'
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          cd "$RUNNER_TEMP/protocol1-prior"
+          shasum -a 256 -c *.zip.sha256
+          cd "$GITHUB_WORKSPACE"
+          export AIOS_COMPLETION_PRIOR_PACKAGE="$(find "$RUNNER_TEMP/protocol1-prior" -name '*.zip' -type f)"
+          export AIOS_COMPLETION_PACKAGE="$(find "$RUNNER_TEMP/protocol1-fixture" -name '*.zip' -type f)"
+          go test -json -tags completionfixture ./internal/lifecycle -run '^TestUpgradeActualProtocol1PackagesPreserveNonemptyKnowledge$' -count=1 > "$RUNNER_TEMP/protocol1-ab.jsonl"
       - uses: actions/upload-artifact@v4
         if: always() && matrix.target == 'macos-arm64'
         with:
@@ -96,6 +116,7 @@ jobs:
             ${{ runner.temp }}/macos-first-run/fingerprints.txt
             ${{ runner.temp }}/daemon-native.json
             ${{ runner.temp }}/onboarding-native.json
+            ${{ runner.temp }}/protocol1-ab.jsonl
             ${{ runner.temp }}/macos-first-run/acceptance-*/acceptance-report.json
             web/playwright-report
             web/test-results

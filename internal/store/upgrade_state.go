@@ -194,7 +194,7 @@ func MigrateUpgradeState(ctx context.Context, data string) (UpgradeState, error)
 	if catalogs > 0 {
 		for _, kind := range requiredProjectionKinds {
 			var count int
-			if err = db.db.QueryRowContext(ctx, `SELECT count(*) FROM active_projection_builds a JOIN projection_builds p ON p.projection_build_id=a.projection_build_id JOIN active_catalog_revision c ON c.catalog_revision_id=p.catalog_revision_id WHERE a.projection_kind=? AND p.state='ready' AND p.builder_version='v1' AND p.projection_schema_version='v1'`, kind).Scan(&count); err != nil {
+			if err = db.db.QueryRowContext(ctx, `SELECT count(*) FROM active_projection_builds a JOIN projection_builds p ON p.projection_build_id=a.projection_build_id JOIN active_catalog_revision c ON c.catalog_revision_id=p.catalog_revision_id WHERE a.projection_kind=? AND p.state='ready' AND p.builder_version=? AND p.projection_schema_version='v1'`, kind, projectionBuilderVersion(kind)).Scan(&count); err != nil {
 				return before, err
 			}
 			if count != 1 {

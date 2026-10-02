@@ -407,25 +407,29 @@ func (s *Service) Query(ctx context.Context, in Query) (result QueryResult, retE
 	if in.Limit < 1 || in.Limit > 100 {
 		return QueryResult{}, fmt.Errorf("limit must be between 1 and 100")
 	}
-	status, e := s.Status(ctx)
+	// Query readiness belongs to the selected route and its read snapshot.
+	// Full diagnostics validates every projection and needlessly repeats the
+	// lookup completeness scan before ExactCandidates validates that snapshot.
+	snapshots, e := s.db.Status(ctx, "")
 	if e != nil {
 		return QueryResult{}, e
 	}
-	if status.Projection == "no_active_generation" {
+	if len(snapshots) == 0 {
 		return QueryResult{Status: "unknown", Entities: []Entity{}, Trace: []TraceEvent{{Kind: "no_active_generation", Detail: "index approved sources first"}}}, nil
 	}
 	basis, e := s.db.Coverage(ctx, in.Repository, "lexical", nil)
 	if e != nil {
 		return QueryResult{}, e
 	}
-	for _, repo := range status.Repositories {
-		if !repo.Active && (in.Repository == "" || in.Repository == repo.ID) {
+	active := map[string]bool{}
+	for _, snapshot := range snapshots {
+		active[snapshot.RepoID] = true
+	}
+	for _, repo := range s.cfg.SourceRepositories() {
+		if !active[repo.ID] && (in.Repository == "" || in.Repository == repo.ID) {
 			basis.Complete = false
 			basis.Uncertainty = append(basis.Uncertainty, "repository_not_indexed:"+repo.ID)
 		}
-	}
-	if e = s.db.RequireProjection(ctx, "lookup"); e != nil {
-		return QueryResult{Status: "unknown", Entities: []Entity{}, Coverage: &basis, Trace: []TraceEvent{{Kind: "projection_unavailable", Detail: "lookup projection is stale or unavailable"}}}, nil
 	}
 	if in.Repository != "" {
 		if _, e := s.db.ActiveGeneration(ctx, in.Repository); e != nil {
@@ -435,7 +439,7 @@ func (s *Service) Query(ctx context.Context, in Query) (result QueryResult, retE
 	filter := store.QueryFilter{Repository: in.Repository, MinimumConfidence: in.MinimumConfidence}
 	candidates, e := s.db.ExactCandidates(ctx, in.Text, filter)
 	if e != nil {
-		return QueryResult{}, e
+		return QueryResult{Status: "unknown", Entities: []Entity{}, Coverage: &basis, Trace: []TraceEvent{{Kind: "projection_unavailable", Detail: "lookup projection is stale or unavailable"}}}, nil
 	}
 	identities := map[string]bool{}
 	for _, c := range candidates {

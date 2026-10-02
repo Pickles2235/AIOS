@@ -135,3 +135,22 @@ func TestProjectionCursorRejectsChangedGeneration(t *testing.T) {
 		t.Fatal("accepted cursor from previous generation")
 	}
 }
+
+func TestIncompleteLookupCannotCertifyNegativeKnowledge(t *testing.T) {
+	db, s := fixture(t)
+	defer db.Close()
+	if _, e := db.DB().Exec(`DELETE FROM projection_lookup_records WHERE entity_id=(SELECT entity_id FROM entities WHERE label='Publish' LIMIT 1)`); e != nil {
+		t.Fatal(e)
+	}
+	result, e := s.Query(context.Background(), Query{Text: "missing_symbol"})
+	if e != nil || result.Status != "unknown" || len(result.Trace) == 0 || result.Trace[0].Kind != "projection_unavailable" {
+		t.Fatalf("incomplete lookup certified absence: %+v %v", result, e)
+	}
+	if e := db.RebuildProjections(context.Background(), []string{"lookup"}); e != nil {
+		t.Fatal(e)
+	}
+	result, e = s.Query(context.Background(), Query{Text: "Publish"})
+	if e != nil || result.Status != "found" {
+		t.Fatal("repaired lookup lost canonical result", result.Status, e)
+	}
+}
