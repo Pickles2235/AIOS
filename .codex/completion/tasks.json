@@ -187,10 +187,10 @@
       "gates": [
         "core"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/07-atomic-upgrades.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/07-upgrade-review.json",
       "product_gates": [
         "core",
         "upgrade"

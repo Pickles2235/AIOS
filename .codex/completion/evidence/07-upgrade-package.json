@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "source_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+  "platform": "Linux",
+  "architecture": "amd64",
+  "native_upgrade_proven": false,
+  "zip": "/workspace/scratch/upgrade-b-final-package/aios-1.0.0-protocol1-b-final-linux-amd64.zip",
+  "zip_sha256": "549cf26d8597d8ad8d8e8fa976943a13d5253f04c497f15f0359ceb4b5fb3628",
+  "zip_bytes": 13731607,
+  "executable": "/workspace/scratch/upgrade-b-evidence/final-frozen-aios",
+  "executable_sha256": "75d40ebf5bdc330413ea784dd9e0bf6b3809f1f02c51797d2b5b23ec614982e7",
+  "manifest": {
+    "schema_version": 1,
+    "version": "1.0.0-protocol1-b-final",
+    "source_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+    "platform": "linux",
+    "architecture": "amd64",
+    "disk_schema": 1,
+    "knowledge_ir_format": "knowledge-ir-v10",
+    "update_protocol": 1,
+    "compatible_ir_formats": [
+      "knowledge-ir-v10"
+    ],
+    "compatible_from": [
+      1
+    ],
+    "sha256": {
+      "aios-1.0.0-protocol1-b-final-linux-amd64/LICENSES.txt": "f8417e1d2e8df278cbdb512aa546865927cc73c8b798d2d40b9877ccfab6df0d",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/RELEASE-NOTES.md": "ae26989b6fef7017a6c407ccf5b36d053592bd04a746749f57768d4a24ad826c",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/USER-GUIDE.md": "45233356c7d35d8dfd2838392ecd918d33ca64a5716a0c6efd7b4d4fd5de0f59",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/bin/aios": "75d40ebf5bdc330413ea784dd9e0bf6b3809f1f02c51797d2b5b23ec614982e7",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/install.sh": "64cdf461c0d8ff46b1483ab196d37fea5b001a414ff8b25901bc8e5495a3ffff",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/uninstall.sh": "c233ef837060cdd30ac4cb69e743d727f36864602b0fa0b93dd6efb6d3613f89",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/update.sh": "b25fbd604f55f3dc49cd68af911a4f30e1e146d448186e1e0a40a814217d073b"
+    }
+  },
+  "go_version": "/workspace/scratch/upgrade-b-evidence/final-frozen-aios: go1.27.1\n\tpath\tgithub.com/AdamNi-7080/AIOS/cmd/aios\n\tmod\tgithub.com/AdamNi-7080/AIOS\tv0.0.0-20261002021929-17631ea9ac6b\t\n\tdep\tgithub.com/dustin/go-humanize\tv1.0.1\th1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=\n\tdep\tgithub.com/fsnotify/fsnotify\tv1.9.0\th1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=\n\tdep\tgithub.com/google/jsonschema-go\tv0.4.3\th1:/DBOLZTfDow7pe2GmaJNhltueGTtDKICi8V8p+DQPd0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/mattn/go-pointer\tv0.0.1\th1:n+XhsuGeVO6MEAp7xyEukFINEa+Quek5psIR/ylA6o0=\n\tdep\tgithub.com/modelcontextprotocol/go-sdk\tv1.8.0\th1:KIvahhYqwtbeniWVPs3TcXEA7b8jEtwfBpOTAI+Urx4=\n\tdep\tgithub.com/remyoudompheng/bigfft\tv0.0.0-20230129092748-24d4a6f8daec\th1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=\n\tdep\tgithub.com/segmentio/asm\tv1.1.3\th1:WM03sfUOENvvKexOLp+pCqgb/WDjsi7EK8gIsICtzhc=\n\tdep\tgithub.com/segmentio/encoding\tv0.5.4\th1:OW1VRern8Nw6ITAtwSZ7Idrl3MXCFwXHPgqESYfvNt0=\n\tdep\tgithub.com/tree-sitter-grammars/tree-sitter-kotlin\tv1.1.0\th1:SWIUDASa+WPhDDem1U5IJpYwQEezkqXrUI61OcnORzM=\n\tdep\tgithub.com/tree-sitter/go-tree-sitter\tv0.25.0\th1:sx6kcg8raRFCvc9BnXglke6axya12krCJF5xJ2sftRU=\n\tdep\tgithub.com/tree-sitter/tree-sitter-java\tv0.23.5\th1:J9YeMGMwXYlKSP3K4Us8CitC6hjtMjqpeOf2GGo6tig=\n\tdep\tgithub.com/tree-sitter/tree-sitter-javascript\tv0.25.0\th1:ZkWETb66/w8cc13yhfnNuHOLDQWl3BnKlH6f9AdR88c=\n\tdep\tgithub.com/tree-sitter/tree-sitter-typescript\tv0.23.2\th1:/Odvphn18PniVixb9e97X0DbNVsU6Qocv9mfkyzdXwU=\n\tdep\tgithub.com/yosida95/uritemplate/v3\tv3.0.2\th1:Ed3Oyj9yrmi9087+NczuL5BwkIc4wvTb5zIM+UJPGz4=\n\tdep\tgolang.org/x/oauth2\tv0.35.0\th1:Mv2mzuHuZuY2+bkyWXIHMfhNdJAdwW3FuWeCPYN5GVQ=\n\tdep\tgolang.org/x/sync\tv0.22.0\th1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=\n\tdep\tgolang.org/x/sys\tv0.47.0\th1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=\n\tdep\tgolang.org/x/time\tv0.15.0\th1:bbrp8t3bGUeFOx08pvsMYRTCVSMk89u4tKbNOZbp88U=\n\tdep\tmodernc.org/libc\tv1.75.7\th1:o3DTP9/0p9pKmY2WCKQaySW6wIiZhNM7wc2lUoyhfew=\n\tdep\tmodernc.org/mathutil\tv1.7.1\th1:GCZVGXdaN8gTqB1Mf/usp1Y/hSqgI2vAGGP4jZMCxOU=\n\tdep\tmodernc.org/memory\tv1.12.1\th1:nFMiWrpStgZczNl6XI9GnIk/rWhYIyHGUaR04pGbp9g=\n\tdep\tmodernc.org/sqlite\tv1.59.0\th1:X1es1GpqBlS/5T+vbM4HLUdaa8OtQx468DF2vrx+38A=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tDefaultGODEBUG=cryptocustomrand=1,tlssecpmlkem=0,tracebacklabels=0,urlstrictcolons=0,x509sslcertoverrideplatform=0\n\tbuild\tCGO_ENABLED=1\n\tbuild\tGOARCH=amd64\n\tbuild\tGOOS=linux\n\tbuild\tGOAMD64=v1\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6\n\tbuild\tvcs.time=2026-10-02T02:19:29Z\n\tbuild\tvcs.modified=false\n",
+  "inspection": {
+    "schema_version": 1,
+    "version": "1.0.0-protocol1-b-final",
+    "source_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+    "platform": "linux",
+    "architecture": "amd64",
+    "disk_schema": 1,
+    "knowledge_ir_format": "knowledge-ir-v10",
+    "compatible_from": [
+      1
+    ],
+    "compatible_ir_formats": [
+      "knowledge-ir-v10"
+    ],
+    "update_protocol": 1,
+    "sha256": {
+      "aios-1.0.0-protocol1-b-final-linux-amd64/LICENSES.txt": "f8417e1d2e8df278cbdb512aa546865927cc73c8b798d2d40b9877ccfab6df0d",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/RELEASE-NOTES.md": "ae26989b6fef7017a6c407ccf5b36d053592bd04a746749f57768d4a24ad826c",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/USER-GUIDE.md": "45233356c7d35d8dfd2838392ecd918d33ca64a5716a0c6efd7b4d4fd5de0f59",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/bin/aios": "75d40ebf5bdc330413ea784dd9e0bf6b3809f1f02c51797d2b5b23ec614982e7",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/install.sh": "64cdf461c0d8ff46b1483ab196d37fea5b001a414ff8b25901bc8e5495a3ffff",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/uninstall.sh": "c233ef837060cdd30ac4cb69e743d727f36864602b0fa0b93dd6efb6d3613f89",
+      "aios-1.0.0-protocol1-b-final-linux-amd64/update.sh": "b25fbd604f55f3dc49cd68af911a4f30e1e146d448186e1e0a40a814217d073b"
+    },
+    "downloads": false,
+    "preserve_identity": true
+  }
+}

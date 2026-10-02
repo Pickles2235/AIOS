@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "gate": "core",
+  "milestone": null,
+  "tested_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+  "clean_product_tree": true,
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "timestamp": 1790907768.9659016,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "harness-validate"
+      ],
+      "exit_code": 0,
+      "seconds": 142.14047622680664,
+      "log_sha256": "6d2a8fe0d16967761837a62ab181e2c0f51ce7f6b12900bf3051b7c5131b7941"
+    }
+  ]
+}

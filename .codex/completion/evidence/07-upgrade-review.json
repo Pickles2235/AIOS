@@ -1,0 +1,330 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "/root/upgrade_reviewer",
+  "reviewed_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+  "reviewed_tree": "d0f285718e3f2e3dcdcccab1b7dffd63e1ca10c5",
+  "reviewed_at": "2026-10-02T02:28:19.606140+00:00",
+  "verdict": "pass",
+  "approval_scope": "Task07 portable engineering implementation and scoped upgrade acceptance only; full native and final release acceptance remain deferred to task15",
+  "portable_task07_implementation_approved": true,
+  "full_native_upgrade_gate_approved": false,
+  "candidate_ready": false,
+  "stakeholder_release_approved": false,
+  "native_upgrade_proven": false,
+  "blocking_findings": [],
+  "checks_performed": [
+    "Read AGENTS.md, PRODUCT.md, ACCEPTANCE.md, REVIEWER.md and task07 plan. Reviewed the complete protocol A implementation independently before its freeze, then inspected final B changes and exact committed tree 17631. No product implementation edits were made by this reviewer.",
+    "Independently reproduced and retested durable root/writer/lifetime lease, killed-owner writer admission, absent-data publication, malformed committed journal, committed post-health writer generation, and late source approval/update/uninstall boundary failures. Eleven independent top-level lifecycle overlays pass under race on exact B, 7.570s.",
+    "Checked shared strict journal validators, stable installation filesystem sibling uninstall intent, ancestor fsync chain, copy identity rechecks, staged-only candidate validation, immutable original state, stop-before-snapshot ordering and committed phase authority. Previously corrected failures remain covered by the exact-source portable core and overlay suites.",
+    "Inspected matching old binary/state rollback, stable recovery interpreter retention across subsequent upgrades, pending-intent fences after external SIGKILL, and read-only authenticated health startup bound to held root/data/service label. Retained explicit distinction between injected ENOSPC/process kill and native launchd or actual exhausted-filesystem proof.",
+    "Verified lookup builder v2 is a substantive completeness correction: every active canonical entity matches its exact generation/entity/evidence record and same-generation canonical evidence. The unique (build,entity) key plus equal expected/actual row counts excludes all extra records. Both conditions execute in one SQL statement in the same read-only transaction as exact candidate retrieval; no prior certification cache is used.",
+    "Independently inserted FK-valid inactive-generation lookup rows, and replaced an active row with an inactive row at equal total count. Missing-symbol reads reject both. Adjacent missing-row/wrong-evidence/version-change tests and private corruption tests pass on exact B under race; unavailable exact reads classify unknown rather than inventing absence.",
+    "Checked migration expects v2 only for ordinary lookup and preserves all other builder identities, including vector-specific identity/schema. Canonical fingerprint and active generation identities remain unchanged; only changed lookup projection is rebuilt.",
+    "Verified final actual Linux ZIP SHA, all seven manifest inventory hashes, embedded executable bytes, actual frozen executable GoVCS exact 17631/modified false and actual CLI inspect output against final-package receipt. Superseded f9b package receipt is retained privately and was not used for approval.",
+    "Independently executed retained actual committed A and B packages: A installed CLI ingests nonempty Git-backed knowledge, real B staged validator/health run, failed update restores A and successful update retains B. Both canonical fingerprint/active generations/instance/approval controls survive, unchanged projection IDs survive, only lookup changes on success. Exact-source package test PASS 2.433s; service start/stop callbacks are portable and do not prove native launchd.",
+    "Verified formal exact 17631 core, web and scoped upgrade receipts against actual raw log hashes, zero exit codes, clean product tree and copied repository metadata. Core 142.140s includes full Python/Go/vet/race/build; web 59.771s contains 27 unit and 32 live browser passes; scoped upgrade 10.064s includes actual A/B cases plus 92 upgrade and 26 uninstall portable cases, explicitly native_lifecycle_proven=0.",
+    "Independently verified two fresh actual hermetic acceptance reports and executed binaries, all 12 cases/25 repositories accepted, all command exit codes zero, report/log/binary hashes and actual GoVCS exact 17631/modified false. Both semantic fingerprints equal each other and frozen A Linux fixture results.",
+    "Ran exact B private staged validation, live authenticated health no-write invariant, lookup corruption and migration tests under race: store 4.283s/knowledge 1.346s/webui 3.064s/cmd 1.025s PASS.",
+    "Measured exact B valid canonical dense fixtures with asserted expected found/not_found outcomes, not timeout-as-correct. After browser completion, 20k and 50k functions pass all three positive and negative queries; concurrent browser load produced one 50k budget-exhausted unknown and the assertion failed. Retained both logs and recorded the load limitation.",
+    "Confirmed protocol0 engineering installations are rejected before mutation. Supported prior A is a real frozen protocol1 engineering package, not a fabricated historical or public release. Separate preserve/reinstall and canonical v9 migration obligations are not advertised as protocol0 transactional compatibility."
+  ],
+  "nonblocking_findings": [
+    {
+      "id": "scale-load-budget",
+      "scope": "nonblocking for finite task07; required task14/task15 follow-up",
+      "finding": "Exact B one repository with 50k functions; negative query has limited headroom: idle after-web negatives 799.9\u2013886.5ms; concurrent browser load produced budget_exhausted unknown at 1003.0ms. Unknown was a failed expected-result assertion and is not counted correct. Measure and improve dense/multi-repository correctness and latency under load on declared native reference hardware; no query budget was expanded."
+    },
+    {
+      "id": "native-full-upgrade-pending",
+      "scope": "blocking for final task15 candidate approval",
+      "finding": "Portable and actual Linux A/B checks do not establish native GUI launchd recovery, matching prior A restored start/stop/uninstall controls after failed/killed updates, actual exhausted-filesystem recovery, or hardware power loss. Native full gate remains explicitly pending/failing; actual retained native A/B package proof and these full native scenarios must be completed."
+    },
+    {
+      "id": "fixture-prior-boundary",
+      "scope": "declared compatibility contract",
+      "finding": "Supported prior A is an actual source-frozen protocol1 engineering fixture, not a historical public release. Protocol0 prior04 requires documented data-preserving reinstall; native populated v9\u2192v10 preserve/reinstall proof remains separate."
+    }
+  ],
+  "verified_receipts": {
+    "core": {
+      "path": ".codex/completion/evidence/07-upgrade-core.json",
+      "receipt_sha256": "818ac00de6d9c2d0bf2077e3e5e4d317f3b1f11576097867e72b3e4c003d77c9",
+      "log_sha256": "6d2a8fe0d16967761837a62ab181e2c0f51ce7f6b12900bf3051b7c5131b7941",
+      "seconds": 142.14047622680664,
+      "clean_product_tree": true,
+      "platform": "Linux",
+      "architecture": "x86_64"
+    },
+    "web": {
+      "path": ".codex/completion/evidence/07-upgrade-web.json",
+      "receipt_sha256": "25c7f5525327adb3e586a871fdb6d8445a10e04b0d3db8a0446679a937b67440",
+      "log_sha256": "c3790d90c38bf11edbf35a361c9959987839f80e841a587db5fbd6c6bcc7ff64",
+      "seconds": 59.77127242088318,
+      "clean_product_tree": true,
+      "platform": "Linux",
+      "architecture": "x86_64"
+    },
+    "upgrade": {
+      "path": ".codex/completion/evidence/07-upgrade.json",
+      "receipt_sha256": "eed8c2ac04d7c535a58b01f805c195f52257990803bc1c68b1dd3f7c9d47b525",
+      "log_sha256": "cb8e02f4bf7cc6a47e92d46a7d16b3e80ca582292a9b22a68ca6ce6818dccef9",
+      "seconds": 10.064265012741089,
+      "clean_product_tree": true,
+      "platform": "Linux",
+      "architecture": "x86_64"
+    },
+    "package": {
+      "path": ".codex/completion/evidence/07-upgrade-package.json",
+      "receipt_sha256": "92dd46f87218b6006836fc9875ab34e9e4e7fe7132b45c82f1fc628bd53a3e3f"
+    },
+    "acceptance": {
+      "path": ".codex/completion/evidence/07-upgrade-acceptance.json",
+      "receipt_sha256": "f38076428fff0feb86f6779b77e5627940b7a0add6555ab21757ba6777ccc921"
+    },
+    "scenarios": {
+      "path": ".codex/completion/evidence/07-upgrade-scenarios.json",
+      "receipt_sha256": "35ac71aaf5fcf038717ef6596b0b601c1f40ce8b152b434bb21e66af17b999e9"
+    }
+  },
+  "verified_engineering_artifacts": {
+    "prior_a": {
+      "source_commit": "6619f662ad87a8b88719e0eecd0c93d882766082",
+      "zip_sha256": "b68310ead11a612c5f97664da734bae84eaeccbdf2f0ecd2bef75a614841a829",
+      "executable_sha256": "18aaae55f4493460988d41151746ea2eb7558d49c1d6620ea41e0b3653af3526",
+      "platform": "linux",
+      "architecture": "amd64",
+      "historical_or_public_release": false
+    },
+    "candidate_b": {
+      "source_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+      "zip_sha256": "549cf26d8597d8ad8d8e8fa976943a13d5253f04c497f15f0359ceb4b5fb3628",
+      "zip_bytes": 13731607,
+      "executable_sha256": "75d40ebf5bdc330413ea784dd9e0bf6b3809f1f02c51797d2b5b23ec614982e7",
+      "inventory_files": 7,
+      "platform": "linux",
+      "architecture": "amd64",
+      "go_vcs_modified": false,
+      "manifest_update_protocol": 1,
+      "manifest_knowledge_ir_format": "knowledge-ir-v10",
+      "native": false
+    }
+  },
+  "hermetic_acceptance": {
+    "cases_per_run": 12,
+    "repositories_per_run": 25,
+    "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+    "equal_fingerprints": true,
+    "runs": [
+      {
+        "run": 1,
+        "report_sha256": "2d65e3b67ef862d8894e6963e0fe3c584e424ef5b66a2cfefbb24f1a93ac9cd8",
+        "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+        "cases": 12,
+        "repositories": 25,
+        "binary_sha256": "18c2029baa6f00a0c3b305c6823516a158a81f632261cf0eefdfdc7f1988c75d",
+        "go_vcs_revision": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+        "go_vcs_modified": false,
+        "exit_code": 0,
+        "log_sha256": "f5fa430a384e2f68a8522c64098ff9eae2be536e53b5f4629bfb4c475086c0f8"
+      },
+      {
+        "run": 2,
+        "report_sha256": "cb1d1acfde033df3adc8c88e06083fada2845efde96b3e5af445bd4c8b0ee8a6",
+        "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+        "cases": 12,
+        "repositories": 25,
+        "binary_sha256": "58fbed1a1c2b7dae47c86f8a5514b974b743dc782e24c278e7b0dceca6c4303f",
+        "go_vcs_revision": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+        "go_vcs_modified": false,
+        "exit_code": 0,
+        "log_sha256": "136a37f8c8c96a59996fdb2f495766c7f1f96c2fb7f397c95011131a3876bd53"
+      }
+    ]
+  },
+  "dense_lookup_measurements": {
+    "source_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+    "platform": "Linux",
+    "architecture": "x86_64",
+    "available_cpus": 5,
+    "cgroup_cpu_quota_cores": 4,
+    "container_memory_mib": 18007,
+    "native_reference_hardware_proof": false,
+    "corpus": "synthetic owned Go canonical fixture,100 functions/file,one active repository",
+    "after_browser": {
+      "passed": true,
+      "functions20000": {
+        "canonical_entities": 20200,
+        "files": 200,
+        "source_bytes": 580000,
+        "positive_ms": [
+          123.340575,
+          134.736325,
+          120.076783
+        ],
+        "negative_ms": [
+          290.863793,
+          298.671715,
+          287.174399
+        ]
+      },
+      "functions50000": {
+        "canonical_entities": 50500,
+        "files": 500,
+        "source_bytes": 1450000,
+        "positive_ms": [
+          379.612407,
+          366.685696,
+          393.461347
+        ],
+        "negative_ms": [
+          799.852609,
+          886.482725,
+          869.059794
+        ]
+      }
+    },
+    "concurrent_browser": {
+      "passed": false,
+      "functions50000": "first negative not_found 948.428ms; second negative unknown/budget_exhausted 1003.049ms; expected-not_found assertion failed",
+      "unknown_counted_correct": false
+    },
+    "single_file_provisional": "20k functions were slow; 50k construction failed with SQLite temp disk-full before query measurement. Not a transaction/native ENOSPC proof."
+  },
+  "native_workflow_observation": {
+    "run_id": 36955124703,
+    "linux_job_id": 110676301956,
+    "linux_conclusion": "success",
+    "apple_silicon_job_id": 110676301767,
+    "apple_silicon_status_at_review": "in_progress",
+    "active_step": "Run native deterministic acceptance",
+    "full_native_upgrade_proven": false
+  },
+  "private_test_log_inventory": [
+    {
+      "name": "b-exact-protocol-overlays.log",
+      "sha256": "f0b2aa4b0e5878a3adbb56692b66474dbc1db9809270a603029ec5503035ffce",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": true
+    },
+    {
+      "name": "b-exact-store-knowledge-race.log",
+      "sha256": "df94b5b6bae36a1ef5a95f372ca3bc94fec0e3d94f1977387dcd96213f421a6b",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": true
+    },
+    {
+      "name": "b-final-exact-actual-packages.log",
+      "sha256": "839e323a4ecee114d7e47df6246639171027f88c0d4985caee0dfdcb2b2f2f58",
+      "source_scope": "exact 17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+      "passed": true
+    },
+    {
+      "name": "b-final-exact-dense-after-web.log",
+      "sha256": "b1e9dbf7c5994ef9d5a207afee2a2d836dc2632b693c64be15ef9eee932de1c7",
+      "source_scope": "exact 17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+      "passed": true
+    },
+    {
+      "name": "b-final-exact-dense.log",
+      "sha256": "41c15549b0085a366d06e1510c15cb741b7fcb9ee4289b923b33e7dfdd373f9d",
+      "source_scope": "exact 17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+      "passed": false
+    },
+    {
+      "name": "b-final-exact-protocol-overlays.log",
+      "sha256": "25fa4442e80ef1e740f739abb25af1597cb8f7209dad93b358a1d96abf82d281",
+      "source_scope": "exact 17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+      "passed": true
+    },
+    {
+      "name": "b-final-exact-read-health-race.log",
+      "sha256": "058e8195af8b962764eb84503dedd57bd922ca1232e34ad26964e56d81450f5b",
+      "source_scope": "exact 17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+      "passed": true
+    },
+    {
+      "name": "b-lookup-count-proof-corruption-final.log",
+      "sha256": "b351951d6465545ab2b36578308a39ed40dc3f3fc1ae1044970cd4bf3b456770",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": true
+    },
+    {
+      "name": "b-lookup-count-proof-corruption.log",
+      "sha256": "6435e53e7b56ebfc95018aa2d56272ed07939dfb41caff81031bf18a5cd1a5eb",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": true
+    },
+    {
+      "name": "b-lookup-count-proof-dense.log",
+      "sha256": "dfbdf3b59312add4d2447bbcf8cd6a026a1f6f2fafa2139e3553aae42dd310f8",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": true
+    },
+    {
+      "name": "b-lookup-independent.log",
+      "sha256": "f2811f09effbb8c23f6f578f958224b251780468c66142354b00658c50ce9eb7",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": false
+    },
+    {
+      "name": "b-lookup-partitioned-corrected.log",
+      "sha256": "74ff0dc8bd7f037a58eea15ebf22712cb8d1e53cafac943093027b6540fd54cb",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": true
+    },
+    {
+      "name": "b-lookup-partitioned.log",
+      "sha256": "a41e997f8bd9496aeb25d2e4543439fd12a209b42d51f7d5468541082b0924a5",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": true
+    },
+    {
+      "name": "b-lookup-plan.log",
+      "sha256": "72ec466bb4b8fce764899232ac4e0bde942d49bf22fa27bd95af0d895524700b",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": true
+    },
+    {
+      "name": "b-lookup-targeted-race.log",
+      "sha256": "33d20117343141043191dff1ec186f0d339271d9880788ae050b59229b7e706a",
+      "source_scope": "provisional dirty implementation; not a final source receipt",
+      "passed": true
+    }
+  ],
+  "private_overlay_source_inventory": [
+    {
+      "name": "b_dense_final_review_test.go",
+      "sha256": "e6d6a88a2f2d1d5716e88af6c6a67074cd2b702a0a8c10151d39ee2038ffb4e8"
+    },
+    {
+      "name": "b_dense_review_test.go",
+      "sha256": "6d490373456d7ea73ed89bddb36e2f02e21afcbf9ff932126581da516d72d7f4"
+    },
+    {
+      "name": "b_foreign_review_test.go",
+      "sha256": "8b3be848449d275418e9ad0151b39aa27ee5db770833fa85d09ea7d420ee0dc0"
+    },
+    {
+      "name": "b_plan_review_test.go",
+      "sha256": "eab083262917de02b7920c7ca25296cd88d5de8d5a60e5cf3f524d1811dc7d64"
+    },
+    {
+      "name": "durable_fence_review_test.go",
+      "sha256": "395a0fea227a42b0ff9b01fe548ea2e11061a5e1441fdd9c789ccf6e984f8275"
+    },
+    {
+      "name": "killed_writer_review_test.go",
+      "sha256": "7fc6e4e97926b275b5e1df204c2148e212cd9e214f5abaf9d2daf4b394a863a5"
+    },
+    {
+      "name": "lease_temp_review_test.go",
+      "sha256": "9f1f3a29c0acd94865a9f09ec8862386d074f4960ede0b0dcfec6ed813e62006"
+    },
+    {
+      "name": "uninstall_source_review_test.go",
+      "sha256": "0981a09bba7203971e1564c113265163189fa0bc5b89e701b15e7aae8d599c73"
+    }
+  ],
+  "review_provenance": "Separate explicitly delegated /root/upgrade_reviewer agent session; independent source inspection, private scratch overlays and concrete failure reproduction/retests. This is an audit trail, not cryptographic proof of independence."
+}

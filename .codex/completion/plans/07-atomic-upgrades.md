@@ -196,3 +196,57 @@ Lookup completeness uses exact expected entity/evidence coverage plus equal coun
 under PK uniqueness in one snapshot, safely avoiding the second full joined scan.
 Regressions cover extra inactive rows and equal-count substitution. This follows
 independent review's dense50k query budget finding; no changed time budget/cache.
+
+
+## Final B engineering validation
+
+Implementation source17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6/tree
+d0f285718e3f2e3dcdcccab1b7dffd63e1ca10c5 is committed and clean.
+Actual frozen Linux archive549cf26d8597d8ad8d8e8fa976943a13d5253f04c497f15f0359ceb4b5fb3628
+and executable75d40ebf5bdc330413ea784dd9e0bf6b3809f1f02c51797d2b5b23ec614982e7
+verified against every manifest inventory hash and GoVCS fullsource/modifiedfalse;
+executable unchanged0500 before/after scenarios. SourceA6619f662 archive is an
+actual distinct preserved protocol1 engineering fixture, not historicalrelease.
+
+Formal core142.140s PASS (rawdigest6d2a8fe0d16967761837a62ab181e2c0f51ce7f6b12900bf3051b7c5131b7941);
+web Chromium59.771s PASS27unit/32browser (c3790d90c38bf11edbf35a361c9959987839f80e841a587db5fbd6c6bcc7ff64).
+Scoped upgrade10.064s PASS3scenarios/37recordedassertions, actualABparent+2subcases
+and118portabletransaction cases (cb8e02f4bf7cc6a47e92d46a7d16b3e80ca582292a9b22a68ca6ce6818dccef9).
+Actual A own installedCLI populated nonempty canonical knowledge. Health fault
+restored matching A binary/state/config/instance/projection IDs and A ownstatusCLI;
+successful B preserves canonicalFP/generations/config/ID, rebuildsonlylookup.
+Portable service callbacks explicitly native_lifecycle_proven=0; nativeactual
+launchd upgrade/fault/kill/diskfull/restoredcontrols remain mandatory15.
+
+Fresh detached exactB worktrees each accepted12cases/25repos with equalsemanticFP
+f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea, verified
+actual report/binary/log hashes and cleanGoVCS. Receipts07-upgrade-{core,web,
+package,acceptance,scenarios}.json and07-upgrade.json retained in evidence;
+private rawfiles/artifacts under/workspace/scratch/upgrade-b-evidence.
+
+Independent dense fixture found valid50k negative requests can exhaust1s budget
+under concurrent browser load, truthfully returningunknown. Idle corrected runs
+known365–403ms/missing800–884ms, allcorrect; underload oneunknown1.003s is a
+recorded performance miss, never a correctnegative. Task14/15 must measure and
+tune the declared native scale/load envelope. Lookup completeness still validates
+in one snapshot; no certificationcache and noquerybudget relaxed.
+
+Native engineering workflow36955124703 targets exactB. Linuxjob110676301956
+isSUCCESS, including corrected bounded scopepoll. Nativejob110676301767 is
+inprogress; no nativeB PASS claim yet. Existing A native engineering evidence
+is separate and does not certify B finalcandidate. Full current-code/native
+assembled proof, actual diskfull and installed A restoredcontrols, licensing and
+referencehardware/GPU/wake remain explicitly pending final15.
+
+
+## Independent review and publication handoff
+
+Separate reviewer /root/upgrade_reviewer passed corrected exactsource17631ea9
+in07-upgrade-review.json with no blocking task07 findings after reproducing and
+verifying fixes, actual archives andA/Bexecution, exact-source race overlays,
+formal receipts/twicefreshacceptance and dense querycorruption/count-proof tests.
+Idleafterweb dense50k negatives799.9–886.5ms pass, concurrentload1003msunknown
+remains measured14/15 obligation. Native full upgrade/powerloss/actualENOSPC/
+Acontrols and protocol0preservedv9 native migration remain final15 obligations.
+Task07 is ready for normal fast-forward publication; completion only after
+verifiedmain and follow-upbookkeeping. Continue08 localobservability next.

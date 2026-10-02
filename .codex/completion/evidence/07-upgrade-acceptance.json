@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "source_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "passed": true,
+  "clean_worktrees": true,
+  "equal_semantic_fingerprint": true,
+  "runs": [
+    {
+      "run": 1,
+      "report": "/workspace/scratch/upgrade-b-evidence/acceptance-1/acceptance-report.json",
+      "report_sha256": "2d65e3b67ef862d8894e6963e0fe3c584e424ef5b66a2cfefbb24f1a93ac9cd8",
+      "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+      "cases": 12,
+      "repositories": 25,
+      "binary_sha256": "18c2029baa6f00a0c3b305c6823516a158a81f632261cf0eefdfdc7f1988c75d",
+      "go_vcs_revision": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+      "go_vcs_modified": false,
+      "exit_code": 0,
+      "log_sha256": "f5fa430a384e2f68a8522c64098ff9eae2be536e53b5f4629bfb4c475086c0f8"
+    },
+    {
+      "run": 2,
+      "report": "/workspace/scratch/upgrade-b-evidence/acceptance-2/acceptance-report.json",
+      "report_sha256": "cb1d1acfde033df3adc8c88e06083fada2845efde96b3e5af445bd4c8b0ee8a6",
+      "semantic_fingerprint": "f75584b3be0c5e3750e72144fc072c55af56235e37d8218a39bf2ff8ef7656ea",
+      "cases": 12,
+      "repositories": 25,
+      "binary_sha256": "58fbed1a1c2b7dae47c86f8a5514b974b743dc782e24c278e7b0dceca6c4303f",
+      "go_vcs_revision": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+      "go_vcs_modified": false,
+      "exit_code": 0,
+      "log_sha256": "136a37f8c8c96a59996fdb2f495766c7f1f96c2fb7f397c95011131a3876bd53"
+    }
+  ]
+}
