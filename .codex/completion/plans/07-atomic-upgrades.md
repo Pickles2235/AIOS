@@ -187,3 +187,12 @@ Dense corrected measurements and exact B gates remain pending. Actual native
 A/B package mechanics workflow retrieves retained sourceA artifact36952287178,
 verifies SHA256 and executes nonempty actual package tests with explicit portable
 service callbacks; no launchd/fault/native final gate is implied by those callbacks.
+
+Actual Linux A/B installed binaries both passed nonempty upgrade/fault/state
+assertions. Initial fixture cleanup failed on A's immutable snapshot directory;
+corrected fixture restores owned directory write permission after assertions only.
+Provisional corrected suitePASS2.132s, final exact-source execution pending.
+Lookup completeness uses exact expected entity/evidence coverage plus equal counts
+under PK uniqueness in one snapshot, safely avoiding the second full joined scan.
+Regressions cover extra inactive rows and equal-count substitution. This follows
+independent review's dense50k query budget finding; no changed time budget/cache.

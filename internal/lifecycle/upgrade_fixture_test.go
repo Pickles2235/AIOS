@@ -40,6 +40,16 @@ func TestUpgradeActualProtocol1PackagesPreserveNonemptyKnowledge(t *testing.T) {
 		t.Run(map[bool]string{true: "failed", false: "committed"}[failure], func(t *testing.T) {
 			ctx := context.Background()
 			home := canonicalTemp(t)
+			// Real immutable A snapshots are read-only. Restore directory owner
+			// write access only after all assertions so TempDir can remove them.
+			t.Cleanup(func() {
+				_ = filepath.WalkDir(home, func(path string, entry os.DirEntry, e error) error {
+					if e == nil && entry.IsDir() {
+						return os.Chmod(path, 0700)
+					}
+					return e
+				})
+			})
 			o, e := Defaults(Options{Root: filepath.Join(home, "install"), Label: "dev.aios.fixture.actual"})
 			if e != nil {
 				t.Fatal(e)

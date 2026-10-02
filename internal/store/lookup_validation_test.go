@@ -110,3 +110,35 @@ func TestUpgradeLookupBuilderVersionChangesOnlyLookup(t *testing.T) {
 		t.Fatal("v2 read unavailable after staged upgrade", e)
 	}
 }
+
+func TestLookupRejectsExtraInactiveRowsAndEqualCountSubstitution(t *testing.T) {
+	for _, replace := range []bool{false, true} {
+		t.Run(map[bool]string{false: "extra", true: "equal_count_substitution"}[replace], func(t *testing.T) {
+			ctx := context.Background()
+			db, e := OpenWriter(t.TempDir())
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer db.Close()
+			old := canonicalFixture(t, db, "one")
+			canonicalFixture(t, db, "two")
+			var build string
+			if e = db.DB().QueryRow(`SELECT projection_build_id FROM active_projection_builds WHERE projection_kind='lookup'`).Scan(&build); e != nil {
+				t.Fatal(e)
+			}
+			if replace {
+				if _, e = db.DB().Exec(`DELETE FROM projection_lookup_records WHERE projection_build_id=? AND entity_id=(SELECT entity_id FROM projection_lookup_records WHERE projection_build_id=? LIMIT 1)`, build, build); e != nil {
+					t.Fatal(e)
+				}
+			}
+			if _, e = db.DB().Exec(`INSERT INTO projection_lookup_records SELECT ?,generation_id,entity_id,evidence_id FROM entities WHERE generation_id=? LIMIT 1`, build, old.ID); e != nil {
+				t.Fatal(e)
+			}
+			for _, symbol := range []string{"Publish", "missing_symbol"} {
+				if _, e = db.ExactCandidates(ctx, symbol, QueryFilter{}); e == nil {
+					t.Fatal("inactive derived membership certified a result", symbol)
+				}
+			}
+		})
+	}
+}
