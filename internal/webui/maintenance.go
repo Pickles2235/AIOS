@@ -15,6 +15,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/app"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/knowledge"
+	"github.com/AdamNi-7080/AIOS/internal/lifecycle"
 	"github.com/AdamNi-7080/AIOS/internal/maintenance"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
 	"github.com/AdamNi-7080/AIOS/internal/model"
@@ -54,8 +55,11 @@ func (s *Server) startMaintenance() {
 	cfg, _, err := setupConfig(setup.Repositories)
 	if setup.Mode == "local" {
 		cfg, err = localSetupConfigForMaintenance(setup.LocalRepositories)
+		if err == nil {
+			err = lifecycle.ValidateInstallationSourceBoundaries(approvedAssetSources(setup), s.dataDir)
+		}
 	} else if err == nil {
-		err = mirror.ValidateSourceBoundaries(mirror.Registry{Version: 1, Repositories: setup.Repositories}, s.dataDir)
+		err = lifecycle.ValidateInstallationSourceBoundaries(mirror.Registry{Version: 1, Repositories: setup.Repositories}, s.dataDir)
 	}
 	if err == nil {
 		err = applyScope(&cfg, setup.Rules)

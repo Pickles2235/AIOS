@@ -560,7 +560,7 @@ func (s *Server) addRepository(w http.ResponseWriter, r *http.Request) {
 	next.Rules[id] = in.Rules
 	cfg, _, err := managementConfig(next)
 	if err == nil && next.Mode != "local" {
-		err = mirror.ValidateSourceBoundaries(mirror.Registry{Version: 1, Repositories: next.Repositories}, s.dataDir)
+		err = lifecycle.ValidateInstallationSourceBoundaries(mirror.Registry{Version: 1, Repositories: next.Repositories}, s.dataDir)
 	}
 	if err != nil {
 		s.setupTransitionMu.Unlock()

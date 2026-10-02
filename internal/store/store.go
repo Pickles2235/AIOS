@@ -255,20 +255,32 @@ func (s *Store) PreviousInputs(ctx context.Context, repo string) ([]model.Symbol
 }
 
 func OpenWriter(dataDir string) (*Store, error) {
-	abs, err := filepath.Abs(dataDir)
+	abs, err := canonicalWriterPath(dataDir)
 	if err != nil {
 		return nil, err
 	}
+	guard, err := acquireDataAuthority(abs)
+	if err != nil {
+		return nil, err
+	}
+	if err = checkTransactionFence(abs); err != nil {
+		guard.close()
+		return nil, err
+	}
 	if err = os.MkdirAll(abs, 0700); err != nil {
+		guard.close()
 		return nil, err
 	}
 	if err = validateDataDirectory(abs); err != nil {
+		guard.close()
 		return nil, err
 	}
 	lock, err := acquireWriterLock(filepath.Join(abs, writerLockName))
 	if err != nil {
+		guard.close()
 		return nil, err
 	}
+	lock.guard = guard
 	path := filepath.Join(abs, DatabaseName)
 	exists, err := databaseExists(path)
 	if err != nil {
@@ -340,8 +352,16 @@ func OpenWriter(dataDir string) (*Store, error) {
 // repository input. The persistent writer lock is retained so locking cannot
 // be bypassed while a reset is in progress.
 func ResetDerivedData(dataDir string) error {
-	abs, err := filepath.Abs(dataDir)
+	abs, err := canonicalWriterPath(dataDir)
 	if err != nil {
+		return err
+	}
+	guard, err := acquireDataAuthority(abs)
+	if err != nil {
+		return err
+	}
+	defer guard.close()
+	if err = checkTransactionFence(abs); err != nil {
 		return err
 	}
 	if err = validateDataDirectory(abs); err != nil {

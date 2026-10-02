@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"time"
 )
 
 func runDaemon(ctx context.Context, args []string) error {
@@ -26,6 +27,7 @@ func runDaemon(ctx context.Context, args []string) error {
 	fs.StringVar(&o.DataDir, "data-dir", "", "owned knowledge data directory")
 	fs.StringVar(&o.Label, "service-label", "", "per-user launchd service label")
 	fs.BoolVar(&o.Managed, "launchd", false, "run as the managed launchd child")
+	health := fs.Bool("upgrade-health", false, "private transaction-bound update health child")
 	_ = fs.Bool("json", false, "structured JSON output")
 	recovery := fs.Bool("recovery", false, "open/link through localhost recovery without renaming the namespace")
 	if err := fs.Parse(args[1:]); err != nil {
@@ -40,6 +42,12 @@ func runDaemon(ctx context.Context, args []string) error {
 		return err
 	}
 	switch args[0] {
+	case "launch":
+		health, e := lifecycle.PrepareUpgradeStartup(ctx, o)
+		if e != nil {
+			return e
+		}
+		return execInstalledDaemon(o, health)
 	case "plan":
 		p, e := lifecycle.MakePlan(o)
 		if e != nil {
@@ -105,10 +113,66 @@ func runDaemon(ctx context.Context, args []string) error {
 		}
 		return writeJSON(s)
 	case "run":
+		allowed, e := lifecycle.PrepareUpgradeStartup(ctx, o)
+		if e != nil {
+			return e
+		}
+		if *health && !allowed {
+			return fmt.Errorf("update health is not authorised by a live owned transaction")
+		}
+		if allowed {
+			return serveUpgradeHealth(ctx, o)
+		}
 		return serveDaemon(ctx, o)
 	default:
 		return fmt.Errorf("unknown daemon action")
 	}
+}
+func serveUpgradeHealth(ctx context.Context, o lifecycle.Options) error {
+	lock, e := lifecycle.Lock(o.DataDir)
+	if e != nil {
+		return e
+	}
+	defer lock.Close()
+	db, e := store.OpenReadOnly(o.DataDir)
+	if e != nil {
+		return e
+	}
+	defer db.Close()
+	instance, e := store.ReadExistingInstance(o.DataDir)
+	if e != nil {
+		return e
+	}
+	s, e := webui.NewUpgradeHealth(db)
+	if e != nil {
+		return e
+	}
+	defer s.Close()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	if e = lifecycle.ServeControl(ctx, o, func() lifecycle.State {
+		return lifecycle.State{Running: ctx.Err() == nil, InstanceID: instance.ID, PID: os.Getpid()}
+	}, s.FreshURL); e != nil {
+		return e
+	}
+	// The health server never turns on workers or mutations. If its updater
+	// dies (or commits then exits), quit so launchd re-enters journal recovery.
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if !lifecycle.UpgradeHealthLeaseHeld(o.Root) {
+					cancel()
+					return
+				}
+			}
+		}
+	}()
+	return s.Serve(ctx)
 }
 
 func serveDaemon(ctx context.Context, o lifecycle.Options) error {

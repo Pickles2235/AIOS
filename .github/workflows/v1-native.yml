@@ -75,6 +75,15 @@ jobs:
       - name: Verify disposable per-user daemon and ZIP installation
         if: matrix.target == 'macos-arm64'
         run: python3 scripts/verify_daemon_native.py --output "$RUNNER_TEMP/daemon-native.json"
+      - name: Retain native protocol1 engineering compatibility fixture
+        if: matrix.target == 'macos-arm64'
+        run: python3 scripts/build_candidate.py --version "1.0.0-protocol1-${GITHUB_SHA:0:12}" --output-dir "$RUNNER_TEMP/protocol1-fixture"
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.target == 'macos-arm64'
+        with:
+          name: protocol1-native-fixture
+          path: ${{ runner.temp }}/protocol1-fixture/*
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always() && matrix.target == 'macos-arm64'
         with:

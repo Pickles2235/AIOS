@@ -15,7 +15,8 @@ const writerLockName = ".writer.lock"
 var ErrWriterLocked = errors.New("index already has an active writer")
 
 type writerLock struct {
-	file *os.File
+	file  *os.File
+	guard *writerLock
 }
 
 func acquireWriterLock(path string) (*writerLock, error) {
@@ -52,8 +53,16 @@ func (l *writerLock) close() error {
 	if l == nil || l.file == nil {
 		return nil
 	}
-	unlockErr := syscall.Flock(int(l.file.Fd()), syscall.LOCK_UN)
-	closeErr := l.file.Close()
+	file := l.file
+	l.file = nil
+	unlockErr := syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+	closeErr := file.Close()
+	if l.guard != nil {
+		if e := l.guard.close(); closeErr == nil {
+			closeErr = e
+		}
+		l.guard = nil
+	}
 	if unlockErr != nil {
 		return fmt.Errorf("release writer lock: %w", unlockErr)
 	}

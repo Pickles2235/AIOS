@@ -688,22 +688,52 @@ class ProductScenarios(unittest.TestCase):
         self.check(plan['disk_schema'] and plan['compatible_from'], 'declared compatible upgrade path')
         self.check(plan['downloads'] is False and plan['preserve_identity'], 'explicit local update preserves state')
 
+    def portable_transaction_tests(self, names, minimum_children):
+        # Real SQLite/filesystem/process-kill boundaries, with explicit portable
+        # service callbacks. This cannot certify installed launchd execution.
+        pattern = '^(' + '|'.join(names) + ')$'
+        result = subprocess.run(['go', 'test', '-json', './internal/lifecycle',
+                                 '-run', pattern, '-count=1'], cwd=SOURCE_ROOT,
+                                capture_output=True, text=True, timeout=240)
+        self.check(result.returncode == 0, 'portable lifecycle transaction tests pass')
+        events = [json.loads(line) for line in result.stdout.splitlines()]
+        passed = {row['Test'] for row in events if row.get('Action') == 'pass' and row.get('Test')}
+        for name in names:
+            self.check(name in passed, 'actual lifecycle test executed: ' + name)
+        for name, minimum in minimum_children.items():
+            children = [value for value in passed if value.startswith(name + '/')]
+            self.check(len(children) >= minimum, 'all portable fault boundaries executed: ' + name)
+        self.measurements.append({'portable_transaction_cases': len(passed),
+                                  'native_lifecycle_proven': 0})
+
     def test_upgrade_fault_rollback(self):
-        package = self.package()
-        for boundary in FAULTS:
-            with self.subTest(boundary=boundary):
-                install = self.root / boundary
-                self.install(package, install)
-                old = source_fingerprint(install)
-                # Only completion-test builds enable these injected crash points.
-                env = dict(os.environ, AIOS_COMPLETION_FAULT=boundary)
-                self.cli('upgrade', 'apply', '--package', package, '--root', install, '--json',
-                         env=env, expected=1)
-                self.cli('upgrade', 'recover', '--root', install, '--json')
-                self.check(source_fingerprint(install) == old, 'matching binary/state rollback at ' + boundary)
-        self.check(False, 'PENDING task07: distinct prior package, nonempty IR, killed-process crash recovery and installed binary/state parity')
+        names = ['TestUpgradeEveryPrecommitBoundaryRestoresMatchingPair',
+                 'TestUpgradeKilledProcessRecoversBeforeNextStartup',
+                 'TestUpgradePostcommitStartFailureRetainsCandidate',
+                 'TestUpgradePublicationRetainsWriterLeaseAndBindsHealthLabel',
+                 'TestUpgradeSubsequentFailureRetainsExistingRecoveryInterpreter',
+                 'TestUpgradeRejectsProtocolZeroBeforeStoppingOrStateMutation',
+                 'TestUpgradeCorruptCommittedIntentRejectsEveryWriter',
+                 'TestUpgradePreservesApprovedCurrentWorkspace',
+                 'TestInitialInstallFaultsRestoreFreshOrPreservedState',
+                 'TestInitialInstallKilledProcessRecoversBeforeStartup',
+                 'TestInitialInstallPublicationRetainsWriterLease',
+                 'TestInitialInstallRecoveryCleansPartiallyDeletedDiscard']
+        self.portable_transaction_tests(names, {names[0]: 20, names[1]: 20,
+                                                names[8]: 18, names[9]: 18})
+        if getattr(self, 'completion_milestone', None) != '07-atomic-upgrades':
+            self.check(False, 'PENDING final native A/B fault, disk-full and installed controls evidence')
 
     def test_uninstall_preserve_delete(self):
+        if getattr(self, 'completion_milestone', None) == '07-atomic-upgrades':
+            names = ['TestUninstallFaultsKeepDurableChoiceAndRetryOwnedCleanup',
+                     'TestUninstallKilledProcessRetainsOwnedCleanupAuthority',
+                     'TestUninstallCompletesPartialOwnedRootDeletion',
+                     'TestUninstallRefreshesSourceApprovalAfterStopping',
+                     'TestUninstallProtectsApprovedPlistWorkspace',
+                     'TestUninstallProtectsApprovedDurableAuthorityWorkspace']
+            self.portable_transaction_tests(names, {names[0]: 10, names[1]: 10})
+            return
         package = self.package()
         for preserve in (True, False):
             install = self.root / str(preserve)

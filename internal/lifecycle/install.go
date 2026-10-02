@@ -7,12 +7,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/AdamNi-7080/AIOS/internal/installstate"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 )
 
@@ -25,17 +25,11 @@ type Manifest struct {
 	DiskSchema        int               `json:"disk_schema"`
 	KnowledgeIRFormat string            `json:"knowledge_ir_format"`
 	CompatibleFrom    []int             `json:"compatible_from"`
+	CompatibleIR      []string          `json:"compatible_ir_formats,omitempty"`
+	UpdateProtocol    int               `json:"update_protocol,omitempty"`
 	SHA256            map[string]string `json:"sha256"`
 }
-type Installation struct {
-	Scope          string            `json:"scope"`
-	Binary         string            `json:"binary"`
-	DataDir        string            `json:"data_dir"`
-	ServiceLabel   string            `json:"service_label"`
-	Version        string            `json:"version"`
-	Installed      bool              `json:"installed"`
-	GitEnvironment map[string]string `json:"git_environment,omitempty"`
-}
+type Installation = installstate.Installation
 
 var shaPattern = regexp.MustCompile(`^[a-f0-9]{64}$`)
 var commitPattern = regexp.MustCompile(`^[a-f0-9]{40}$`)
@@ -165,7 +159,10 @@ func writeOwnedJSON(dir, name string, value any) error {
 	if closeErr != nil {
 		return closeErr
 	}
-	return os.Rename(f.Name(), filepath.Join(dir, name))
+	if err = os.Rename(f.Name(), filepath.Join(dir, name)); err != nil {
+		return err
+	}
+	return syncUpgradeDir(dir)
 }
 
 func readInstallation(root string) (Installation, error) {
@@ -196,164 +193,12 @@ func Install(ctx context.Context, filename string, o Options) (Installation, err
 	if err := RequireNative(); err != nil {
 		return Installation{}, err
 	}
-	reader, err := zip.OpenReader(filename)
-	if err != nil {
-		return Installation{}, err
-	}
-	defer reader.Close()
-	m, prefix, err := verifyReader(reader)
-	if err != nil {
-		return Installation{}, err
-	}
-	if m.Platform != runtime.GOOS || m.Architecture != runtime.GOARCH {
-		return Installation{}, fmt.Errorf("candidate does not match macOS Apple Silicon")
-	}
-	o, err = Defaults(o)
-	if err != nil {
-		return Installation{}, err
-	}
-	if entries, e := os.ReadDir(o.Root); e == nil && len(entries) > 0 {
-		old, e := readInstallation(o.Root)
-		if e != nil || old.Installed {
-			return Installation{}, fmt.Errorf("installation root is occupied; use manual upgrade for an installed candidate")
-		}
-	} else if e != nil && !os.IsNotExist(e) {
-		return Installation{}, e
-	}
-	if err = PrepareDir(o.Root); err != nil {
-		return Installation{}, err
-	}
-	v := Installation{Scope: "user", Binary: filepath.Join(o.Root, "current", "bin", "aios"), DataDir: filepath.Join(o.Root, "data"), ServiceLabel: o.Label, Version: m.Version}
-	v.GitEnvironment, err = machineGitEnvironment()
-	if err != nil {
-		return v, err
-	}
-	if err = writeOwnedJSON(o.Root, "installation.json", v); err != nil {
-		return v, err
-	}
-	stage, err := os.MkdirTemp(o.Root, ".install-stage-*")
-	if err != nil {
-		return v, err
-	}
-	defer os.RemoveAll(stage)
-	for _, z := range reader.File {
-		if err = ctx.Err(); err != nil {
-			return v, err
-		}
-		if z.Mode().IsDir() {
-			continue
-		}
-		rel := strings.TrimPrefix(z.Name, prefix)
-		if rel == "manifest.json" {
-			if err = writeOwnedJSON(stage, "manifest.json", m); err != nil {
-				return v, err
-			}
-			continue
-		}
-		dest := filepath.Join(stage, filepath.FromSlash(rel))
-		if err = os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
-			return v, err
-		}
-		mode := os.FileMode(0600)
-		if rel == "bin/aios" || strings.HasSuffix(rel, ".sh") {
-			mode = 0700
-		}
-		out, e := os.OpenFile(dest, os.O_CREATE|os.O_EXCL|os.O_WRONLY, mode)
-		if e != nil {
-			return v, e
-		}
-		in, e := z.Open()
-		if e != nil {
-			out.Close()
-			return v, e
-		}
-		h := sha256.New()
-		var copied int64
-		copied, e = io.Copy(io.MultiWriter(out, h), io.LimitReader(in, int64(z.UncompressedSize64)+1))
-		in.Close()
-		if e == nil && copied != int64(z.UncompressedSize64) {
-			e = fmt.Errorf("candidate extraction size mismatch")
-		}
-		if e == nil && hex.EncodeToString(h.Sum(nil)) != m.SHA256[z.Name] {
-			e = fmt.Errorf("candidate changed during extraction")
-		}
-		if e == nil {
-			e = out.Sync()
-		}
-		ce := out.Close()
-		if e != nil {
-			return v, e
-		}
-		if ce != nil {
-			return v, ce
-		}
-	}
-	if err = PrepareDir(v.DataDir); err != nil {
-		return v, err
-	}
-	if err = os.Rename(stage, filepath.Join(o.Root, "current")); err != nil {
-		return v, err
-	}
-	v.Installed = true
-	if err = writeOwnedJSON(o.Root, "installation.json", v); err != nil {
-		return v, err
-	}
-	return v, nil
+	return installCandidate(ctx, filename, o, nativeUpgradeOperations())
 }
 
 func Uninstall(ctx context.Context, o Options, preserve bool) error {
 	if err := RequireNative(); err != nil {
 		return err
 	}
-	o, err := Defaults(o)
-	if err != nil {
-		return err
-	}
-	if _, err = os.Stat(o.Root); os.IsNotExist(err) {
-		return nil
-	} else if err != nil {
-		return err
-	}
-	if err = PrepareDir(o.Root); err != nil {
-		return err
-	}
-	v, err := readInstallation(o.Root)
-	if err != nil {
-		return err
-	}
-	if o.Label != v.ServiceLabel {
-		return fmt.Errorf("service label differs from owned installation")
-	}
-	o.Binary = v.Binary
-	p, err := MakePlan(o)
-	if err != nil {
-		return err
-	}
-	if err = checkServiceFile(o, p); err != nil {
-		return err
-	}
-	if err = Stop(ctx, o); err != nil {
-		return err
-	}
-	if err = cleanupControl(v.DataDir); err != nil {
-		return err
-	}
-	if b, e := os.ReadFile(p.PlistPath); e == nil {
-		if string(b) != p.Plist {
-			return fmt.Errorf("service plist belongs to a different installation")
-		}
-		if e = os.Remove(p.PlistPath); e != nil {
-			return e
-		}
-	} else if !os.IsNotExist(e) {
-		return e
-	}
-	if !preserve {
-		return removeOwnedTree(ctx, o.Root)
-	}
-	if err = os.RemoveAll(filepath.Join(o.Root, "current")); err != nil {
-		return err
-	}
-	v.Installed = false
-	return writeOwnedJSON(o.Root, "installation.json", v)
+	return uninstallCandidate(ctx, o, preserve, stopDaemon)
 }

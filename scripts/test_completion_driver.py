@@ -97,6 +97,7 @@ class DriverTests(unittest.TestCase):
 
     def test_scope_excludes_later_native_scenarios_but_never_full_proof(self):
         def method(test):
+            test.assertEqual(test.completion_milestone, '03-daemon-install')
             test.assertion_count = 1
         cls = type('PortableInstallFixture', (unittest.TestCase,), {
             'test_bundled_assets': method, 'test_daemon_lifecycle_plan': method})

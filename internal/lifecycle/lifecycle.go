@@ -10,6 +10,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/AdamNi-7080/AIOS/internal/installstate"
 	"io"
 	"net"
 	"os"
@@ -32,6 +33,7 @@ var labelPattern = regexp.MustCompile(`^dev\.aios\.[a-zA-Z0-9.-]{1,100}$`)
 
 type Options struct {
 	Root, DataDir, Binary, Label string
+	recoveryProgram              *bool
 	Managed                      bool
 	home                         string // injected only within this package's ownership tests
 	gitEnvironment               map[string]string
@@ -93,6 +95,8 @@ func Defaults(o Options) (Options, error) {
 	if o.Label == "" {
 		if installed, e := readInstallation(o.Root); e == nil {
 			o.Label = installed.ServiceLabel
+		} else if pending, e := readUninstallJournal(o.Root); e == nil {
+			o.Label = pending.Installation.ServiceLabel
 		} else {
 			o.Label = DefaultLabel
 		}
@@ -134,7 +138,7 @@ func MakePlan(o Options) (Plan, error) {
 	if err != nil {
 		return Plan{}, err
 	}
-	args := []string{o.Binary, "daemon", "run", "--root", o.Root, "--data-dir", o.DataDir, "--service-label", o.Label, "--launchd"}
+	args := daemonProgramArguments(o)
 	var a strings.Builder
 	for _, v := range args {
 		a.WriteString("<string>" + escaped(v) + "</string>")
@@ -157,13 +161,9 @@ func MakePlan(o Options) (Plan, error) {
 var gitPathKeys = map[string]bool{"GIT_CONFIG_GLOBAL": true, "GIT_SSL_CAINFO": true, "SSL_CERT_FILE": true}
 
 func validateGitEnvironment(values map[string]string) error {
-	for key, value := range values {
-		if !gitPathKeys[key] || len(value) > 4096 || !filepath.IsAbs(value) || filepath.Clean(value) != value || strings.ContainsAny(value, "\x00\n\r") {
-			return fmt.Errorf("Git environment permits only bounded external configuration paths")
-		}
-	}
-	return nil
+	return installstate.ValidateGitEnvironment(values)
 }
+
 func machineGitEnvironment() (map[string]string, error) {
 	values := map[string]string{}
 	for key := range gitPathKeys {
@@ -235,6 +235,16 @@ func PrepareDir(dir string) error {
 	if info.Mode().Perm()&0077 != 0 {
 		return fmt.Errorf("owned directory must have owner-only permissions")
 	}
+	if ancestor != abs {
+		for path := abs; ; path = filepath.Dir(path) {
+			if err = syncUpgradeDir(path); err != nil {
+				return err
+			}
+			if path == ancestor {
+				break
+			}
+		}
+	}
 	return nil
 }
 
@@ -283,6 +293,29 @@ func serviceDir(dir string, create bool) error {
 }
 
 func Start(ctx context.Context, o Options) (State, error) {
+	if _, err := RecoverUpgrade(ctx, o); err != nil {
+		return State{}, err
+	}
+	o, e := Defaults(o)
+	if e != nil {
+		return State{}, e
+	}
+	lease, e := lockUpgrade(o.Root)
+	if e != nil {
+		return State{}, e
+	}
+	defer lease.Close()
+	if e = pendingUninstall(o.Root); e != nil {
+		return State{}, e
+	}
+	for _, name := range []string{upgradeJournalName, installJournalName} {
+		if _, e = os.Lstat(filepath.Join(o.Root, name)); !os.IsNotExist(e) {
+			return State{}, fmt.Errorf("recover pending installation transaction before start")
+		}
+	}
+	return startDaemon(ctx, o)
+}
+func startDaemon(ctx context.Context, o Options) (State, error) {
 	if err := RequireNative(); err != nil {
 		return State{}, err
 	}
@@ -345,7 +378,22 @@ func Start(ctx context.Context, o Options) (State, error) {
 }
 
 func Stop(ctx context.Context, o Options) error {
-	if err := RequestStop(ctx, o); err != nil {
+	if e := RequireNative(); e != nil {
+		return e
+	}
+	o, e := Defaults(o)
+	if e != nil {
+		return e
+	}
+	lease, e := lockUpgrade(o.Root)
+	if e != nil {
+		return e
+	}
+	defer lease.Close()
+	return stopDaemon(ctx, o)
+}
+func stopDaemon(ctx context.Context, o Options) error {
+	if err := requestStop(ctx, o); err != nil {
 		return err
 	}
 	o, err := Defaults(o)
@@ -363,6 +411,21 @@ func Stop(ctx context.Context, o Options) error {
 // RequestStop unregisters only the verified owned job. The daemon's UI uses
 // this request-only boundary: it cannot wait for its own lifetime lock to close.
 func RequestStop(ctx context.Context, o Options) error {
+	if e := RequireNative(); e != nil {
+		return e
+	}
+	o, e := Defaults(o)
+	if e != nil {
+		return e
+	}
+	lease, e := lockUpgrade(o.Root)
+	if e != nil {
+		return e
+	}
+	defer lease.Close()
+	return requestStop(ctx, o)
+}
+func requestStop(ctx context.Context, o Options) error {
 	if err := RequireNative(); err != nil {
 		return err
 	}
@@ -461,8 +524,22 @@ func matchesLoadedService(output []byte, o Options, p Plan) bool {
 			}
 		}
 	}
-	expected := []string{o.Binary, "daemon", "run", "--root", o.Root, "--data-dir", o.DataDir, "--service-label", o.Label, "--launchd"}
-	return program == o.Binary && plist == p.PlistPath && strings.Join(args, "\x00") == strings.Join(expected, "\x00")
+	expected := daemonProgramArguments(o)
+	return program == expected[0] && plist == p.PlistPath && strings.Join(args, "\x00") == strings.Join(expected, "\x00")
+}
+func daemonProgramArguments(o Options) []string {
+	binary, action := o.Binary, "run"
+	recovery := false
+	if o.recoveryProgram != nil {
+		recovery = *o.recoveryProgram
+	} else if v, e := readInstallation(o.Root); e == nil {
+		recovery = v.Installed && v.RecoveryLauncher
+	}
+	if recovery {
+		binary = filepath.Join(o.Root, "recovery", "bin", "aios")
+		action = "launch"
+	}
+	return []string{binary, "daemon", action, "--root", o.Root, "--data-dir", o.DataDir, "--service-label", o.Label, "--launchd"}
 }
 
 func checkLoadedService(ctx context.Context, o Options, p Plan) error {

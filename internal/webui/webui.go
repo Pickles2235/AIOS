@@ -32,6 +32,7 @@ import (
 var assets embed.FS
 
 type Server struct {
+	upgradeHealth                     bool
 	listener                          net.Listener
 	origin, capability, session, csrf string
 	read                              *knowledge.Service
@@ -184,6 +185,9 @@ func decode(r *http.Request, v any) error {
 	return nil
 }
 func (s *Server) api(w http.ResponseWriter, r *http.Request) {
+	if s.upgradeHealthAPI(w, r) {
+		return
+	}
 	switch r.URL.Path {
 	case "/api/v1/repositories/add", "/api/v1/repositories/remove", "/api/v1/repositories/rules", "/api/v1/repositories/retry", "/api/v1/repositories/rebuild", "/api/v1/repositories/purge-status":
 		s.managementAPI(w, r)
@@ -419,7 +423,9 @@ func (s *Server) Serve(ctx context.Context) error {
 	s.maintenanceMu.Lock()
 	s.maintenanceContext = ctx
 	s.maintenanceMu.Unlock()
-	s.startMaintenance()
+	if !s.upgradeHealth {
+		s.startMaintenance()
+	}
 	sub, e := fs.Sub(assets, "dist")
 	if e != nil {
 		return e

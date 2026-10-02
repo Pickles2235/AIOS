@@ -89,11 +89,38 @@ are preserved. Retain the extracted candidate's binary or reinstall script to
 reinstall preserved data. Custom acceptance installs use `--root` and disposable
 `--service-label`; do not point a test at your live installation.
 
-Manual atomic updates and diagnostic export are being implemented in their owner
-milestones. Until those pass, this package is an engineering candidate, not a
-candidate-ready release. Do not replace binaries/state manually to simulate an update.
+From the newly extracted candidate, inspect an explicit local update with
+`./bin/aios upgrade inspect --package /absolute/candidate.zip --json`, then apply
+it with `./update.sh --package /absolute/candidate.zip --json`. Add `--root` for
+a custom installation. There are no automatic downloads or background updates.
+Finish any pending repository removal before updating. The updater stops the
+owned service, stages the executable and a consistent state copy, validates
+migration and read-only health, and commits the matching binary/state together.
+During validation, browser mutations are paused. Before commit, failure restores
+the previous pair; the next startup recovers an interrupted transaction. After a
+durable commit, newly ingested knowledge is retained: a restart or cleanup error
+requests `./bin/aios upgrade recover --json` from the extracted candidate instead
+of discarding that knowledge. Do not replace binaries/state manually.
+
+Protocol1 updates require an installed manifest declaring `update_protocol: 1`
+and matching declared layout and canonical-format compatibility. Earlier protocol0
+engineering installations are rejected before stopping or changing their state.
+For those prototypes, use their installed binary to uninstall with
+`--preserve-data`, then use the new candidate to install at the same root. That
+reinstall stages supported canonical-format migration while retaining instance
+identity, configuration and knowledge. It is a separate manual migration path.
+
+If initial installation is interrupted, repeat the install command or use
+`upgrade recover` before installing again. An interrupted uninstall retains its
+original preserve/delete choice; repeat that same command using the extracted
+candidate binary. A small private hashed lock/cleanup authority remains outside
+the installation to coordinate deletion and reinstall safely. It contains no
+source or query content. Do not delete transaction control files to bypass an
+error. Diagnostic export and full native installed-upgrade proof remain owner
+milestone obligations; this is still an engineering candidate.
 
 Manifest `disk_schema: 1` describes the installation layout/metadata only. The
-canonical database is `knowledge-ir-v10`; `compatible_from` is a declaration, not
-proof of a supported upgrade until the upgrade milestone passes. Complete
+canonical database is `knowledge-ir-v10`; `compatible_from` declares layout
+compatibility and `compatible_ir_formats` declares state compatibility. Supported
+upgrade evidence must bind distinct actual packages and source revisions. Complete
 transitive dependency/native helper attribution is required before final packaging.

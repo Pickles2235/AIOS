@@ -3,7 +3,13 @@
 This completion mission preserves the canonical repository Knowledge IR, bounded
 deterministic retrieval, immutable generations and honest coverage. The package
 bundles the production UI, structural extractors and local Nomic embedding assets.
-Per-user daemon lifecycle and checksummed ZIP installation are under verification.
+Per-user daemon lifecycle and checksummed ZIP installation have retained native
+engineering evidence. Explicit protocol1 local updates stage binary/state,
+validate migration and read-only health, and recover durable interrupted
+transactions. Initial install and preserve/delete uninstall retain cleanup intent.
+Protocol0 prototypes use preserve-data uninstall/reinstall instead of the update
+transaction. Actual distinct-package upgrade proof and full assembled acceptance
+remain pending; engineering fixture candidates are not public releases.
 
 Supported product: macOS Apple Silicon. Linux builds are developer smoke only.
 Native launchd/login, installed upgrades, resource signals, namespace resolution,

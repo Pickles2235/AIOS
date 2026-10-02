@@ -174,6 +174,12 @@ func writeInstance(dataDir string, v Instance) error {
 }
 
 // LoadInstance lazily migrates legacy data directories without changing Knowledge IR.
+func ReadExistingInstance(dataDir string) (Instance, error) {
+	if _, err := os.Lstat(filepath.Join(dataDir, instanceFile)); err != nil {
+		return Instance{}, err
+	}
+	return readInstance(dataDir)
+}
 func LoadInstance(dataDir string) (Instance, error) {
 	lock, err := instanceLock(dataDir)
 	if err != nil {

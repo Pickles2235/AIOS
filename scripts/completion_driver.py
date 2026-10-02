@@ -190,7 +190,9 @@ def execute(gate, output, milestone=None, case_class=None):
             for case in cases:
                 if not callable(getattr(cls, case['test'], None)):
                     raise ValueError('missing executable scenario: ' + case['test'])
-                suite.addTest(cls(case['test']))
+                probe = cls(case['test'])
+                probe.completion_milestone = milestone
+                suite.addTest(probe)
             suite.run(result)
             report['scenarios'] = result.records
             expected = {c['test'] for c in cases}

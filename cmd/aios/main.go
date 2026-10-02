@@ -10,6 +10,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/benchmark"
 	cachepkg "github.com/AdamNi-7080/AIOS/internal/cache"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
+	"github.com/AdamNi-7080/AIOS/internal/lifecycle"
 	mcpserver "github.com/AdamNi-7080/AIOS/internal/mcp"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
 	"github.com/AdamNi-7080/AIOS/internal/store"
@@ -37,6 +38,8 @@ func run(ctx context.Context, args []string) error {
 		return runInstallation(ctx, args)
 	case "daemon":
 		return runDaemon(ctx, args[1:])
+	case "upgrade":
+		return runUpgrade(ctx, args[1:])
 	case "namespace":
 		return runNamespace(ctx, args[1:])
 	case "local":
@@ -341,6 +344,12 @@ func run(ctx context.Context, args []string) error {
 		if err != nil {
 			return err
 		}
+		lifetime, err := lifecycle.Lock(*data)
+		if err != nil {
+			writer.Close()
+			return err
+		}
+		defer lifetime.Close()
 		if err = writer.Close(); err != nil {
 			return err
 		}

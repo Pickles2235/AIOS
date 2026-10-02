@@ -9,6 +9,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/app"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/knowledge"
+	"github.com/AdamNi-7080/AIOS/internal/lifecycle"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
 	"github.com/AdamNi-7080/AIOS/internal/model"
 	"net/http"
@@ -164,7 +165,7 @@ func (s *Server) setupAPI(w http.ResponseWriter, r *http.Request) {
 		} else {
 			approved, _, validationErr = setupConfig(in.Repositories)
 			if validationErr == nil {
-				validationErr = mirror.ValidateSourceBoundaries(mirror.Registry{Version: 1, Repositories: in.Repositories}, s.dataDir)
+				validationErr = lifecycle.ValidateInstallationSourceBoundaries(mirror.Registry{Version: 1, Repositories: in.Repositories}, s.dataDir)
 			}
 		}
 		if validationErr == nil {
@@ -331,6 +332,9 @@ func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Re
 }
 
 func localSetupConfig(entries []adapter.LocalRepository, dataDir string) (catalog.Config, error) {
+	if err := lifecycle.ValidateInstallationSourceBoundaries(approvedAssetSources(Setup{LocalRepositories: entries}), dataDir); err != nil {
+		return catalog.Config{}, err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	reg := adapter.LocalRegistry{Version: 1, Repositories: entries}

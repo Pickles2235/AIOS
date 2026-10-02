@@ -13,7 +13,10 @@ func Lock(data string) (*os.File, error) {
 	if err := PrepareDir(data); err != nil {
 		return nil, err
 	}
-	fd, err := syscall.Open(filepath.Join(data, ".daemon.lock"), syscall.O_CREAT|syscall.O_RDWR|syscall.O_CLOEXEC|syscall.O_NOFOLLOW, 0600)
+	return lockOwnedFile(data, ".daemon.lock")
+}
+func lockOwnedFile(data, name string) (*os.File, error) {
+	fd, err := syscall.Open(filepath.Join(data, name), syscall.O_CREAT|syscall.O_RDWR|syscall.O_CLOEXEC|syscall.O_NOFOLLOW, 0600)
 	if err != nil {
 		return nil, err
 	}

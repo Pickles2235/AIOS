@@ -18,6 +18,7 @@ var ErrWriterLocked = errors.New("index already has an active writer")
 
 type writerLock struct {
 	file       *os.File
+	guard      *writerLock
 	overlapped windows.Overlapped
 }
 
@@ -62,9 +63,17 @@ func (lock *writerLock) close() error {
 	if lock == nil || lock.file == nil {
 		return nil
 	}
-	handle := windows.Handle(lock.file.Fd())
+	file := lock.file
+	lock.file = nil
+	handle := windows.Handle(file.Fd())
 	unlockErr := windows.UnlockFileEx(handle, 0, 1, 0, &lock.overlapped)
-	closeErr := lock.file.Close()
+	closeErr := file.Close()
+	if lock.guard != nil {
+		if e := lock.guard.close(); closeErr == nil {
+			closeErr = e
+		}
+		lock.guard = nil
+	}
 	if unlockErr != nil {
 		return fmt.Errorf("release writer lock: %w", unlockErr)
 	}

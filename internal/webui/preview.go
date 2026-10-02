@@ -13,6 +13,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/app"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/discover"
+	"github.com/AdamNi-7080/AIOS/internal/lifecycle"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
 )
 
@@ -118,6 +119,9 @@ func (s *Server) previewAPI(w http.ResponseWriter, r *http.Request) {
 	if in.Mode == "local" {
 		reg := adapter.LocalRegistry{Version: 1, Repositories: in.Local}
 		err = adapter.ValidateLocalRegistry(reg)
+		if err == nil {
+			err = lifecycle.ValidateInstallationSourceBoundaries(approvedAssetSources(Setup{LocalRepositories: in.Local}), s.dataDir)
+		}
 		cfg = catalog.Config{Version: 1, Limits: catalog.Defaults()}
 		for _, x := range in.Local {
 			cfg.Sources = append(cfg.Sources, catalog.Source{Kind: "repository", ID: x.ID})
@@ -125,7 +129,7 @@ func (s *Server) previewAPI(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cfg, _, err = setupConfig(in.Mirrors)
 		if err == nil {
-			err = mirror.ValidateSourceBoundaries(mirror.Registry{Version: 1, Repositories: in.Mirrors}, s.dataDir)
+			err = lifecycle.ValidateInstallationSourceBoundaries(mirror.Registry{Version: 1, Repositories: in.Mirrors}, s.dataDir)
 		}
 	}
 	if err == nil {
