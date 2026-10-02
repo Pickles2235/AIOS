@@ -43,5 +43,30 @@
     "/workspace/scratch/management-independent-browser-4249/confirm-cancel-keyboard.png",
     "/workspace/scratch/management-independent-browser-4249/removed-empty-knowledge.png",
     "https://github.com/Pickles2235/AIOS/actions/runs/36941818885"
+  ],
+  "native_provenance_addenda": [
+    {
+      "schema_version": 1,
+      "role": "independent_reviewer",
+      "session_id": "/root/upgrade_reviewer",
+      "reviewed_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
+      "recorded_at_utc": "2026-10-02 00:14:00 UTC",
+      "verdict": "pass",
+      "blocking_findings": [],
+      "checks_performed": [
+        "Independently fetched GitHub run36941818885, exact4249522a36d52a1e4b3113306df242821c0cd5b7, completed success. Apple Silicon job110634843335 completed all native steps successfully; Linux developer smoke110634843501 completed successfully and its native-only steps were skipped, not counted as native evidence.",
+        "Fetched artifact11201695247 provenance and verified published sha256:513c490b029a20b8ed54d95b801b53a83cc25f26cabd5bf0d52ce886d6421d81 against actual retained ZIP bytes. Compared every minimized acceptance/integration/installed-binary report hash and case/check inventory in06-management-native.json to actual archived bytes.",
+        "All four archived Darwin arm64 acceptance reports bind engine_revision4249522, accept14cases over25repositories, have only successful commands and equal semantic fingerprint6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a. Native installed first-run report uses the installed executable; native daemon/onboarding reports pass their recorded owned launchd, session/namespace/authentication, restart/identity, source preservation and preserve-uninstall checks.",
+        "Inspected hardware/toolchain record: actual macOS15.7.9 Darwin arm64,3CPUs,7516192768memory bytes. Installed executable record identifies Mach-O arm64, Go1.25.0, source4249522 and vcs.modified=false, binary SHAd28bd859885f85fa00e0685ee0e0c27a80e1baae9bb46871d0a957220b38f55b. Recorded TAR checksum4ae1f9fc3acddd7c525a48dcafd2c61c958468642290d64b177704b8225e7dc3 and explicit installed_package_bytes_retained=false correctly distinguish CI checksum reporting from independent access to package bytes."
+      ],
+      "nonblocking_findings": [
+        "This addendum resolves the earlier pending final-source native engineering workflow/report observation. It does not certify full native repository-management/maintenance continuity, real sleep/wake or final assembled candidate acceptance. All pending_final_proof entries remain obligations for task15 on one final installed artifact; no candidate-ready or public-release approval is given."
+      ],
+      "evidence": [
+        ".codex/completion/evidence/06-management-native.json",
+        "/workspace/attachments/ef6fdbf6-a035-4db1-8859-e1e3558886b3/management-4249-native.zip",
+        "https://github.com/Pickles2235/AIOS/actions/runs/36941818885"
+      ]
+    }
   ]
 }

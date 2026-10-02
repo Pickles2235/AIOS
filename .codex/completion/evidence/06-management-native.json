@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "purpose": "verified_native_engineering_smoke_not_final_candidate",
+  "tested_commit": "4249522a36d52a1e4b3113306df242821c0cd5b7",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "passed": true,
+  "ci": {
+    "run_id": 36941818885,
+    "job_id": 110634843335,
+    "conclusion": "success"
+  },
+  "artifact": {
+    "id": 11201695247,
+    "path": "/workspace/attachments/ef6fdbf6-a035-4db1-8859-e1e3558886b3/management-4249-native.zip",
+    "sha256": "513c490b029a20b8ed54d95b801b53a83cc25f26cabd5bf0d52ce886d6421d81"
+  },
+  "installed_package_sha256": "4ae1f9fc3acddd7c525a48dcafd2c61c958468642290d64b177704b8225e7dc3",
+  "installed_package_bytes_retained": false,
+  "hardware": {
+    "macos": "15.7.9",
+    "cpu_count": 3,
+    "memory_bytes": 7516192768
+  },
+  "installed_binary_record_sha256": "4b60a0eb497b722123798ec288b54b7cf0cb2b05510b097a32293c5b85b4cf28",
+  "integration": {
+    "daemon": {
+      "passed": true,
+      "checks": [
+        "checksummed_zip_install",
+        "native_headless_launchd",
+        "service_path_with_spaces",
+        "foreign_root_stop_rejected",
+        "native_stop_start_identity",
+        "native_browser_open",
+        "preserve_data_uninstall"
+      ],
+      "report_sha256": "7ff81a98c5ab1bef54c1bbf0ff93315d85169077bf0ff7651e137d03ff5572e5"
+    },
+    "onboarding": {
+      "passed": true,
+      "checks": [
+        "actual_launchd_external_helper_tls_auth",
+        "noninteractive_login_context",
+        "auth_failure_direct_remediation_mode_unchanged",
+        "auth_failure_retains_last_good",
+        "native_named_origin_authenticated",
+        "old_name_to_new_name_capability_migration",
+        "localhost_recovery",
+        "namespace_identity_restart",
+        "native_ui_stop_restart",
+        "source_nonmutation"
+      ],
+      "report_sha256": "7c86716915c4124a648be6852aa663ab31682407cbbe383b72ca001c1a0e124b"
+    }
+  },
+  "acceptance_runs": [
+    {
+      "report": "_temp/acceptance-v1/acceptance-report.json",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "report_sha256": "9784b3e80b5125c230474f26c7f581c07653e936fbf32aa25feed654b14b698f",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_unknown",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_canonical_fallback",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "report": "_temp/macos-first-run/acceptance-a/acceptance-report.json",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "report_sha256": "d7bb84a7c410a379ea9bbf8c064e6ef21ebb19df0a1a8fb2191e81d1e327de46",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_unknown",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_canonical_fallback",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "report": "_temp/macos-first-run/acceptance-b/acceptance-report.json",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "report_sha256": "6d719970adcfb03354800818baa61c350017a17ad49b4c133e6e448624e51434",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_unknown",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_canonical_fallback",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "report": "_temp/macos-first-run/acceptance-installed/acceptance-report.json",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6eeab4379b06b9176ddf374e503050290aa89fb3a1690e03a5c6bb5c2caa693a",
+      "report_sha256": "619c8a488082a46e494841475e03822b7157677d42c7f811bed086fed0bcdd8a",
+      "cases": [
+        {
+          "id": "baseline_activation",
+          "status": "pass"
+        },
+        {
+          "id": "route_exact",
+          "status": "pass"
+        },
+        {
+          "id": "route_lexical",
+          "status": "pass"
+        },
+        {
+          "id": "route_graph",
+          "status": "pass"
+        },
+        {
+          "id": "route_vector",
+          "status": "pass"
+        },
+        {
+          "id": "negative_not_found",
+          "status": "pass"
+        },
+        {
+          "id": "architecture_slice",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_unknown",
+          "status": "pass"
+        },
+        {
+          "id": "missing_vector_canonical_fallback",
+          "status": "pass"
+        },
+        {
+          "id": "scoped_delta",
+          "status": "pass"
+        },
+        {
+          "id": "delta_visibility",
+          "status": "pass"
+        },
+        {
+          "id": "stale_result_handle",
+          "status": "pass"
+        },
+        {
+          "id": "negative_evidence_invalidated",
+          "status": "pass"
+        },
+        {
+          "id": "corruption_recovery",
+          "status": "pass"
+        }
+      ]
+    }
+  ],
+  "pending_final_proof": [
+    "native_full_maintenance_and_management_gate",
+    "actual_native_sleep_wake",
+    "all_gates_one_final_installed_candidate",
+    "reference_hardware_scale_and_gpu_visual_qa",
+    "full_installed_upgrade_and_licensing"
+  ]
+}
