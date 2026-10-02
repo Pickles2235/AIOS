@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "role": "mission_handoff",
+  "timestamp": "2026-10-02T03:11:38Z",
+  "status": "blocked_environment",
+  "candidate_ready": false,
+  "completed_milestones": [
+    "01-baseline-contract",
+    "02-product-test-driver",
+    "03-daemon-install",
+    "04-onboarding-namespace",
+    "05-maintained-repositories",
+    "06-repo-management",
+    "07-atomic-upgrades"
+  ],
+  "last_verified_main": "3ae2efd369322a8b92d6a33ab6b3bb7f50285615",
+  "upgrade_source": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+  "selected_milestone": "08-local-observability",
+  "workspace": "/workspace/AIOS",
+  "workspace_branch": "codex/completion-observability",
+  "environment": {
+    "id": "ccarenv_b64_Y2NhcmVudl80YjJiNDcwYzY1ZGM4MTkxYWQ5YjJmOWFlMTFhM2EyYQ",
+    "observations_current": true,
+    "observed_phase": "starting",
+    "connectivity": "offline",
+    "desired_phase": "running",
+    "spec_revision": "28",
+    "failure": null,
+    "probe_results": "Both implementation and independent reviewer shell calls stopped returning, including pwd with login=false. wait_for_environment returned ready but current environment_status still reports starting/offline and shell probe remains stalled. Read-only pending cells terminated; no subsequent planned edits assumed applied."
+  },
+  "workspace_state": "Last observed working tree contains uncommitted task08 product and plan changes. Cannot reverify filesystem or snapshot those changes while executor is offline. Preserve all existing/untracked changes; do not reset, stash, reclone over this checkout, or publish unvalidated source.",
+  "implemented_provisional": [
+    "Pinned OTEL1.38 direct SDK providers, fixed resources, bounded spans/attributes/events/metric cardinality and strictly local rotating owned files.",
+    "Retained directory identity, openat/renameat, nofollow/nonblocking regular-file owner/single-link checks; re-opaque Snapshot identifiers.",
+    "Diagnostic status/details and bounded default/acknowledged expanded ZIP APIs; active source data excluded.",
+    "Shared closed metadata/opaque identifying-field policy for operational diagnostic ledger, bounded ledger retention and redacted failure messages.",
+    "Writer-only lazy CLI ingest collector, web request/query/setup/maintenance propagation, root-level upgrade collector outside renamed data.",
+    "Legacy operational ledger cleanup with canonical compiler/coverage/source preservation; current checkpoint implementation still needs busy-result correction."
+  ],
+  "last_provisional_checks": {
+    "dirty_tree": true,
+    "formal_receipts": false,
+    "command": "go test ./internal/store ./internal/knowledge ./internal/app ./internal/webui ./internal/lifecycle",
+    "result": "pass before subsequent CLI context/defer changes; those later edits have not been recompiled",
+    "log": "/workspace/scratch/observability-ledger-development.log"
+  },
+  "independent_review": {
+    "session": "/root/upgrade_reviewer",
+    "verdict": "not_yet_attested",
+    "private_repro_directory": "/workspace/scratch/observability-independent-review",
+    "corrected_reproductions": [
+      "diagnostic event/scope/metadata plaintext",
+      "resolution plaintext",
+      "ingestion failure plaintext",
+      "post-New ancestor symlink swap",
+      "credential-shaped Snapshot IDs",
+      "FIFO blocking"
+    ]
+  },
+  "remaining_blocking_work": [
+    "Use opaque repository keys in diagnostic purge/count, preserving complete removal.",
+    "Read busy/pages/checkpointed WAL result; do not mark policy current on busy, persist a pending retry marker, validate compaction retry/canonical fingerprint preservation.",
+    "Hash trace/span/parent identifiers at persistence; reject or hash externally inherited credential-shaped trace IDs. Disable/sanitize metric exemplars and verify actual metric JSON does not leak raw/base64 identifiers.",
+    "Record export-specific failures accurately (outer HTTP status wrapper fixed; export span still finish(nil)).",
+    "Finish and test real root-level upgrade/rollback/recovery records and expose existing root control records through redacted diagnostics without creating files in read-only upgrade health/rejected transactions.",
+    "Complete browser diagnostic details/export controls, explicit expanded warning/acknowledgement, accessible interactions, embedded asset rebuild and actual browser test.",
+    "Finish planted-content probes across every sink and actual env endpoint outbound trap; assert correlated query/job/ingest/upgrade stages and bounded retention/drop/unavailable behavior.",
+    "Add adjacent secure-path/hardlink/FIFO/retention/redaction/legacy retry tests, documentation and sink inventory.",
+    "Recompile current dirty edits, commit exact source, collect core/web/scoped privacy and twice fresh equal-fingerprint acceptance; build/freeze package with GoVCS clean/exactSHA.",
+    "Independent reviewer passes corrected exact commit/receipts; normal FF publication/bookkeeping; continue tasks09–15. All full native/fault/scale/release gates remain mandatory."
+  ],
+  "resumption": [
+    "Restore executor connectivity and verify /workspace/AIOS plus all dirty/untracked work first.",
+    "Reconcile this metadata-only remote commit with local branch without discarding product changes. Preserve local07 reviewer wording change and08 plan decisions.",
+    "Read AGENTS/MISSION/PRODUCT/ACCEPTANCE/tasks plus this handoff; check/next should select08.",
+    "Resume existing corrections, not the completed upgrade milestone. Fetch retained native07 artifacts for final integration and current code proof.",
+    "If workspace was replaced, report missing uncommitted source explicitly; rebuild only the unpublished08 work from this handoff. Published01–07 remain on main."
+  ]
+}

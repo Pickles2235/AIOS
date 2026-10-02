@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "source_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
+  "workflow_run_id": 36955124703,
+  "workflow_url": "https://github.com/Pickles2235/AIOS/actions/runs/36955124703",
+  "native_job_id": 110676301767,
+  "native_job_conclusion": "success",
+  "linux_job_id": 110676301956,
+  "linux_job_conclusion": "success",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "scope": "Actual native engineering installation/onboarding/acceptance plus A/B real package/state mechanics. Tagged A/B fixture uses explicit portable service callbacks, so this is not full launchd upgrade/fault/power-loss/ENOSPC proof.",
+  "prior_source": "6619f662ad87a8b88719e0eecd0c93d882766082",
+  "prior_artifact_id": 11205375980,
+  "checks": [
+    "Native engineering job and Linux engineering job completed success.",
+    "Native workflow downloaded retained actual A artifact and verified package checksum before tagged A/B test.",
+    "Tagged actual A/B populated-knowledge failed-health rollback and committed changed-only lookup package tests executed on Apple Silicon.",
+    "Actual installed launchd/onboarding/browser/offline acceptance engineering checks completed in native job."
+  ],
+  "artifact_refs": [
+    {
+      "id": 11205429546,
+      "name": "macos-first-run-evidence",
+      "bytes": 379658,
+      "github_declared_sha256": "3c84bce39b6613158b055807a4ba1a76779c5f39adaabc7b8d9be1a1a8744ecd"
+    },
+    {
+      "id": 11205404512,
+      "name": "protocol1-native-fixture",
+      "bytes": 271910708,
+      "github_declared_sha256": "e5326f6408bfe7a0e806607cb630f7589efbc51fdf3357382aa0e5d0e4530a27"
+    }
+  ],
+  "artifact_expires_at": "2026-12-31T02:19:56Z",
+  "local_artifact_retention_verified": false,
+  "limitation": "Environment went offline before artifact materialisation/inspection; declared artifact ZIP digests are wrapper hashes, not native candidate package/executable hashes. Do not conflate them.",
+  "native_full_upgrade_proven": false,
+  "hardware_power_loss_proven": false,
+  "candidate_ready": false
+}
