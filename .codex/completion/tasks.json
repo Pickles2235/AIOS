@@ -187,9 +187,9 @@
       "gates": [
         "core"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/07-atomic-upgrades.md",
-      "completion_commit": null,
+      "completion_commit": "17631ea9ac6bb18a16aaa855c01a55c5eebfc6e6",
       "review": ".codex/completion/evidence/07-upgrade-review.json",
       "product_gates": [
         "core",
