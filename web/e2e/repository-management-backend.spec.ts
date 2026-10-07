@@ -37,6 +37,9 @@ for(const mode of ["local","mirror"])test(`real ${mode} repository add scope reb
     await expect(management.getByRole("button",{name:"Rebuild knowledge base",exact:true})).toBeEnabled();
     const allBefore=(await status()).repositories.map((r:{generation:string})=>r.generation);
     await management.getByRole("button",{name:"Rebuild knowledge base",exact:true}).click();await expect.poll(async()=>(await status()).repositories.map((r:{generation:string})=>r.generation).every((g:string,i:number)=>g!==allBefore[i]),{timeout:30000}).toBe(true);
+    // A changed generation can be provisional while another rebuild job is
+    // still running. Query only after the complete rebuild reaches idle.
+    await expect.poll(async()=>{const current=await jobs();return current.jobs.length===2&&current.jobs.every((job:{state:string})=>job.state==="idle")},{timeout:30000}).toBe(true);
     await page.getByLabel("Query",{exact:true}).fill("OriginalWorker");await page.getByRole("button",{name:"Search",exact:true}).click();await expect(page.getByLabel("Evidence inspector")).toContainText("class OriginalWorker {}");
     await management.getByRole("button",{name:"Remove fixture",exact:true}).click();await expect(management.getByLabel("Confirm repository removal")).toContainText("Its source workspace stays on disk");await management.getByRole("button",{name:"Confirm remove fixture",exact:true}).click();
     await expect.poll(async()=>(await status()).repositories.some((r:{id:string})=>r.id==="fixture")).toBe(false);
