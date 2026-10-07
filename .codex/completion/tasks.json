@@ -305,7 +305,7 @@
         "core",
         "web"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "plan": ".codex/completion/plans/11-volumetric-cloud.md",
       "completion_commit": null,
       "review": null,

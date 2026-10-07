@@ -15,11 +15,13 @@ Finish the approved installable V1 completion mission. Acceptance is the full 15
 
 | Owner | Level and role | Scope | Status |
 |---|---|---|---|
-| `/root` | Manager / integration, senior | Mission scope, plan/state, integration, publication, final sign-off | Active |
-| `/root/investigation_search_delivery` | Senior delivery lead; `gpt-6-sol` / `medium` / `fork_turns=none` | Task 10 implementation and exact-SHA gates; current source `4092163`, deterministic browser power fixture repair in progress | Active |
-| `/root/investigation_search_acceptance` | Senior independent reviewer; `gpt-6-sol` / `high` / `fork_turns=none` | Task 10 independent source/corpus review; repairs and gold audited, final corrected-SHA gates pending | Active |
-| `/root/cloud_gap_audit` | Principal read-only audit; `gpt-6-sol` / `high` / `fork_turns=none` | Task 11 baseline/gap analysis, no writes; completed audit, delivery dependency-blocked |
-| Reserved fresh agents | Task 11 delivery and independent acceptance | New assignment after task 10 is reviewed and published | Pending dependency |
+| `/root` | Manager / integration | Scope, plans/evidence, publication and mission sign-off | Active |
+| Pending fresh delivery lead | Principal; `gpt-6-astra` / `medium` / `fork_turns=none` | Task 11 API, renderer, safe source actions and motion integration; may delegate one bounded contributor | Launch now |
+| Pending fresh acceptance owner | Principal; `gpt-6-astra` / `medium` / `fork_turns=none` | Independent R18-R20 evidence, security and native rendering acceptance | Launch after delivery brief |
+| Completed task 10 delivery/review | Senior delivery and independent review | Task 10 passed and published; reviewed source4d176cd, publication6e16126, completion0c3fba2 | Completed |
+| Completed cloud gap auditor | Principal read-only audit | Task 11 current gap map, retained below | Completed |
+
+Staffing rationale: task 11 spans canonical aggregate semantics, renderer behavior, source-action security and native GPU evidence, requiring principal integration judgment and separate principal acceptance. One delivery lead keeps these contracts coordinated; one optional disjoint contributor is allowed only after the lead defines interfaces. Manager retains plan/state/evidence writes.
 
 ## Efficiency and workflow
 

@@ -11,11 +11,11 @@ Requirements: R18, R19, R20
 
 ## Decisions
 
-Inspect current implementation before selecting changes.
+Reuse canonical IR, immutable generations and investigation evidence. Build exact aggregate membership and bounded generation-aware expansion before UI renderer integration. Real 3D, semantic colours, safe source actions and observed-state motion must be wired into main.tsx; no decorative or inferred knowledge.
 
 ## Progress
 
-Pending.
+Started 2026-10-07 on `codex/completion-volumetric-cloud` from fetched main `0c3fba23fd64b68e5ab548779dcb45c40ffd3413`. Tasks 06 and 10 are published and independently reviewed. Principal delivery lead owns implementation/integration; fresh principal independent reviewer owns acceptance. The prior read-only audit is in `.codex/consultancy/operating-log.md`.
 
 ## Scenario scope
 
