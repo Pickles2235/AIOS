@@ -14,7 +14,10 @@ describe("desktop single-page layout contract", () => {
     expect(css).toContain("grid-template-columns: 1fr");
     expect(css).not.toContain("[data-testid=\"knowledge-dashboard\"] > section:nth-of-type(n+5) { display: none; }");
     expect(css).not.toContain(".mcp-dialog");
-    expect(css).not.toContain("@keyframes");
+    expect(css.match(/@keyframes/g)).toHaveLength(1);
+    expect(css).toContain("@keyframes observed-stage");
+    expect(css).toContain(".cloud-staging li {animation:observed-stage .6s ease-out;}");
+    expect(css).toContain(".cloud-staging li{animation:none}");
     expect(css).toContain("grid-template-rows: 56px minmax(0, 1fr)");
   });
 
