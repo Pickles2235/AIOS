@@ -3,6 +3,7 @@ package webui
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -219,7 +220,8 @@ func (s *Server) benchmarkAPI(w http.ResponseWriter, r *http.Request) {
 			ownerAlive := true
 			if parseErr == nil && ownerPID > 0 {
 				if process, err := os.FindProcess(ownerPID); err == nil {
-					ownerAlive = process.Signal(syscall.Signal(0)) == nil
+					signalErr := process.Signal(syscall.Signal(0))
+					ownerAlive = !errors.Is(signalErr, os.ErrProcessDone) && !errors.Is(signalErr, syscall.ESRCH)
 				}
 			}
 			if readErr == nil && len(parts) == 2 && parts[0] == "aios-benchmark-v1" && !ownerAlive {
