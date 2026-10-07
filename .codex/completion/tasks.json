@@ -273,9 +273,9 @@
         "core",
         "web"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/10-investigation-search.md",
-      "completion_commit": null,
+      "completion_commit": "4d176cdd4587381d4491526dc09137b40631a77d",
       "review": ".codex/completion/evidence/10-review.json",
       "product_gates": [
         "core",

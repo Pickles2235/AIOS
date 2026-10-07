@@ -35,7 +35,7 @@ Reviewer `/root/investigation_search_acceptance` independently audited typed cov
 
 ## Blockers
 
-No external blocker. Task 10 is ready after independent pass; verified normal publication remains before completion. Native final installed-product and GPU acceptance remain task 15 obligations; scoped fixture checks do not prove them.
+No external blocker. Task 10 completed after independent pass and verified normal publication. Native final installed-product and GPU acceptance remain task 15 obligations; scoped fixture checks do not prove them.
 
 ## Handoff
 
@@ -56,3 +56,5 @@ The run at `/tmp/aios-task10-web-4092163.json` terminated with exit 2 after 437.
 Fixture repair `4f81e8771d555d0e267790153da00d8d2ce1ee71` passed the focused maintenance/management suite (8/8). Final clean web receipt `.codex/completion/evidence/10-web.json` passes on that exact source, Darwin arm64: 36/36 browser tests, exit 0, 184.6 seconds. Independent reviewer verified exact source, cleanliness and raw-log digest `45bdf45a6974b6c20a00cb95bee17536d44b2b7f645e7124cd07804c6708ef6f`. Core, retrieval, paired acceptance and final review remain pending. Synthetic AC fixture evidence is not native power-signal certification.
 
 Ready-state bookkeeping checks: `python3 scripts/completion_harness.py check` and `make harness-test` passed (exit 0), log `/tmp/aios-task10-ready-harness.log`. Synthetic failure probes inside harness regressions are expected test fixtures, not final product failures.
+
+Publication: normal fast-forward `git push origin HEAD:main` published validated task 10 in `6e16126`; fetched origin/main verified that head and reviewed implementation `4d176cdd4587381d4491526dc09137b40631a77d` as an ancestor. Follow-up bookkeeping records task completion and retains the independently reviewed implementation SHA. Next eligible milestone: 11-volumetric-cloud.
