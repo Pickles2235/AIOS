@@ -36,3 +36,5 @@ None established; native requirements need actual hardware/CI.
 ## Handoff
 
 Persist implementation SHA, publication evidence and next work. Continue mission.
+
+Architecture checkpoint: delivery lead owns raw WebGL renderer/live UI/tests/integration; fresh senior backend contributor owns only Go API/source-action work. The canonical cloud response pins active generation membership and scopes total claims separately from visible page edges. Package/module metadata is used when available; path-derived fallback is labelled directory. Independent reviewer is auditing membership, security, state motion and native rendering proof before candidate acceptance.
