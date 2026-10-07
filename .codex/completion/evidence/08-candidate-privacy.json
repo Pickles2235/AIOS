@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "privacy",
+  "milestone": "08-local-observability",
+  "tested_commit": "e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e",
+  "clean_product_tree": true,
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "timestamp": 1791374713.321571,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=08-local-observability",
+        "COMPLETION_GATE=privacy"
+      ],
+      "exit_code": 0,
+      "seconds": 5.509182929992676,
+      "log_sha256": "aa0a022136ba8923daa27e0c74c87fc44a05bf4b5b24bf4e0d945a1c865531e4"
+    }
+  ]
+}

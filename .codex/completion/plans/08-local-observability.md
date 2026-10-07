@@ -30,9 +30,11 @@ sink, operational ledger scrub, query/setup/job/ingest/upgrade correlation,
 safe API/UI and embedded assets are implemented. Fault and planted probes are
 in place. Independent review found a raw diagnostic-ID prefix bypass in the
 first implementation commit `8a734bf38f50f0895dbcf0984618f33cadd7914d`;
-the corrected source commit is `353de6a43dde4e1998636d47a80730c90343d307`.
-Task remains in progress pending reviewer recheck and disposition of a variable
-full-browser failure. No publication or candidate-ready claim has been made.
+the corrected product commit is `353de6a43dde4e1998636d47a80730c90343d307`.
+The final task08 candidate source commit is
+`e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e`, adding only an E2E wait for
+rebuild jobs to settle. Task remains in progress pending independent re-review.
+No publication or assembled candidate-ready claim has been made.
 
 ## Scenario scope
 
@@ -80,27 +82,66 @@ run terminated after 34/36 passes; the last hung-run log is
 `/tmp/aios-task08-web-final-20261007T1235.log`. Preserve these failures for
 review rather than treating the prior web pass as corrected-commit proof.
 
+The mirror failure was reproduced in 2/10 isolated desktop-2560 repeats at
+five Playwright workers, while 5/5 serial repeats passed. In the failing trace,
+the query returned HTTP 200 `found` with three `fixture` entities from
+generation `g1-ba4b...`; the repository advanced to `g1-fa4c...` before the
+entity read, which correctly returned HTTP 409 stale handle. At that point
+`/api/v1/jobs` reported one running and one pending job. The test's prior
+generation-change poll observed a provisional intermediate state. The
+test-only commit `e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e` additionally
+waits for both jobs to be idle before the same positive `OriginalWorker`
+query/evidence assertion. Ten desktop-2560 repeats at five workers then
+passed. Pre/post logs: `/tmp/aios-task08-mirror-parallel-repeat-20261007.log`
+and `/tmp/aios-task08-mirror-parallel-fixed-20261007.log`.
+
+At final candidate `e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e`, clean
+`make build` reported the exact GoVCS revision and `vcs.modified=false`.
+Sequential fresh acceptance runs at
+`/tmp/aios-task08-candidate-e47c369-a-20261007/acceptance-report.json` and
+`/tmp/aios-task08-candidate-e47c369-b-20261007/acceptance-report.json`
+each accepted 14/14 cases with matching `engine_revision` and the same
+fingerprint `6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0`.
+The commands were `PATH=/opt/homebrew/bin:$PATH make acceptance-v1
+ACCEPTANCE_OUTPUT=/tmp/aios-task08-candidate-e47c369-a-20261007` and the
+same command with `...-b-20261007`. Exact scoped core and privacy gates passed
+on Darwin arm64 with `PATH=/opt/homebrew/bin:$PATH GIT_CONFIG_COUNT=2
+GIT_CONFIG_KEY_0=maintenance.auto GIT_CONFIG_VALUE_0=false
+GIT_CONFIG_KEY_1=gc.auto GIT_CONFIG_VALUE_1=0 python3
+scripts/completion_harness.py gate core --milestone 08-local-observability
+--output /tmp/aios-task08-candidate-e47c369-evidence/core.json` and
+`PATH=/opt/homebrew/bin:$PATH python3 scripts/completion_harness.py gate
+privacy --milestone 08-local-observability --output
+/tmp/aios-task08-candidate-e47c369-evidence/privacy.json`. Receipts and the
+97-assertion privacy report are copied to
+`.codex/completion/evidence/08-candidate-{core,privacy,privacy-scenarios}.json`.
+The exact `PATH=/opt/homebrew/bin:$PATH make harness-validate-web` exited 0:
+27 unit tests and 36 live Chrome E2E tests passed in 1.5 minutes. Full log:
+`/tmp/aios-task08-candidate-e47c369-evidence/web.log`.
+
 ## Independent review
 
 Independent reviewer identified the ID-prefix privacy bypass and required a
-corrected commit. Re-review of `353de6a43dde4e1998636d47a80730c90343d307`
-and its receipts is pending. Reviewer must also decide whether the broader
-browser timing failure blocks task08; the task is not ready yet.
+corrected commit. Trace inspection then identified a separate test timing
+race, repaired without changing product behavior or weakening assertions.
+Re-review of exact candidate `e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e`
+and its receipts is pending; the task is not ready yet.
 
 ## Blockers
 
-The current blocker is review disposition of the corrected privacy fix and
-the committed-source full browser failure. The earlier cloud outage and
-unpublished source loss remain historical evidence below. Native
+No implementation or environment blocker remains on the current candidate.
+Independent re-review is pending before a ready transition. The earlier cloud
+outage and unpublished source loss remain historical evidence below. Native
 assembled-product acceptance remains a milestone 15 gate.
 
 ## Handoff
 
-Implementation SHA: `353de6a43dde4e1998636d47a80730c90343d307` on
-`codex/completion-observability-resume`. Inspect the corrected commit, copied
-receipts, scenario report, full web log and fresh acceptance reports. Obtain
-independent re-review before changing status. No push, publication, or
-completion bookkeeping was performed.
+Candidate source SHA: `e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e` on
+`codex/completion-observability-resume`. Inspect the corrected product commit
+`353de6a43dde4e1998636d47a80730c90343d307`, the test-only follow-up,
+copied candidate receipts, scenario report, final web log and matching fresh
+acceptance reports. Obtain independent re-review before changing status. No
+push, publication, or completion bookkeeping was performed.
 
 ## Historical implementation and executor outage
 

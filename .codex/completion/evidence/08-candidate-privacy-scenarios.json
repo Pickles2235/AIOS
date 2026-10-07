@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "gate": "privacy",
+  "milestone": "08-local-observability",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "native_required": false,
+  "timestamp": 1791374707.853544,
+  "passed": true,
+  "scenarios": [
+    {
+      "test": "test_redaction_before_persistence",
+      "result": "pass",
+      "seconds": 3.725352166000448,
+      "assertions": 50
+    },
+    {
+      "test": "test_diagnostic_archive_policy",
+      "result": "pass",
+      "seconds": 1.481592083000578,
+      "assertions": 45
+    }
+  ],
+  "purpose": "product",
+  "tested_commit": "e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e",
+  "binary": {
+    "sha256": "85b3d81e796cba5d0492290b97ad5046ef36a36370d8b49d6b80c00cdd93d1e3",
+    "source_commit": "e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e",
+    "vcs_modified": false
+  },
+  "clean_product_tree": true
+}
