@@ -48,6 +48,8 @@ func IngestMaintained(ctx context.Context, cfg catalog.Config, discovery adapter
 		return out, err
 	}
 	defer db.Close()
+	ctx, finishObservation := observeIngest(ctx, dataDir, selected.ID)
+	defer func() { finishObservation(retErr) }()
 	if err = db.ReplaceApprovedOwnership(ctx, cfg.SourceRepositories()); err != nil {
 		return out, err
 	}

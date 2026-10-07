@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/AdamNi-7080/AIOS/internal/model"
+	"github.com/AdamNi-7080/AIOS/internal/observability"
 )
 
 func TestDiagnosticLedgerIsRedactedAndResolvable(t *testing.T) {
@@ -24,7 +25,7 @@ func TestDiagnosticLedgerIsRedactedAndResolvable(t *testing.T) {
 		t.Fatal("unsafe metadata accepted")
 	}
 	events, err := db.DiagnosticEvents(context.Background(), "repo", false, 10)
-	if err != nil || len(events) != 1 || events[0].Scope.Path != "src/a.go" {
+	if err != nil || len(events) != 1 || events[0].Scope.Path != observability.Opaque("src/a.go") || events[0].Scope.Repository != observability.Opaque("repo") {
 		t.Fatalf("events=%#v err=%v", events, err)
 	}
 	if err = db.ResolveDiagnostic(context.Background(), events[0].ID, "fixed"); err != nil {
@@ -35,7 +36,7 @@ func TestDiagnosticLedgerIsRedactedAndResolvable(t *testing.T) {
 		t.Fatalf("active=%#v err=%v", active, err)
 	}
 	history, err := db.DiagnosticEvents(context.Background(), "repo", true, 10)
-	if err != nil || len(history) != 1 || history[0].ResolvedAt == "" || !strings.EqualFold(history[0].Resolution, "fixed") {
+	if err != nil || len(history) != 1 || history[0].ResolvedAt == "" || !strings.EqualFold(history[0].Resolution, "resolved") {
 		t.Fatalf("history=%#v err=%v", history, err)
 	}
 }

@@ -7,6 +7,8 @@ final acceptance also requires installed native/manual evidence and review.
 from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
+import base64
+import http.server
 from datetime import datetime
 import io
 import http.cookiejar
@@ -21,6 +23,7 @@ import sqlite3
 import subprocess
 import tempfile
 import time
+import threading
 import unittest
 import urllib.error
 import urllib.parse
@@ -151,7 +154,7 @@ class ProductScenarios(unittest.TestCase):
                 self.check(len(raw) < 1 << 20, 'bounded response')
                 try:
                     return json.loads(raw)
-                except json.JSONDecodeError:
+                except (json.JSONDecodeError, UnicodeDecodeError):
                     return raw
 
             csrf = request('/api/v1/session', {'token': parsed.fragment.removeprefix('token=')},
@@ -767,18 +770,57 @@ class ProductScenarios(unittest.TestCase):
     def test_redaction_before_persistence(self):
         source = fixture(self.root)
         (source / 'src/Worker.java').write_text('class Worker { /* ' + ' '.join(PLANTED) + ' */ }\n')
-        with self.server() as (api, data, origin):
-            self.configure(api, source)
-            api('/api/v1/query', {'text': PLANTED[-2]})
-            api('/api/v1/onboarding/preview', {'mode': 'mirror', 'urls': [PLANTED[3]]}, expected=400)
-            status = api('/api/v1/diagnostics/status')
-            self.check(status['otel'] and status['local_only'] and status['correlation'], 'local correlated OTEL')
-            files = list((data / 'diagnostics').rglob('*'))
-            self.check(any(p.is_file() for p in files), 'real persisted diagnostics exist')
-            for path in files:
-                if path.is_file():
-                    self.check(not any(v.encode() in path.read_bytes() for v in PLANTED), 'redaction before persistence')
-        self.check(False, 'PENDING task08: enumerate every telemetry sink and exercise job/error/upgrade/export channels with outbound deny probe')
+        outbound = []
+        class Trap(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                outbound.append(self.path)
+                self.send_response(204); self.end_headers()
+            def log_message(self, *_): pass
+        trap = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Trap)
+        worker = threading.Thread(target=trap.serve_forever, daemon=True)
+        worker.start()
+        try:
+            env = dict(os.environ, OTEL_EXPORTER_OTLP_ENDPOINT=f'http://127.0.0.1:{trap.server_port}',
+                       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=f'http://127.0.0.1:{trap.server_port}/v1/traces',
+                       OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=f'http://127.0.0.1:{trap.server_port}/v1/metrics')
+            with self.server(env=env) as (api, data, origin):
+                self.configure(api, source)
+                api('/api/v1/query', {'text': PLANTED[-2]})
+                api('/api/v1/onboarding/preview', {'mode': 'mirror', 'paths': [PLANTED[2]], 'urls': [PLANTED[3]]}, expected=400)
+                api('/api/v1/repositories/check-now', {'repository': 'fixture'}, expected=202)
+                deadline = time.monotonic() + 15
+                while time.monotonic() < deadline:
+                    jobs = api('/api/v1/jobs')['jobs']
+                    if jobs and jobs[0]['runs'] >= 1 and jobs[0]['state'] == 'idle': break
+                    time.sleep(.1)
+                self.check(jobs and jobs[0]['runs'] >= 1, 'actual maintenance job exercised')
+                status = api('/api/v1/diagnostics/status')
+                self.check(status['otel'] and status['local_only'] and status['correlation'] and status['available'], 'local correlated OTEL')
+                details = api('/api/v1/diagnostics/details')
+                self.check(details['coverage']['active_repositories'] == 1 and details['timings_ms'], 'safe coverage and timings')
+                files = list((data / 'diagnostics').rglob('*'))
+                self.check(any(p.is_file() for p in files), 'real persisted diagnostics exist')
+                records = []
+                for path in files:
+                    if path.is_file():
+                        raw = path.read_bytes()
+                        planted = [v.encode() for v in PLANTED] + [base64.b64encode(v.encode()) for v in PLANTED]
+                        self.check(not any(v in raw for v in planted), 'redaction before persistence')
+                        records.extend(json.loads(line) for line in raw.splitlines() if line)
+                names = {row['operation'] for row in records}
+                self.check({'setup','ingest','query','job','http_request'} <= names, 'real correlated setup/ingest/query/job spans')
+                setup_traces = {row['trace'] for row in records if row['operation'] == 'setup'}
+                ingest_traces = {row['trace'] for row in records if row['operation'] == 'ingest'}
+                self.check(bool(setup_traces & ingest_traces), 'nested setup/ingest correlation')
+                self.check(all(row['trace'].startswith('h_') and row['span'].startswith('h_') for row in records), 'opaque trace and span identifiers')
+                with sqlite3.connect(data / 'index.db') as db:
+                    ledger = repr(db.execute('SELECT code,repository_id,path,metadata_json,remediation,resolution FROM diagnostic_events').fetchall())
+                    ledger += repr(db.execute('SELECT failure_diagnostic FROM ingestion_events').fetchall())
+                    ledger += repr(db.execute('SELECT failure_diagnostic FROM ingestion_queues').fetchall())
+                self.check(not any(v in ledger for v in PLANTED), 'operational SQLite ledger redacted')
+            self.check(not outbound, 'configured OTLP outbound trap saw no telemetry')
+        finally:
+            trap.shutdown(); trap.server_close(); worker.join(timeout=5)
 
     def test_diagnostic_archive_policy(self):
         source = fixture(self.root)

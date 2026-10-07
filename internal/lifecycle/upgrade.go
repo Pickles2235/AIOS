@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdamNi-7080/AIOS/internal/observability"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
 
@@ -281,6 +282,14 @@ func applyUpgrade(ctx context.Context, filename string, o Options, ops upgradeOp
 	if e = writeOwnedJSON(o.Root, upgradeJournalName, j); e != nil {
 		return result, e
 	}
+	upgradeObs, _ := observability.Open(o.Root)
+	ctx, upgradeSpan := upgradeObs.Start(ctx, "upgrade", map[string]string{"stage": "transaction"})
+	defer func() {
+		observability.End(upgradeSpan, err != nil)
+		if upgradeObs != nil {
+			_ = upgradeObs.Close()
+		}
+	}()
 	var lifetime *os.File
 	var lease io.Closer
 	var state store.UpgradeState
@@ -784,7 +793,15 @@ func RecoverUpgrade(ctx context.Context, o Options) (UpgradeResult, error) {
 	}
 	return UpgradeResult{Recovered: true, Updated: j.Phase == "committed", InstanceID: j.InstanceID, ActiveGenerations: state.ActiveGenerations, CanonicalFingerprint: state.CanonicalFingerprint, Version: version}, nil
 }
-func recoverUpgradeLocked(ctx context.Context, o Options, j *upgradeJournal) error {
+func recoverUpgradeLocked(ctx context.Context, o Options, j *upgradeJournal) (retErr error) {
+	recoveryObs, _ := observability.Open(o.Root)
+	ctx, recoverySpan := recoveryObs.Start(ctx, "upgrade_recovery", map[string]string{"stage": "recovery"})
+	defer func() {
+		observability.End(recoverySpan, retErr != nil)
+		if recoveryObs != nil {
+			_ = recoveryObs.Close()
+		}
+	}()
 	// A surviving foreground daemon/writer is never compatible with restoration.
 	var leases []io.Closer
 	defer func() {

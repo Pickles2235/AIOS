@@ -318,6 +318,14 @@ func OpenWriter(dataDir string) (*Store, error) {
 			lock.close()
 			return nil, openErr
 		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		openErr = scrubOperationalLedger(ctx, db)
+		cancel()
+		if openErr != nil {
+			_ = db.Close()
+			lock.close()
+			return nil, fmt.Errorf("operational diagnostic recovery: %w", openErr)
+		}
 		return &Store{db: db, path: path, lock: lock}, nil
 	}
 	if err = prepareDatabaseFile(path); err != nil {
@@ -343,6 +351,14 @@ func OpenWriter(dataDir string) (*Store, error) {
 		db.Close()
 		lock.close()
 		return nil, fmt.Errorf("initialize canonical V1 database: %w", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	err = scrubOperationalLedger(ctx, db)
+	cancel()
+	if err != nil {
+		_ = db.Close()
+		lock.close()
+		return nil, fmt.Errorf("operational diagnostic initialization: %w", err)
 	}
 	return &Store{db: db, path: path, lock: lock}, nil
 }

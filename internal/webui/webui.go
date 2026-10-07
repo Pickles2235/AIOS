@@ -24,6 +24,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/knowledge"
 	"github.com/AdamNi-7080/AIOS/internal/localname"
 	"github.com/AdamNi-7080/AIOS/internal/maintenance"
+	"github.com/AdamNi-7080/AIOS/internal/observability"
 	"github.com/AdamNi-7080/AIOS/internal/semantic"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
@@ -57,6 +58,7 @@ type Server struct {
 	maintenanceContext                context.Context
 	maintenanceError                  string
 	setupTransitionMu                 sync.Mutex
+	obs                               *observability.Collector
 }
 
 func token() string {
@@ -101,6 +103,9 @@ func New(cfg catalog.Config, db *store.Store, listener net.Listener) (*Server, e
 		_ = listener.Close()
 		return nil, e
 	}
+	// Unsafe diagnostic paths leave the knowledge service available but never
+	// acquire a weaker sink. The status API reports the unavailable collector.
+	s.obs, _ = observability.Open(s.dataDir)
 	return s, nil
 }
 func (s *Server) URL() string {
@@ -134,6 +139,9 @@ func (s *Server) Close() error {
 		lease.Close()
 	}
 	s.namespaceMu.Unlock()
+	if s.obs != nil {
+		_ = s.obs.Close()
+	}
 	return s.listener.Close()
 }
 func (s *Server) SetStopDaemon(stop func() error) {
@@ -189,6 +197,9 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch r.URL.Path {
+	case "/api/v1/diagnostics/status", "/api/v1/diagnostics/details", "/api/v1/diagnostics/export":
+		s.diagnosticsAPI(w, r)
+		return
 	case "/api/v1/repositories/add", "/api/v1/repositories/remove", "/api/v1/repositories/rules", "/api/v1/repositories/retry", "/api/v1/repositories/rebuild", "/api/v1/repositories/purge-status":
 		s.managementAPI(w, r)
 		return
@@ -411,7 +422,9 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, "invalid request")
 			return
 		}
-		v, e := s.readService().Query(r.Context(), in)
+		ctx, span := s.obs.Start(r.Context(), "query", map[string]string{"repository": in.Repository, "query": in.Text})
+		v, e := s.readService().Query(ctx, in)
+		observability.End(span, e != nil)
 		if e != nil {
 			fail(w, 400, e.Error())
 			return
@@ -439,7 +452,10 @@ func (s *Server) Serve(ctx context.Context) error {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		if strings.HasPrefix(r.URL.Path, "/api/") {
-			s.api(w, r)
+			ctx, span := s.obs.Start(observability.WithCollector(r.Context(), s.obs), "http_request", map[string]string{"method": strings.ToLower(r.Method)})
+			tracked := &diagnosticResponse{ResponseWriter: w, status: 200}
+			s.api(tracked, r.WithContext(ctx))
+			observability.End(span, tracked.status >= 400)
 			return
 		}
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {

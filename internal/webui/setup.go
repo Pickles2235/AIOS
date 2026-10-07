@@ -12,6 +12,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/lifecycle"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
 	"github.com/AdamNi-7080/AIOS/internal/model"
+	"github.com/AdamNi-7080/AIOS/internal/observability"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -284,8 +285,10 @@ func (s *Server) cancelJob() {
 	}
 }
 func (s *Server) runSetup(ctx context.Context, cfg catalog.Config, reg mirror.Registry, local ...[]adapter.LocalRepository) {
+	ctx = observability.WithCollector(ctx, s.obs)
+	ctx, span := s.obs.Start(ctx, "setup", nil)
 	var retErr error
-	defer func() { s.finishSetup(ctx, cfg, retErr) }()
+	defer func() { observability.End(span, retErr != nil); s.finishSetup(ctx, cfg, retErr) }()
 	if len(local) > 0 && len(local[0]) > 0 {
 		_, retErr = app.IngestLocal(ctx, cfg, adapter.LocalRegistry{Version: 1, Repositories: local[0]}, s.dataDir, "")
 		if retErr == nil {

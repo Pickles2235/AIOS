@@ -31,6 +31,8 @@ func IngestMirrorCatalog(ctx context.Context, configPath, registryPath, dataDir 
 		return IndexResult{}, err
 	}
 	defer db.Close()
+	ctx, finishObservation := observeIngest(ctx, dataDir, "catalog")
+	defer func() { finishObservation(retErr) }()
 	if err = db.ReplaceApprovedOwnership(ctx, repositories); err != nil {
 		return IndexResult{}, err
 	}
@@ -152,6 +154,8 @@ func IngestMirrorRevision(ctx context.Context, configPath, registryPath, dataDir
 		return IndexResult{}, err
 	}
 	defer db.Close()
+	ctx, finishObservation := observeIngest(ctx, dataDir, repositoryID)
+	defer func() { finishObservation(retErr) }()
 	if err = db.ReplaceApprovedOwnership(ctx, repositories); err != nil {
 		return IndexResult{}, err
 	}

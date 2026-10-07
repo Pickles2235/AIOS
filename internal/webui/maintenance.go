@@ -19,6 +19,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/maintenance"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
 	"github.com/AdamNi-7080/AIOS/internal/model"
+	"github.com/AdamNi-7080/AIOS/internal/observability"
 )
 
 func (s *Server) stopMaintenance() {
@@ -85,7 +86,10 @@ func (s *Server) startMaintenance() {
 	}{cfg, setup.LocalRepositories, setup.Repositories})
 	sum := sha256.Sum256(encoded)
 	fingerprint := hex.EncodeToString(sum[:])
-	run := func(ctx context.Context, id string) (maintenance.Outcome, error) {
+	run := func(ctx context.Context, id string) (out maintenance.Outcome, runErr error) {
+		ctx = observability.WithCollector(ctx, s.obs)
+		ctx, span := s.obs.Start(ctx, "job", map[string]string{"repository": id})
+		defer func() { observability.End(span, runErr != nil) }()
 		ctx = app.WithProgress(ctx, s.recordProgress)
 		var discovery adapter.Discovery
 		var err error

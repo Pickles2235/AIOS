@@ -112,6 +112,7 @@ func recordEventTx(ctx context.Context, tx *sql.Tx, e *IngestionEvent) error {
 	if e.Status == "" {
 		e.Status = "recorded"
 	}
+	e.FailureDiagnostic = safeFailureDiagnostic(e.FailureDiagnostic)
 	if e.EventID == "" {
 		e.EventID = eventID(*e)
 	}
@@ -227,6 +228,7 @@ func (s *Store) FailRevision(ctx context.Context, repo, revision, fingerprint, d
 	if err = tx.QueryRowContext(ctx, `SELECT current_revision,attempt FROM ingestion_queues WHERE repository_id=? AND pending_revision=? AND manifest_fingerprint=?`, repo, revision, fingerprint).Scan(&source, &attempt); err != nil {
 		return err
 	}
+	diagnostic = safeFailureDiagnostic(diagnostic)
 	if _, err = tx.ExecContext(ctx, `UPDATE ingestion_queues SET state='failed',failure_diagnostic=? WHERE repository_id=?`, diagnostic, repo); err != nil {
 		return err
 	}
@@ -237,6 +239,14 @@ func (s *Store) FailRevision(ctx context.Context, repo, revision, fingerprint, d
 		}
 	}
 	return tx.Commit()
+}
+
+func safeFailureDiagnostic(value string) string {
+	switch value {
+	case "", "mirror_revision_failed", "local_revision_failed", "maintained_revision_failed":
+		return value
+	}
+	return "operation_failed"
 }
 
 // RecordSourceDelta writes immutable Git-tree evidence before compilation.

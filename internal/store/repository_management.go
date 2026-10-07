@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"regexp"
 	"time"
+
+	"github.com/AdamNi-7080/AIOS/internal/observability"
 )
 
 var purgeID = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{0,62}$`)
@@ -25,7 +27,6 @@ func (s *Store) RepositoryOwnedRecords(ctx context.Context, repository string) (
 		`SELECT count(*) FROM ingestion_queues WHERE repository_id=?`,
 		`SELECT count(*) FROM ir_delta_records WHERE repository_id=?`,
 		`SELECT count(*) FROM approved_ownership WHERE repository_id=?`,
-		`SELECT count(*) FROM diagnostic_events WHERE repository_id=?`,
 		`SELECT count(*) FROM catalog_revision_members WHERE repo_id=?`,
 		`SELECT count(*) FROM source_files WHERE repo_id=?`,
 		`SELECT count(*) FROM evidence WHERE repo_id=?`,
@@ -41,6 +42,11 @@ func (s *Store) RepositoryOwnedRecords(ctx context.Context, repository string) (
 		}
 		total += n
 	}
+	var diagnostics int
+	if err := s.db.QueryRowContext(ctx, `SELECT count(*) FROM diagnostic_events WHERE repository_id IN (?,?)`, repository, observability.Opaque(repository)).Scan(&diagnostics); err != nil {
+		return 0, err
+	}
+	total += diagnostics
 	return total, nil
 }
 
@@ -119,7 +125,6 @@ func (s *Store) PurgeRepository(ctx context.Context, repository string) error {
 	for _, q := range []string{
 		`DELETE FROM active_generations WHERE repo_id=?`,
 		`DELETE FROM generation_staging WHERE repo_id=?`,
-		`DELETE FROM diagnostic_events WHERE repository_id=?`,
 		`DELETE FROM ingestion_events WHERE repository_id=?`,
 		`DELETE FROM ingestion_queues WHERE repository_id=?`,
 		`DELETE FROM ir_delta_records WHERE repository_id=?`,
@@ -130,6 +135,9 @@ func (s *Store) PurgeRepository(ctx context.Context, repository string) error {
 		if err = exec(q, repository); err != nil {
 			return err
 		}
+	}
+	if err = exec(`DELETE FROM diagnostic_events WHERE repository_id IN (?,?)`, repository, observability.Opaque(repository)); err != nil {
+		return err
 	}
 	rows, err := tx.QueryContext(ctx, `PRAGMA foreign_key_check`)
 	if err != nil {

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/AdamNi-7080/AIOS/internal/model"
+	"github.com/AdamNi-7080/AIOS/internal/observability"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
 
@@ -164,6 +165,31 @@ func assertPriorUpgrade(t *testing.T, o Options, before store.UpgradeState, id s
 }
 
 var upgradeFaultBoundaries = []string{"before_stop", "after_stop", "stage_binary", "stage_state", "migration", "before_recovery_rename", "after_recovery_rename", "after_recovery_metadata", "after_recovery_plan", "before_rename_0", "after_rename_0", "before_rename_1", "after_rename_1", "before_rename_2", "after_rename_2", "before_rename_3", "after_rename_3", "activation", "health", "commit"}
+
+func TestUpgradeRootTelemetryRecordsOutcomeWithoutTransactionContent(t *testing.T) {
+	o, path, _, id := upgradeFixture(t)
+	ops := portableUpgradeOps(id, func(context.Context, string, string) error { return nil })
+	result, err := applyUpgrade(context.Background(), path, o, ops)
+	if err != nil || !result.Updated {
+		t.Fatalf("upgrade result=%+v err=%v", result, err)
+	}
+	status, records, err := observability.ReadExisting(o.Root)
+	if err != nil || !status.Available {
+		t.Fatalf("root diagnostics status=%+v err=%v", status, err)
+	}
+	found := false
+	for _, row := range records {
+		if row.Operation == "upgrade" && row.Outcome == "ok" {
+			found = true
+		}
+		if strings.Contains(fmt.Sprint(row), path) || strings.Contains(fmt.Sprint(row), id) {
+			t.Fatal("root telemetry exposed transaction input")
+		}
+	}
+	if !found {
+		t.Fatalf("missing root upgrade span: %+v", records)
+	}
+}
 
 func TestUpgradeEveryPrecommitBoundaryRestoresMatchingPair(t *testing.T) {
 	for _, boundary := range upgradeFaultBoundaries {

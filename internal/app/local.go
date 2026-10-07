@@ -49,6 +49,8 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 		return out, err
 	}
 	defer db.Close()
+	ctx, finishObservation := observeIngest(ctx, dataDir, repositoryID)
+	defer func() { finishObservation(retErr) }()
 	if err = db.ReplaceApprovedOwnership(ctx, repos); err != nil {
 		return out, err
 	}

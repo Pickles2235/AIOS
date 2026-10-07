@@ -10,7 +10,94 @@ import (
 	"time"
 
 	"github.com/AdamNi-7080/AIOS/internal/model"
+	"github.com/AdamNi-7080/AIOS/internal/observability"
 )
+
+func safeDiagnostic(event model.DiagnosticEvent) (model.DiagnosticEvent, error) {
+	if event.Code == "" || event.Severity == "" {
+		return event, fmt.Errorf("diagnostic code and severity are required")
+	}
+	if event.Severity != model.DiagnosticInfo && event.Severity != model.DiagnosticWarning && event.Severity != model.DiagnosticError {
+		return event, fmt.Errorf("invalid diagnostic severity")
+	}
+	code := event.Code
+	switch code {
+	case DiagnosticIngestionFailure, DiagnosticExtractionFailure, DiagnosticUnsupportedAnalysis, DiagnosticProjectionFailure,
+		DiagnosticProjectionMismatch, DiagnosticDanglingProvenance, DiagnosticCacheMismatch, DiagnosticPlannerFallback, DiagnosticPlannerBudgetExceeded:
+	default:
+		code = "OPERATIONAL_DIAGNOSTIC"
+	}
+	event.Code = code
+	event.Scope.Repository = observability.OpaqueIfNeeded(event.Scope.Repository)
+	event.Scope.Revision = observability.OpaqueIfNeeded(event.Scope.Revision)
+	event.Scope.Generation = observability.OpaqueIfNeeded(event.Scope.Generation)
+	event.Scope.Path = observability.OpaqueIfNeeded(event.Scope.Path)
+	event.Scope.Query = observability.OpaqueIfNeeded(event.Scope.Query)
+	event.Scope.Handle = observability.OpaqueIfNeeded(event.Scope.Handle)
+	if event.Scope.Projection != "" {
+		event.Scope.Projection = safeDiagnosticValue(event.Scope.Projection)
+	}
+	event.Remediation = "inspect local knowledge health and retry the operation"
+	if event.Resolution != "" {
+		event.Resolution = "resolved"
+	}
+	if event.ID != "" && !strings.HasPrefix(event.ID, "diag-h_") {
+		event.ID = "diag-" + observability.Opaque(event.ID)
+	}
+	if _, err := time.Parse(time.RFC3339Nano, event.Timestamp); err != nil {
+		event.Timestamp = time.Now().UTC().Format(time.RFC3339Nano)
+	}
+	if event.ResolvedAt != "" {
+		if _, err := time.Parse(time.RFC3339Nano, event.ResolvedAt); err != nil {
+			event.ResolvedAt = time.Now().UTC().Format(time.RFC3339Nano)
+		}
+	}
+	clean := map[string]string{}
+	for key, value := range event.Metadata {
+		if key == "" || len(key) > 64 || len(value) > 256 || strings.ContainsAny(value, "\n\r") {
+			return event, fmt.Errorf("diagnostic metadata must be bounded single-line fields")
+		}
+		lower := strings.ToLower(key)
+		if strings.Contains(lower, "token") || strings.Contains(lower, "secret") || strings.Contains(lower, "password") || strings.Contains(lower, "excerpt") || strings.Contains(lower, "query") || strings.Contains(lower, "content") {
+			return event, fmt.Errorf("diagnostic metadata field %q is not safe", key)
+		}
+		switch key {
+		case "language":
+			switch value {
+			case "go", "java", "kotlin", "javascript", "typescript", "python", "tsx", "jsx":
+				clean[key] = value
+			default:
+				clean[key] = "other"
+			}
+		case "operation":
+			if value == "operator_rebuild" {
+				clean[key] = value
+			} else {
+				clean[key] = "other"
+			}
+		case "state":
+			switch value {
+			case "ready", "staged", "unavailable", "failed", "retired", "disabled":
+				clean[key] = value
+			default:
+				clean[key] = "other"
+			}
+		case "extractor_code", "strategy", "reason":
+			clean[key] = observability.Opaque(value)
+		case "build":
+			clean[key] = observability.Opaque(value)
+		}
+	}
+	event.Metadata = clean
+	return event, nil
+}
+func safeDiagnosticValue(value string) string {
+	switch value {
+	case "lookup", "lexical", "graph", "path", "ui", "cache", "vector", "landmarks":
+		return value
+	}
+	return "other"
+}
 
 // RecordDiagnostic writes only allowlisted, source-content-free operational
 // context.  Callers supply query fingerprints rather than query text.
@@ -18,11 +105,10 @@ func (s *Store) RecordDiagnostic(ctx context.Context, event model.DiagnosticEven
 	if s.readOnly {
 		return model.DiagnosticEvent{}, fmt.Errorf("store is read-only")
 	}
-	if event.Code == "" || event.Severity == "" {
-		return model.DiagnosticEvent{}, fmt.Errorf("diagnostic code and severity are required")
-	}
-	if event.Severity != model.DiagnosticInfo && event.Severity != model.DiagnosticWarning && event.Severity != model.DiagnosticError {
-		return model.DiagnosticEvent{}, fmt.Errorf("invalid diagnostic severity")
+	var err error
+	event, err = safeDiagnostic(event)
+	if err != nil {
+		return model.DiagnosticEvent{}, err
 	}
 	if event.ID == "" {
 		event.ID = "diag-" + digest(event.Code, string(event.Severity), event.Scope.Repository, event.Scope.Revision, event.Scope.Generation, event.Scope.Path, event.Scope.Projection, event.Scope.Query, event.Scope.Handle)
@@ -35,6 +121,9 @@ func (s *Store) RecordDiagnostic(ctx context.Context, event model.DiagnosticEven
 		return model.DiagnosticEvent{}, err
 	}
 	_, err = s.db.ExecContext(ctx, `INSERT OR IGNORE INTO diagnostic_events VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, event.ID, event.Code, event.Severity, event.Timestamp, event.Scope.Repository, event.Scope.Revision, event.Scope.Generation, event.Scope.Path, event.Scope.Projection, event.Scope.Query, event.Scope.Handle, event.Remediation, metadata, event.ResolvedAt, event.Resolution)
+	if err == nil {
+		err = retainDiagnostics(ctx, s.db)
+	}
 	return event, err
 }
 
@@ -70,7 +159,7 @@ func (s *Store) ResolveDiagnostic(ctx context.Context, id, resolution string) er
 	if id == "" || len(resolution) > 256 || strings.ContainsAny(resolution, "\n\r") {
 		return fmt.Errorf("invalid diagnostic resolution")
 	}
-	_, err := s.db.ExecContext(ctx, `UPDATE diagnostic_events SET resolved_at=?,resolution=? WHERE diagnostic_id=? AND resolved_at=''`, time.Now().UTC().Format(time.RFC3339Nano), resolution, id)
+	_, err := s.db.ExecContext(ctx, `UPDATE diagnostic_events SET resolved_at=?,resolution=? WHERE diagnostic_id=? AND resolved_at=''`, time.Now().UTC().Format(time.RFC3339Nano), "resolved", id)
 	return err
 }
 
@@ -83,7 +172,7 @@ func (s *Store) DiagnosticEvents(ctx context.Context, repository string, include
 	where := []string{}
 	if repository != "" {
 		where = append(where, "repository_id=?")
-		args = append(args, repository)
+		args = append(args, observability.Opaque(repository))
 	}
 	if !includeResolved {
 		where = append(where, "resolved_at=''")
@@ -114,6 +203,11 @@ func (s *Store) DiagnosticEvents(ctx context.Context, repository string, include
 }
 
 func recordDiagnosticTx(ctx context.Context, tx *sql.Tx, event model.DiagnosticEvent) error {
+	var err error
+	event, err = safeDiagnostic(event)
+	if err != nil {
+		return err
+	}
 	metadata, err := diagnosticMetadata(event.Metadata)
 	if err != nil {
 		return err
@@ -125,5 +219,8 @@ func recordDiagnosticTx(ctx context.Context, tx *sql.Tx, event model.DiagnosticE
 		event.Timestamp = time.Now().UTC().Format(time.RFC3339Nano)
 	}
 	_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO diagnostic_events VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, event.ID, event.Code, event.Severity, event.Timestamp, event.Scope.Repository, event.Scope.Revision, event.Scope.Generation, event.Scope.Path, event.Scope.Projection, event.Scope.Query, event.Scope.Handle, event.Remediation, metadata, event.ResolvedAt, event.Resolution)
+	if err == nil {
+		_, err = tx.ExecContext(ctx, `DELETE FROM diagnostic_events WHERE diagnostic_id NOT IN (SELECT diagnostic_id FROM diagnostic_events ORDER BY timestamp DESC,diagnostic_id DESC LIMIT 1000)`)
+	}
 	return err
 }

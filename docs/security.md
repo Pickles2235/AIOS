@@ -10,6 +10,9 @@
 - Serve the browser API on IPv4 loopback with one-use capabilities, HttpOnly
   same-site sessions, matching Origin and CSRF checks.
 - Save authenticated bounded setup/branding metadata into fixed owned paths.
+- Persist bounded, redacted local OpenTelemetry operation records in private
+  owned diagnostics directories; export a redacted archive only on an
+  authenticated user request.
 
 ## Denied or absent
 

@@ -116,8 +116,9 @@ original preserve/delete choice; repeat that same command using the extracted
 candidate binary. A small private hashed lock/cleanup authority remains outside
 the installation to coordinate deletion and reinstall safely. It contains no
 source or query content. Do not delete transaction control files to bypass an
-error. Diagnostic export and full native installed-upgrade proof remain owner
-milestone obligations; this is still an engineering candidate.
+error. Use [Local diagnostics](how-to/local-diagnostics.md) for a bounded redacted
+support archive. Full native installed-upgrade proof remains a release-candidate
+gate; this is still an engineering candidate.
 
 Manifest `disk_schema: 1` describes the installation layout/metadata only. The
 canonical database is `knowledge-ir-v10`; `compatible_from` declares layout
