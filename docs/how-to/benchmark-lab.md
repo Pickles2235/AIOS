@@ -59,7 +59,7 @@ an arbitrary sole correct file; a `found` response is a classification miss.
 
 ## Bounds and recovery
 
-One comparison runs at a time, with a two-minute budget and an explicit cancel
+One comparison per browser service runs at a time, with a two-minute budget and an explicit cancel
 button. The last saved report remains available during a run. Storage admission
 reserves 1 GiB of capture space above the standard free-space reserve. The complete
 indexed database must fit 256 MiB; captured active sources must fit 64 MiB and
@@ -71,4 +71,4 @@ where needed. Use a smaller separately indexed comparison instance if necessary.
 
 Temporary copies are private and removed after success, failure or cancellation.
 A later run cleans interrupted directories only when they have the Lab's explicit
-ownership marker. Saved files use atomic replacement and file/directory syncing.
+ownership marker and its owning process has stopped. Saved files use atomic replacement and file/directory syncing.

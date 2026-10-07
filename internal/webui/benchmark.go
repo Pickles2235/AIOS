@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/AdamNi-7080/AIOS/internal/benchmark"
@@ -209,7 +211,18 @@ func (s *Server) benchmarkAPI(w http.ResponseWriter, r *http.Request) {
 			}
 			old := filepath.Join(s.dataDir, entry.Name())
 			marker, readErr := os.ReadFile(filepath.Join(old, ".owner"))
-			if readErr == nil && string(marker) == "aios-benchmark-v1" {
+			parts := strings.Split(string(marker), "\n")
+			ownerPID, parseErr := 0, fmt.Errorf("invalid owner")
+			if len(parts) == 2 {
+				ownerPID, parseErr = strconv.Atoi(parts[1])
+			}
+			ownerAlive := true
+			if parseErr == nil && ownerPID > 0 {
+				if process, err := os.FindProcess(ownerPID); err == nil {
+					ownerAlive = process.Signal(syscall.Signal(0)) == nil
+				}
+			}
+			if readErr == nil && len(parts) == 2 && parts[0] == "aios-benchmark-v1" && !ownerAlive {
 				if e := os.RemoveAll(old); e != nil {
 					fail(w, 500, "cannot clean interrupted benchmark")
 					return
@@ -222,7 +235,7 @@ func (s *Server) benchmarkAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer os.RemoveAll(work)
-		if e = os.WriteFile(filepath.Join(work, ".owner"), []byte("aios-benchmark-v1"), 0600); e != nil {
+		if e = os.WriteFile(filepath.Join(work, ".owner"), []byte(fmt.Sprintf("aios-benchmark-v1\n%d", os.Getpid())), 0600); e != nil {
 			fail(w, 500, "cannot mark benchmark workspace")
 			return
 		}
