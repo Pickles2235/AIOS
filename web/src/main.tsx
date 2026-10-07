@@ -9,12 +9,12 @@ import {InstanceBrand, type Instance} from "./instance-brand";
 import {KnowledgeCloud} from "./knowledge-cloud";
 import {Diagnostics} from "./diagnostics";
 import {Spotlight} from "./spotlight";
-import {QueryFeedback, type Entity, type Excerpt, type Projection, type QueryResult, type Status} from "./runtime-types";
+import {QueryFeedback, type Entity, type Excerpt, type Investigation, type Projection, type QueryResult, type Status} from "./runtime-types";
 
 let csrf = "";
 class ApiError extends Error {constructor(message: string, public status: number, public details?: {suggestions?:string[]}) {super(message);}}
-const request = async <T,>(path: string, body?: unknown): Promise<T> => {
-  const r = await fetch(path, {method: body === undefined ? "GET" : "POST", credentials: "same-origin", headers: body === undefined ? undefined : {"Content-Type": "application/json", "X-CSRF-Token": csrf}, body: body === undefined ? undefined : JSON.stringify(body)});
+const request = async <T,>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> => {
+  const r = await fetch(path, {method: body === undefined ? "GET" : "POST", credentials: "same-origin", headers: body === undefined ? undefined : {"Content-Type": "application/json", "X-CSRF-Token": csrf}, body: body === undefined ? undefined : JSON.stringify(body), signal});
   if (!r.ok) {const details=await r.json().catch(()=>({error:"Request failed"}));throw new ApiError(details.error,r.status,details);}
   return r.json();
 };
@@ -25,7 +25,7 @@ function App() {
   const [query, setQuery] = useState(""), [result, setResult] = useState<QueryResult>(), [notice, setNotice] = useState(""), [mapNotice, setMapNotice] = useState(""), [busy, setBusy] = useState(false);
   const [daemonState, setDaemonState] = useState<"connected" | "stopping" | "disconnected">("connected");
   const [indexing,setIndexing]=useState(false);
-  const inspection = useRef(0), loading = useRef(0), searching = useRef(0), viewRevision=useRef(0);
+  const inspection = useRef(0), loading = useRef(0), searching = useRef(0), viewRevision=useRef(0), statusGenerations=useRef("");
   const views=useRef<{repo:string;selected?:Entity;result?:QueryResult}>({repo:""}), inspecting=useRef<Entity>();views.current={repo,selected,result};
   function clearSelection() {viewRevision.current++;inspection.current++; inspecting.current=undefined;views.current.selected=undefined;views.current.result=undefined;setSelected(undefined); setEvidence(undefined); searching.current++; setResult(undefined); setBusy(false);}
   async function load(wanted?: string) {
@@ -40,10 +40,13 @@ function App() {
       if(viewAtRead!==viewRevision.current)return load(wanted);
       setStatus(s);setInstance(brand);setIndexing(setup.state==="syncing"||setup.state==="ingesting");
       const active = s.repositories.filter(r => r.active), next = active.find(r => r.id === (wanted || views.current.repo))?.id || active[0]?.id || "";
+      const currentGenerations=active.map(r=>`${r.id}:${r.generation}`).sort().join("|");
+      if(statusGenerations.current && statusGenerations.current!==currentGenerations)setSpotlight(false);
+      statusGenerations.current=currentGenerations;
       const generations=new Map(active.map(r=>[r.id,r.generation])), current=views.current;
       const referenced=[current.selected,inspecting.current,...(current.result?.entities||[])].filter((e):e is Entity=>!!e);
       const activeGenerations=new Set(active.map(r=>r.generation));
-      if(next!==current.repo||referenced.some(e=>generations.get(e.repository)!==e.generation)||(current.result?.coverage?.generations||[]).some(g=>!activeGenerations.has(g)))clearSelection();
+      if(next!==current.repo||referenced.some(e=>generations.get(e.repository)!==e.generation)||(current.result?.coverage?.generations||[]).some(g=>!activeGenerations.has(g))){clearSelection();setSpotlight(false);}
       if(!next||projection?.generation!==generations.get(next))setProjection(undefined);
       setRepo(next);
       if (next) {
@@ -125,7 +128,7 @@ function App() {
       {selected && <p>{selected.repository}/{selected.path} · generation {selected.generation} · lines {selected.span.start_line}–{selected.span.end_line}</p>}
       {evidence && <><p>{evidence.working_tree?"Working-tree snapshot · Git HEAD:":"Captured commit:"} {evidence.git_commit} · SHA256: {evidence.sha256}</p><p>Excerpt generation {evidence.generation} · lines {evidence.start_line}–{evidence.end_line}{evidence.truncated ? " · bounded excerpt" : ""}</p><pre>{evidence.lines.join("\n")}</pre></>}
     </aside></div>
-    <Spotlight open={spotlight} close={() => setSpotlight(false)} search={queryRequest} select={inspect}/>
+    <Spotlight open={spotlight} close={() => setSpotlight(false)} search={(text, signal) => request<Investigation>("/api/v1/investigation", {text}, signal)} history={async () => (await request<{entries:string[]}>("/api/v1/history")).entries} clearHistory={async () => {await request("/api/v1/history/clear", {});}} select={inspect}/>
   </main>;
 }
 createRoot(document.getElementById("root")!).render(<App/>);

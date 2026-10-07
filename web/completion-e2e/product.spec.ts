@@ -41,6 +41,8 @@ async function build(page: Page, source: string) {
   await page.getByLabel("Source type").selectOption("local");
   await page.getByLabel("id 1", {exact: true}).fill("fixture");
   await page.getByLabel("url 1", {exact: true}).fill(source);
+  await page.getByRole("button", {name: "Preview scope"}).click();
+  await expect(page.getByRole("button", {name: /Build|Sync and index/, exact: true})).toBeEnabled();
   await page.getByRole("button", {name: /Build|Sync and index/, exact: true}).click();
   await expect(page.getByRole("heading", {name: "Knowledge map"})).toBeVisible({timeout: 30000});
 }
@@ -93,6 +95,34 @@ test.describe("real installed-product UI", () => {
     await expect(page.getByRole("dialog").getByRole("option").first()).toContainText("Worker");
     await page.getByRole("combobox", {name: "Spotlight query"}).press("Enter");
     await expect(page.getByLabel("Evidence inspector")).toContainText("Captured commit");
+  });
+
+  test("investigation copy and local history", async ({page, context}) => {
+    await build(page, source);
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.getByRole("button", {name: "Open Spotlight"}).click();
+    const query = page.getByRole("combobox", {name: "Spotlight query"});
+    await query.fill("/symbol @fixture Worker");
+    await query.press("Enter");
+    const result = page.getByLabel("Investigation result");
+    await expect(result).toContainText("generation");
+    await expect(page.getByRole("listbox", {name: "Spotlight results"})).toContainText("Worker");
+    await page.getByRole("button", {name: "Copy investigation payload"}).click();
+    const copied = JSON.parse(await page.evaluate(() => navigator.clipboard.readText()));
+    expect(copied.schema_version).toBe(1);
+    expect(copied.findings[0].entity.path).toBe(copied.canonical_evidence[0].path);
+    expect(copied.findings[0].entity.generation).toBe(copied.canonical_evidence[0].generation);
+    expect(copied.coverage.generations).toContain(copied.findings[0].entity.generation);
+    await page.getByRole("button", {name: "Close Spotlight"}).click();
+    await page.getByRole("button", {name: "Open Spotlight"}).click();
+    await expect(page.getByLabel("Search history")).toContainText("/symbol @fixture Worker");
+    await page.getByRole("button", {name: "Clear history"}).click();
+    await expect(page.getByLabel("Search history")).not.toContainText("/symbol @fixture Worker");
+    await query.fill("/unknown Worker"); await query.press("Enter");
+    await expect(result).toContainText("Unknown");
+    await query.press("Escape");
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(page.getByRole("button", {name: "Open Spotlight"})).toBeFocused();
   });
 
   test("contextual modules and reconnect", async ({page}) => {

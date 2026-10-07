@@ -18,6 +18,7 @@ import (
 	contextpkg "github.com/AdamNi-7080/AIOS/internal/context"
 	"github.com/AdamNi-7080/AIOS/internal/discover"
 	"github.com/AdamNi-7080/AIOS/internal/extract"
+	"github.com/AdamNi-7080/AIOS/internal/knowledge"
 	"github.com/AdamNi-7080/AIOS/internal/model"
 	"github.com/AdamNi-7080/AIOS/internal/planner"
 	"github.com/AdamNi-7080/AIOS/internal/store"
@@ -269,11 +270,12 @@ func benchmarkRuntime(fixturePath string) model.CompilerRuntime {
 
 func runCase(ctx context.Context, db *store.Store, fixture Fixture, base string, c Case) Result {
 	expected := map[string]string{"repository": c.ExpectedRepository, "path": c.ExpectedPath}
+	searchText := knowledge.SearchTerm("question", c.Query)
 	searchStarted := time.Now()
-	hits, err := db.SearchCandidates(ctx, c.Query, store.QueryFilter{})
+	hits, err := db.SearchCandidates(ctx, searchText, store.QueryFilter{})
 	searchLatency := float64(time.Since(searchStarted).Microseconds()) / 1000
 	structuralStarted := time.Now()
-	structural, structuralErr := db.StructuralCandidates(ctx, c.Query, store.QueryFilter{})
+	structural, structuralErr := db.StructuralCandidates(ctx, searchText, store.QueryFilter{})
 	structuralLatency := float64(time.Since(structuralStarted).Microseconds()) / 1000
 	seeds := make([]string, 0, len(hits))
 	for _, hit := range hits {
@@ -391,6 +393,18 @@ func runCase(ctx context.Context, db *store.Store, fixture Fixture, base string,
 		}
 	}
 	stateCorrect := resultState == expectedState
+	// A complete, evidence-backed absence is a correct canonical result even
+	// though there is deliberately no positive entity to rank or cite.
+	if expectedState == "not_found" && stateCorrect && basis.Complete {
+		canonical.Correct = true
+		canonical.ProvenanceCorrect = true
+	}
+	// Unknown is correct only when the searched capability has an actual
+	// coverage gap. It must never be scored as a proven absence.
+	if expectedState == "unknown" && stateCorrect && !basis.Complete {
+		canonical.Correct = true
+		canonical.ProvenanceCorrect = true
+	}
 	return Result{ID: c.ID, Revision: revisionFor(fixture, c.ExpectedRepository), QueryClass: c.QueryClass, Expected: expected, Canonical: canonical, Baseline: baseline, Retrievers: retrievers, HybridVsSingle: comparison, Context: measureContext(c, contextCandidates, contextpkg.Budget{}), UnboundedContext: measureContext(c, contextCandidates, contextpkg.Budget{MaxBytes: 256 * 1024, EstimatedTokens: 64 * 1024, Entities: 100, Edges: 100, Excerpts: 100, LinesPerExcerpt: 200}), ExpectedState: expectedState, ResultState: resultState, StateCorrect: stateCorrect, CoverageComplete: basis.Complete}
 }
 

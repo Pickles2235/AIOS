@@ -38,6 +38,7 @@ type Server struct {
 	origin, capability, session, csrf string
 	read                              *knowledge.Service
 	mu                                sync.Mutex
+	historyMu                         sync.Mutex
 	dataDir                           string
 	db                                *store.Store
 	setup                             Setup
@@ -198,6 +199,9 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch r.URL.Path {
+	case "/api/v1/investigation", "/api/v1/history", "/api/v1/history/clear":
+		s.investigationAPI(w, r)
+		return
 	case "/api/v1/diagnostics/status", "/api/v1/diagnostics/details", "/api/v1/diagnostics/export":
 		s.diagnosticsAPI(w, r)
 		return
