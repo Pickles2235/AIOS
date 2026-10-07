@@ -305,9 +305,9 @@
         "core",
         "web"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/11-volumetric-cloud.md",
-      "completion_commit": null,
+      "completion_commit": "31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485",
       "review": ".codex/completion/evidence/11-review.json",
       "product_gates": [
         "core",
