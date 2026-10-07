@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "/root/observability_acceptance_retry",
+  "reviewed_commit": "f28e413a8637d4561d358ff659ade3df90b5116c",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "nonblocking_findings": [
+    "The 100 GiB policy is a start-work admission threshold, not an atomic byte quota across every in-flight projection write."
+  ],
+  "checks_performed": [
+    "Reviewed staging and final-root registration, bounded fair snapshot reclamation, lease and symlink safety, cancellation, disk-fault rollback, archive bounds, and last-good preservation.",
+    "Verified repository purge deletes candidate roots only beneath the exact snapshots/<repository> boundary and leaves other, prefix-colliding, and external candidates intact.",
+    "Verified retired canonical source revisions without generations are removed with their locations and fact observations, while injected rollback preserves them.",
+    "Ran focused purge regressions and reviewed committed-source core, resources, web, and paired acceptance evidence."
+  ],
+  "evidence": [
+    ".codex/completion/evidence/09-resource-policy-core.json",
+    ".codex/completion/evidence/09-resource-policy-resources.json",
+    ".codex/completion/evidence/09-web.json",
+    ".codex/completion/evidence/09-acceptance-a.json",
+    ".codex/completion/evidence/09-acceptance-b.json"
+  ],
+  "approval_scope": "task09 engineering milestone only",
+  "candidate_ready": false,
+  "native_final_acceptance": "deferred",
+  "stakeholder_release": false
+}

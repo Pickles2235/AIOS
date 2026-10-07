@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "gate": "web",
+  "milestone": "09-resource-policy",
+  "tested_commit": "f28e413a8637d4561d358ff659ade3df90b5116c",
+  "clean_product_tree": true,
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "command": "CI=true make harness-validate-web",
+  "passed": true,
+  "summary": {
+    "unit_tests": "27/27 passed",
+    "production_build": "passed",
+    "browser_tests": "36/36 passed; 2 passed on configured retry",
+    "task09_affected_matrix": "18/18 passed across both viewports"
+  },
+  "transient_failures": [
+    "desktop-1440 daemon namespace alternatives passed on configured CI retry",
+    "desktop-1440 mirror maintenance generation update passed on configured CI retry"
+  ]
+}

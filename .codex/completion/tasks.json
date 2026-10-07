@@ -243,10 +243,10 @@
       "gates": [
         "core"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/09-resource-policy.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/09-review.json",
       "product_gates": [
         "core",
         "resources"

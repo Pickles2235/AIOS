@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "resources",
+  "milestone": "09-resource-policy",
+  "tested_commit": "f28e413a8637d4561d358ff659ade3df90b5116c",
+  "clean_product_tree": true,
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "timestamp": 1791386596.5914712,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=09-resource-policy",
+        "COMPLETION_GATE=resources"
+      ],
+      "exit_code": 0,
+      "seconds": 27.303713083267212,
+      "log_sha256": "918dfea112c972afda193d6e84407f499707d168b8d9d0447e9fb753afab6eca"
+    }
+  ]
+}
