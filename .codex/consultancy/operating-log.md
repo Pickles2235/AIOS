@@ -9,7 +9,7 @@ Finish the approved installable V1 completion mission. Acceptance is the full 15
 - Follow `.codex/completion/PRODUCT.md`, `MISSION.md`, `ACCEPTANCE.md`, `tasks.json`, and each milestone plan.
 - Preserve canonical IR, evidence semantics, browser security, source nonmutation, and truthful native evidence. Never claim a deferred check passed.
 - Task 09 implementation `f28e413a8637d4561d358ff659ade3df90b5116c` was published in `50211f88ec62fc066b121d42212b87a96b7dac90`; follow-up completion bookkeeping is `c9637783e9cca819b3e2c0afb683683e63b92f8b`.
-- Task 10 runs on `codex/completion-investigation-search`, from fetched main `c9637783e9cca819b3e2c0afb683683e63b92f8b`.
+- Task 10 reviewed source `4d176cdd4587381d4491526dc09137b40631a77d` is published and completion bookkeeping verified in `0c3fba23fd64b68e5ab548779dcb45c40ffd3413`. Task 11 now runs on `codex/completion-volumetric-cloud` from that fetched main.
 
 ## Team map
 
@@ -35,7 +35,7 @@ Task 11 audit: live `web/src/knowledge-cloud.tsx` is a 2D SVG ring wired by `mai
 
 ## Task 10 recovery checkpoint
 
-Current source `4092163670030770823585e372c7370e7c01f4fe` includes typed coverage, faithful relationship citations, independently reviewed gold cases, stale evidence handling, configuration coverage repair and bounded Playwright runner. The final serial web run failed seven maintenance/management cases: actual battery power deferred initial jobs beyond the fixture poll deadline. Delivery owns a private AC-power command fixture for only those disposable test backends. Reviewer independently audited its isolation and retained behavioral assertions; this synthetic fixture is not native power evidence. Production resource policy remains unchanged. Milestone stays in progress until clean exact-SHA core/web/retrieval gates, paired acceptance and final independent review pass. Prior passing reports and rejected/stalled runs remain historical evidence.
+Current source `4092163670030770823585e372c7370e7c01f4fe` includes typed coverage, faithful relationship citations, independently reviewed gold cases, stale evidence handling, configuration coverage repair and bounded Playwright runner. The final serial web run failed seven maintenance/management cases: actual battery power deferred initial jobs beyond the fixture poll deadline. Delivery owns a private AC-power command fixture for only those disposable test backends. Reviewer independently audited its isolation and retained behavioral assertions; this synthetic fixture is not native power evidence. Production resource policy remains unchanged. Recovery completed: clean exact-SHA core/web/retrieval gates and paired 14-case acceptance passed at 4d176cd; independent report10-review.json passed, and milestone10 was published/completed. Prior passing reports and rejected/stalled runs remain historical evidence.
 
 Task 11 initial architecture: canonical cloud API pinned to an active generation set; bounded exact hierarchy membership/pages and claim-backed edges; actual WebGL perspective/depth with deterministic positions; DOM evidence alternative and backend validated source actions. Path-derived directories must be labelled as directories rather than inferred modules. Delivery lead owns UI/integration and will staff one fresh backend contributor with a disjoint contract. Reviewer owns independent criteria/evidence checks.
 
