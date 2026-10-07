@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"time"
 
@@ -10,6 +11,13 @@ import (
 )
 
 var purgeID = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{0,62}$`)
+
+const repositorySnapshotCandidatePredicate = `(root=? OR substr(root,1,length(?)+1)=?||?)`
+
+func (s *Store) repositorySnapshotCandidateArgs(repository string) []any {
+	root := filepath.Join(filepath.Dir(s.path), "snapshots", repository)
+	return []any{root, root, root, string(filepath.Separator)}
+}
 
 // RepositoryOwnedRecords checks canonical data and retired/staged history rather
 // than inferring purge completion from the active catalog alone.
@@ -47,6 +55,18 @@ func (s *Store) RepositoryOwnedRecords(ctx context.Context, repository string) (
 		return 0, err
 	}
 	total += diagnostics
+	var candidateTable int
+	if err := s.db.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type='table' AND name='snapshot_gc_candidates'`).Scan(&candidateTable); err != nil {
+		return 0, err
+	}
+	if candidateTable != 0 {
+		var candidates int
+		args := s.repositorySnapshotCandidateArgs(repository)
+		if err := s.db.QueryRowContext(ctx, `SELECT count(*) FROM snapshot_gc_candidates WHERE `+repositorySnapshotCandidatePredicate, args...).Scan(&candidates); err != nil {
+			return 0, err
+		}
+		total += candidates
+	}
 	return total, nil
 }
 
@@ -68,6 +88,7 @@ func (s *Store) PurgeRepository(ctx context.Context, repository string) error {
 	}
 	for _, q := range []string{
 		`INSERT INTO removal_generations SELECT generation_id FROM generations WHERE repo_id=?`,
+		`INSERT OR IGNORE INTO removal_generations SELECT revision_id FROM ir_source_revisions WHERE repository_id=?`,
 		`INSERT INTO removal_entities SELECT canonical_entity_id FROM ir_entities WHERE repository_id=?`,
 		`INSERT INTO removal_catalogs SELECT DISTINCT catalog_revision_id FROM catalog_revision_members WHERE repo_id=?`,
 	} {
@@ -138,6 +159,15 @@ func (s *Store) PurgeRepository(ctx context.Context, repository string) error {
 	}
 	if err = exec(`DELETE FROM diagnostic_events WHERE repository_id IN (?,?)`, repository, observability.Opaque(repository)); err != nil {
 		return err
+	}
+	var candidateTable int
+	if err = tx.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type='table' AND name='snapshot_gc_candidates'`).Scan(&candidateTable); err != nil {
+		return err
+	}
+	if candidateTable != 0 {
+		if err = exec(`DELETE FROM snapshot_gc_candidates WHERE `+repositorySnapshotCandidatePredicate, s.repositorySnapshotCandidateArgs(repository)...); err != nil {
+			return err
+		}
 	}
 	rows, err := tx.QueryContext(ctx, `PRAGMA foreign_key_check`)
 	if err != nil {
