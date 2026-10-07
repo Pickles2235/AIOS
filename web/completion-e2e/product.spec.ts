@@ -11,6 +11,8 @@ import {
   chmodSync,
   readdirSync,
   statSync,
+  readFileSync,
+  unlinkSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
@@ -356,6 +358,37 @@ test.describe("real installed-product UI", () => {
     await expect(page.getByLabel("Staged cloud activity")).toContainText(
       "not queryable",
     );
+    await page
+      .getByRole("button", { name: "Refresh cloud", exact: true })
+      .click();
+    await expect(
+      page
+        .getByLabel("Evidence navigation")
+        .getByRole("button", { name: "Worker", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByLabel("Evidence navigation")
+      .getByRole("button", { name: "Worker", exact: true })
+      .click();
+    await expect(page.getByLabel("Evidence inspector")).toContainText(
+      "replacement",
+    );
+    unlinkSync(join(source, "src", "Worker.java"));
+    await page
+      .getByRole("button", { name: "Force rebuild fixture", exact: true })
+      .click();
+    await expect(page.getByLabel("Cloud scope")).toContainText("Repositories", {
+      timeout: 30000,
+    });
+    await expect(page.getByLabel("Evidence inspector")).toContainText(
+      "Select an entity",
+    );
+    await expect(page.getByLabel("Evidence inspector")).not.toContainText(
+      "replacement",
+    );
+    await expect(page.getByLabel("Cloud generation change")).toContainText(
+      "previous evidence was cleared",
+    );
     await info.attach("canonical-membership", {
       body: JSON.stringify({
         snapshot: estate.snapshot,
@@ -584,6 +617,7 @@ test.describe("real installed-product UI", () => {
       "/api/v1/query",
       { text: "Worker", repository: "fixture", limit: 1 },
     );
+    const sourceBefore = readFileSync(join(source, "src", "Worker.java"));
     const opened = await api<{ opened: boolean }>(
       page,
       "/api/v1/source-actions/open",
@@ -602,6 +636,9 @@ test.describe("real installed-product UI", () => {
         ).trim(),
       )
       .toBe(join(source, "src", "Worker.java"));
+    expect(
+      readFileSync(join(source, "src", "Worker.java")).equals(sourceBefore),
+    ).toBe(true);
     writeFileSync(
       info.outputPath("native-finder-proof.json"),
       JSON.stringify({

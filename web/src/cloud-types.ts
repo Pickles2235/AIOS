@@ -64,6 +64,7 @@ export const semanticColours: Record<string, string> = {
   symbol: "#ffcb7a",
   selected: "#ffffff",
   result: "#ff80ac",
+  relationship: "#6180a6",
 };
 export function nodeColour(node: CloudNode) {
   return semanticColours[

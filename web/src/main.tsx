@@ -491,7 +491,10 @@ function App() {
       <div className="knowledge-workspace">
         <div>
           <KnowledgeCloud
-            onPromotion={clearSelection}
+            onPromotion={() => {
+              clearSelection();
+              void load();
+            }}
             inspectClaim={(claim) => void inspectClaim(claim)}
             request={request}
             selected={selected?.handle}
@@ -542,6 +545,12 @@ function App() {
           <h2>
             {selectedClaim?.predicate || selected?.label || "Select an entity"}
           </h2>
+          {selected && (
+            <p>
+              {selected.kind} · identity {selected.identity} · confidence{" "}
+              {selected.confidence} · {selected.evidence_count} canonical claims
+            </p>
+          )}
           {selected && (
             <p>
               {selected.repository}/{selected.path} · generation{" "}

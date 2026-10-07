@@ -115,10 +115,32 @@ export function KnowledgeCloud({
       setPage(next);
       setError("");
     } catch (e) {
-      if (id === requestID.current)
-        setError(
-          `Cloud page unavailable or stale. ${e instanceof Error ? e.message : "Refresh to retry."}`,
-        );
+      if (id !== requestID.current) return;
+      // A removed scope cannot return a newer snapshot. Invalidate consumers
+      // before attempting recovery so the inspector never keeps old evidence.
+      onPromotion();
+      setPicked(undefined);
+      setError(
+        `Cloud page unavailable or stale. ${e instanceof Error ? e.message : "Refresh to retry."}`,
+      );
+      if ((e as { status?: number }).status === 409 && scope) {
+        try {
+          const estate = await requestRef.current<CloudPage>(
+            "/api/v1/cloud?limit=256",
+          );
+          if (id !== requestID.current) return;
+          comparable.current = false;
+          pageCursor.current = "";
+          setPage(estate);
+          setTrail([]);
+          setError("");
+          setMotion(
+            "The selected scope changed or was removed. Returned to the current estate; previous evidence was cleared.",
+          );
+        } catch {
+          /* Retain the labelled page with selection disabled. */
+        }
+      }
     } finally {
       if (id === requestID.current) {
         inFlight.current = false;
@@ -591,6 +613,8 @@ export function KnowledgeCloud({
                   entities; {page.total_claims} canonical claims in the full
                   scope. Claims with hidden endpoints are not drawn. Aggregate
                   membership is not a causal relationship.
+                  {page.edges_truncated &&
+                    " The visible relationship payload is bounded; additional connecting claims are hidden."}
                 </p>
                 <ul>
                   {page.edges.map((edge) => (
