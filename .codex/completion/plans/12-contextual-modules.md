@@ -35,3 +35,5 @@ None established; native requirements need actual hardware/CI.
 ## Handoff
 
 Persist implementation SHA, publication evidence and next work. Continue mission.
+
+Architecture checkpoint: `/root/contextual_modules_delivery` owns a unified actual runtime snapshot poller over jobs/resources/onboarding/activity/status and seven contextual floating modules. Existing activity sequence is in-process and bounded to 512 retained events; explicitly handle restart/reset/history gaps and reconnect, never infer lost events as healthy inactivity. Preserve maintenance controls in health detail and generation/query freshness. Independent `/root/contextual_modules_acceptance` is reviewing before final source freeze. Both senior gpt-6-sol/medium/forknone; manager owns metadata.
