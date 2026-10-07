@@ -113,6 +113,7 @@ type Excerpt struct {
 type Query struct {
 	Text              string  `json:"text"`
 	Repository        string  `json:"repository"`
+	Capability        string  `json:"capability,omitempty"`
 	Limit             int     `json:"limit"`
 	MinimumConfidence float64 `json:"minimum_confidence"`
 }
@@ -417,7 +418,14 @@ func (s *Service) Query(ctx context.Context, in Query) (result QueryResult, retE
 	if len(snapshots) == 0 {
 		return QueryResult{Status: "unknown", Entities: []Entity{}, Trace: []TraceEvent{{Kind: "no_active_generation", Detail: "index approved sources first"}}}, nil
 	}
-	basis, e := s.db.Coverage(ctx, in.Repository, "lexical", nil)
+	capability := in.Capability
+	if capability == "" {
+		capability = "lexical"
+	}
+	if capability != "lexical" && capability != "structural" && capability != "path" {
+		return QueryResult{Status: "unknown", Entities: []Entity{}, Trace: []TraceEvent{{Kind: "unsupported_query", Detail: "unsupported search capability"}}}, nil
+	}
+	basis, e := s.db.Coverage(ctx, in.Repository, capability, nil)
 	if e != nil {
 		return QueryResult{}, e
 	}
@@ -454,8 +462,20 @@ func (s *Service) Query(ctx context.Context, in Query) (result QueryResult, retE
 			return QueryResult{}, e
 		}
 	}
+	if capability == "structural" {
+		structural, structuralErr := s.db.StructuralCandidates(ctx, in.Text, filter)
+		if structuralErr == nil {
+			candidates = append(candidates, structural...)
+		} else {
+			basis.Complete = false
+			basis.Uncertainty = append(basis.Uncertainty, "structural_projection_unavailable")
+		}
+	}
 	sort.SliceStable(candidates, func(i, j int) bool {
 		a, b := candidates[i], candidates[j]
+		if capability == "path" && (a.Entity.Kind == "file") != (b.Entity.Kind == "file") {
+			return a.Entity.Kind == "file"
+		}
 		if a.Entity.ID != b.Entity.ID {
 			return a.Entity.ID < b.Entity.ID
 		}

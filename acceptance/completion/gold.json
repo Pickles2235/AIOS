@@ -133,7 +133,9 @@
       "query_class": "symbol",
       "expected_repository": "01-orders",
       "expected_path": "src/OrdersService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadOrdersRecord"
     },
     {
       "id": "01-orders-event",
@@ -141,7 +143,9 @@
       "query_class": "event",
       "expected_repository": "01-orders",
       "expected_path": "src/OrdersService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "orders.changed.v1"
     },
     {
       "id": "01-orders-route",
@@ -149,7 +153,9 @@
       "query_class": "route",
       "expected_repository": "01-orders",
       "expected_path": "src/OrdersService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/orders/records"
     },
     {
       "id": "01-orders-config",
@@ -157,7 +163,9 @@
       "query_class": "config",
       "expected_repository": "01-orders",
       "expected_path": "src/OrdersService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "ORDERS_RETRY_LIMIT"
     },
     {
       "id": "01-orders-log",
@@ -165,7 +173,10 @@
       "query_class": "log",
       "expected_repository": "01-orders",
       "expected_path": "src/OrdersService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "ORDERS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "01-orders-question",
@@ -173,7 +184,9 @@
       "query_class": "question",
       "expected_repository": "01-orders",
       "expected_path": "src/OrdersService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadOrdersRecord"
     },
     {
       "id": "02-accounts-symbol",
@@ -181,7 +194,9 @@
       "query_class": "symbol",
       "expected_repository": "02-accounts",
       "expected_path": "src/AccountsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadAccountsRecord"
     },
     {
       "id": "02-accounts-event",
@@ -189,7 +204,9 @@
       "query_class": "event",
       "expected_repository": "02-accounts",
       "expected_path": "src/AccountsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "accounts.changed.v1"
     },
     {
       "id": "02-accounts-route",
@@ -197,7 +214,9 @@
       "query_class": "route",
       "expected_repository": "02-accounts",
       "expected_path": "src/AccountsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/accounts/records"
     },
     {
       "id": "02-accounts-config",
@@ -205,7 +224,9 @@
       "query_class": "config",
       "expected_repository": "02-accounts",
       "expected_path": "src/AccountsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "ACCOUNTS_RETRY_LIMIT"
     },
     {
       "id": "02-accounts-log",
@@ -213,7 +234,10 @@
       "query_class": "log",
       "expected_repository": "02-accounts",
       "expected_path": "src/AccountsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "ACCOUNTS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "02-accounts-question",
@@ -221,7 +245,9 @@
       "query_class": "question",
       "expected_repository": "02-accounts",
       "expected_path": "src/AccountsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadAccountsRecord"
     },
     {
       "id": "03-catalog-symbol",
@@ -229,7 +255,9 @@
       "query_class": "symbol",
       "expected_repository": "03-catalog",
       "expected_path": "src/CatalogService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadCatalogRecord"
     },
     {
       "id": "03-catalog-event",
@@ -237,7 +265,9 @@
       "query_class": "event",
       "expected_repository": "03-catalog",
       "expected_path": "src/CatalogService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "catalog.changed.v1"
     },
     {
       "id": "03-catalog-route",
@@ -245,7 +275,9 @@
       "query_class": "route",
       "expected_repository": "03-catalog",
       "expected_path": "src/CatalogService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/catalog/records"
     },
     {
       "id": "03-catalog-config",
@@ -253,7 +285,9 @@
       "query_class": "config",
       "expected_repository": "03-catalog",
       "expected_path": "src/CatalogService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "CATALOG_RETRY_LIMIT"
     },
     {
       "id": "03-catalog-log",
@@ -261,7 +295,10 @@
       "query_class": "log",
       "expected_repository": "03-catalog",
       "expected_path": "src/CatalogService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "CATALOG_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "03-catalog-question",
@@ -269,7 +306,9 @@
       "query_class": "question",
       "expected_repository": "03-catalog",
       "expected_path": "src/CatalogService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadCatalogRecord"
     },
     {
       "id": "04-billing-symbol",
@@ -277,7 +316,9 @@
       "query_class": "symbol",
       "expected_repository": "04-billing",
       "expected_path": "src/BillingService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadBillingRecord"
     },
     {
       "id": "04-billing-event",
@@ -285,7 +326,9 @@
       "query_class": "event",
       "expected_repository": "04-billing",
       "expected_path": "src/BillingService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "billing.changed.v1"
     },
     {
       "id": "04-billing-route",
@@ -293,7 +336,9 @@
       "query_class": "route",
       "expected_repository": "04-billing",
       "expected_path": "src/BillingService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/billing/records"
     },
     {
       "id": "04-billing-config",
@@ -301,7 +346,9 @@
       "query_class": "config",
       "expected_repository": "04-billing",
       "expected_path": "src/BillingService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "BILLING_RETRY_LIMIT"
     },
     {
       "id": "04-billing-log",
@@ -309,7 +356,10 @@
       "query_class": "log",
       "expected_repository": "04-billing",
       "expected_path": "src/BillingService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "BILLING_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "04-billing-question",
@@ -317,7 +367,9 @@
       "query_class": "question",
       "expected_repository": "04-billing",
       "expected_path": "src/BillingService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadBillingRecord"
     },
     {
       "id": "05-shipping-symbol",
@@ -325,7 +377,9 @@
       "query_class": "symbol",
       "expected_repository": "05-shipping",
       "expected_path": "src/ShippingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadShippingRecord"
     },
     {
       "id": "05-shipping-event",
@@ -333,7 +387,9 @@
       "query_class": "event",
       "expected_repository": "05-shipping",
       "expected_path": "src/ShippingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "shipping.changed.v1"
     },
     {
       "id": "05-shipping-route",
@@ -341,7 +397,9 @@
       "query_class": "route",
       "expected_repository": "05-shipping",
       "expected_path": "src/ShippingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/shipping/records"
     },
     {
       "id": "05-shipping-config",
@@ -349,7 +407,9 @@
       "query_class": "config",
       "expected_repository": "05-shipping",
       "expected_path": "src/ShippingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "SHIPPING_RETRY_LIMIT"
     },
     {
       "id": "05-shipping-log",
@@ -357,7 +417,10 @@
       "query_class": "log",
       "expected_repository": "05-shipping",
       "expected_path": "src/ShippingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "SHIPPING_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "05-shipping-question",
@@ -365,7 +428,9 @@
       "query_class": "question",
       "expected_repository": "05-shipping",
       "expected_path": "src/ShippingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadShippingRecord"
     },
     {
       "id": "06-inventory-symbol",
@@ -373,7 +438,9 @@
       "query_class": "symbol",
       "expected_repository": "06-inventory",
       "expected_path": "src/InventoryService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadInventoryRecord"
     },
     {
       "id": "06-inventory-event",
@@ -381,7 +448,9 @@
       "query_class": "event",
       "expected_repository": "06-inventory",
       "expected_path": "src/InventoryService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "inventory.changed.v1"
     },
     {
       "id": "06-inventory-route",
@@ -389,7 +458,9 @@
       "query_class": "route",
       "expected_repository": "06-inventory",
       "expected_path": "src/InventoryService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/inventory/records"
     },
     {
       "id": "06-inventory-config",
@@ -397,7 +468,9 @@
       "query_class": "config",
       "expected_repository": "06-inventory",
       "expected_path": "src/InventoryService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "INVENTORY_RETRY_LIMIT"
     },
     {
       "id": "06-inventory-log",
@@ -405,7 +478,10 @@
       "query_class": "log",
       "expected_repository": "06-inventory",
       "expected_path": "src/InventoryService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "INVENTORY_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "06-inventory-question",
@@ -413,7 +489,9 @@
       "query_class": "question",
       "expected_repository": "06-inventory",
       "expected_path": "src/InventoryService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadInventoryRecord"
     },
     {
       "id": "07-pricing-symbol",
@@ -421,7 +499,9 @@
       "query_class": "symbol",
       "expected_repository": "07-pricing",
       "expected_path": "src/PricingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadPricingRecord"
     },
     {
       "id": "07-pricing-event",
@@ -429,7 +509,9 @@
       "query_class": "event",
       "expected_repository": "07-pricing",
       "expected_path": "src/PricingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "pricing.changed.v1"
     },
     {
       "id": "07-pricing-route",
@@ -437,7 +519,9 @@
       "query_class": "route",
       "expected_repository": "07-pricing",
       "expected_path": "src/PricingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/pricing/records"
     },
     {
       "id": "07-pricing-config",
@@ -445,7 +529,9 @@
       "query_class": "config",
       "expected_repository": "07-pricing",
       "expected_path": "src/PricingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "PRICING_RETRY_LIMIT"
     },
     {
       "id": "07-pricing-log",
@@ -453,7 +539,10 @@
       "query_class": "log",
       "expected_repository": "07-pricing",
       "expected_path": "src/PricingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "PRICING_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "07-pricing-question",
@@ -461,7 +550,9 @@
       "query_class": "question",
       "expected_repository": "07-pricing",
       "expected_path": "src/PricingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadPricingRecord"
     },
     {
       "id": "08-offers-symbol",
@@ -469,7 +560,9 @@
       "query_class": "symbol",
       "expected_repository": "08-offers",
       "expected_path": "src/OffersService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadOffersRecord"
     },
     {
       "id": "08-offers-event",
@@ -477,7 +570,9 @@
       "query_class": "event",
       "expected_repository": "08-offers",
       "expected_path": "src/OffersService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "offers.changed.v1"
     },
     {
       "id": "08-offers-route",
@@ -485,7 +580,9 @@
       "query_class": "route",
       "expected_repository": "08-offers",
       "expected_path": "src/OffersService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/offers/records"
     },
     {
       "id": "08-offers-config",
@@ -493,7 +590,9 @@
       "query_class": "config",
       "expected_repository": "08-offers",
       "expected_path": "src/OffersService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "OFFERS_RETRY_LIMIT"
     },
     {
       "id": "08-offers-log",
@@ -501,7 +600,10 @@
       "query_class": "log",
       "expected_repository": "08-offers",
       "expected_path": "src/OffersService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "OFFERS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "08-offers-question",
@@ -509,7 +611,9 @@
       "query_class": "question",
       "expected_repository": "08-offers",
       "expected_path": "src/OffersService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadOffersRecord"
     },
     {
       "id": "09-returns-symbol",
@@ -517,7 +621,9 @@
       "query_class": "symbol",
       "expected_repository": "09-returns",
       "expected_path": "src/ReturnsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadReturnsRecord"
     },
     {
       "id": "09-returns-event",
@@ -525,7 +631,9 @@
       "query_class": "event",
       "expected_repository": "09-returns",
       "expected_path": "src/ReturnsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "returns.changed.v1"
     },
     {
       "id": "09-returns-route",
@@ -533,7 +641,9 @@
       "query_class": "route",
       "expected_repository": "09-returns",
       "expected_path": "src/ReturnsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/returns/records"
     },
     {
       "id": "09-returns-config",
@@ -541,7 +651,9 @@
       "query_class": "config",
       "expected_repository": "09-returns",
       "expected_path": "src/ReturnsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "RETURNS_RETRY_LIMIT"
     },
     {
       "id": "09-returns-log",
@@ -549,7 +661,10 @@
       "query_class": "log",
       "expected_repository": "09-returns",
       "expected_path": "src/ReturnsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "RETURNS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "09-returns-question",
@@ -557,7 +672,9 @@
       "query_class": "question",
       "expected_repository": "09-returns",
       "expected_path": "src/ReturnsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadReturnsRecord"
     },
     {
       "id": "10-payments-symbol",
@@ -565,7 +682,9 @@
       "query_class": "symbol",
       "expected_repository": "10-payments",
       "expected_path": "src/PaymentsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadPaymentsRecord"
     },
     {
       "id": "10-payments-event",
@@ -573,7 +692,9 @@
       "query_class": "event",
       "expected_repository": "10-payments",
       "expected_path": "src/PaymentsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "payments.changed.v1"
     },
     {
       "id": "10-payments-route",
@@ -581,7 +702,9 @@
       "query_class": "route",
       "expected_repository": "10-payments",
       "expected_path": "src/PaymentsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/payments/records"
     },
     {
       "id": "10-payments-config",
@@ -589,7 +712,9 @@
       "query_class": "config",
       "expected_repository": "10-payments",
       "expected_path": "src/PaymentsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "PAYMENTS_RETRY_LIMIT"
     },
     {
       "id": "10-payments-log",
@@ -597,7 +722,10 @@
       "query_class": "log",
       "expected_repository": "10-payments",
       "expected_path": "src/PaymentsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "PAYMENTS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "10-payments-question",
@@ -605,7 +733,9 @@
       "query_class": "question",
       "expected_repository": "10-payments",
       "expected_path": "src/PaymentsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadPaymentsRecord"
     },
     {
       "id": "11-profiles-symbol",
@@ -613,7 +743,9 @@
       "query_class": "symbol",
       "expected_repository": "11-profiles",
       "expected_path": "src/ProfilesService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadProfilesRecord"
     },
     {
       "id": "11-profiles-event",
@@ -621,7 +753,9 @@
       "query_class": "event",
       "expected_repository": "11-profiles",
       "expected_path": "src/ProfilesService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "profiles.changed.v1"
     },
     {
       "id": "11-profiles-route",
@@ -629,7 +763,9 @@
       "query_class": "route",
       "expected_repository": "11-profiles",
       "expected_path": "src/ProfilesService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/profiles/records"
     },
     {
       "id": "11-profiles-config",
@@ -637,7 +773,9 @@
       "query_class": "config",
       "expected_repository": "11-profiles",
       "expected_path": "src/ProfilesService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "PROFILES_RETRY_LIMIT"
     },
     {
       "id": "11-profiles-log",
@@ -645,7 +783,10 @@
       "query_class": "log",
       "expected_repository": "11-profiles",
       "expected_path": "src/ProfilesService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "PROFILES_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "11-profiles-question",
@@ -653,7 +794,9 @@
       "query_class": "question",
       "expected_repository": "11-profiles",
       "expected_path": "src/ProfilesService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadProfilesRecord"
     },
     {
       "id": "12-sessions-symbol",
@@ -661,7 +804,9 @@
       "query_class": "symbol",
       "expected_repository": "12-sessions",
       "expected_path": "src/SessionsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadSessionsRecord"
     },
     {
       "id": "12-sessions-event",
@@ -669,7 +814,9 @@
       "query_class": "event",
       "expected_repository": "12-sessions",
       "expected_path": "src/SessionsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "sessions.changed.v1"
     },
     {
       "id": "12-sessions-route",
@@ -677,7 +824,9 @@
       "query_class": "route",
       "expected_repository": "12-sessions",
       "expected_path": "src/SessionsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/sessions/records"
     },
     {
       "id": "12-sessions-config",
@@ -685,7 +834,9 @@
       "query_class": "config",
       "expected_repository": "12-sessions",
       "expected_path": "src/SessionsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "SESSIONS_RETRY_LIMIT"
     },
     {
       "id": "12-sessions-log",
@@ -693,7 +844,10 @@
       "query_class": "log",
       "expected_repository": "12-sessions",
       "expected_path": "src/SessionsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "SESSIONS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "12-sessions-question",
@@ -701,7 +855,9 @@
       "query_class": "question",
       "expected_repository": "12-sessions",
       "expected_path": "src/SessionsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadSessionsRecord"
     },
     {
       "id": "13-notifications-symbol",
@@ -709,7 +865,9 @@
       "query_class": "symbol",
       "expected_repository": "13-notifications",
       "expected_path": "src/NotificationsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadNotificationsRecord"
     },
     {
       "id": "13-notifications-event",
@@ -717,7 +875,9 @@
       "query_class": "event",
       "expected_repository": "13-notifications",
       "expected_path": "src/NotificationsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "notifications.changed.v1"
     },
     {
       "id": "13-notifications-route",
@@ -725,7 +885,9 @@
       "query_class": "route",
       "expected_repository": "13-notifications",
       "expected_path": "src/NotificationsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/notifications/records"
     },
     {
       "id": "13-notifications-config",
@@ -733,7 +895,9 @@
       "query_class": "config",
       "expected_repository": "13-notifications",
       "expected_path": "src/NotificationsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "NOTIFICATIONS_RETRY_LIMIT"
     },
     {
       "id": "13-notifications-log",
@@ -741,7 +905,10 @@
       "query_class": "log",
       "expected_repository": "13-notifications",
       "expected_path": "src/NotificationsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "NOTIFICATIONS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "13-notifications-question",
@@ -749,7 +916,9 @@
       "query_class": "question",
       "expected_repository": "13-notifications",
       "expected_path": "src/NotificationsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadNotificationsRecord"
     },
     {
       "id": "14-audit-symbol",
@@ -757,7 +926,9 @@
       "query_class": "symbol",
       "expected_repository": "14-audit",
       "expected_path": "src/AuditService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadAuditRecord"
     },
     {
       "id": "14-audit-event",
@@ -765,7 +936,9 @@
       "query_class": "event",
       "expected_repository": "14-audit",
       "expected_path": "src/AuditService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "audit.changed.v1"
     },
     {
       "id": "14-audit-route",
@@ -773,7 +946,9 @@
       "query_class": "route",
       "expected_repository": "14-audit",
       "expected_path": "src/AuditService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/audit/records"
     },
     {
       "id": "14-audit-config",
@@ -781,7 +956,9 @@
       "query_class": "config",
       "expected_repository": "14-audit",
       "expected_path": "src/AuditService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "AUDIT_RETRY_LIMIT"
     },
     {
       "id": "14-audit-log",
@@ -789,7 +966,10 @@
       "query_class": "log",
       "expected_repository": "14-audit",
       "expected_path": "src/AuditService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "AUDIT_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "14-audit-question",
@@ -797,7 +977,9 @@
       "query_class": "question",
       "expected_repository": "14-audit",
       "expected_path": "src/AuditService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadAuditRecord"
     },
     {
       "id": "15-analytics-symbol",
@@ -805,7 +987,9 @@
       "query_class": "symbol",
       "expected_repository": "15-analytics",
       "expected_path": "src/AnalyticsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadAnalyticsRecord"
     },
     {
       "id": "15-analytics-event",
@@ -813,7 +997,9 @@
       "query_class": "event",
       "expected_repository": "15-analytics",
       "expected_path": "src/AnalyticsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "analytics.changed.v1"
     },
     {
       "id": "15-analytics-route",
@@ -821,7 +1007,9 @@
       "query_class": "route",
       "expected_repository": "15-analytics",
       "expected_path": "src/AnalyticsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/analytics/records"
     },
     {
       "id": "15-analytics-config",
@@ -829,7 +1017,9 @@
       "query_class": "config",
       "expected_repository": "15-analytics",
       "expected_path": "src/AnalyticsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "ANALYTICS_RETRY_LIMIT"
     },
     {
       "id": "15-analytics-log",
@@ -837,7 +1027,10 @@
       "query_class": "log",
       "expected_repository": "15-analytics",
       "expected_path": "src/AnalyticsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "ANALYTICS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "15-analytics-question",
@@ -845,7 +1038,9 @@
       "query_class": "question",
       "expected_repository": "15-analytics",
       "expected_path": "src/AnalyticsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadAnalyticsRecord"
     },
     {
       "id": "16-search-symbol",
@@ -853,7 +1048,9 @@
       "query_class": "symbol",
       "expected_repository": "16-search",
       "expected_path": "src/SearchService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadSearchRecord"
     },
     {
       "id": "16-search-event",
@@ -861,7 +1058,9 @@
       "query_class": "event",
       "expected_repository": "16-search",
       "expected_path": "src/SearchService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "search.changed.v1"
     },
     {
       "id": "16-search-route",
@@ -869,7 +1068,9 @@
       "query_class": "route",
       "expected_repository": "16-search",
       "expected_path": "src/SearchService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/search/records"
     },
     {
       "id": "16-search-config",
@@ -877,7 +1078,9 @@
       "query_class": "config",
       "expected_repository": "16-search",
       "expected_path": "src/SearchService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "SEARCH_RETRY_LIMIT"
     },
     {
       "id": "16-search-log",
@@ -885,7 +1088,10 @@
       "query_class": "log",
       "expected_repository": "16-search",
       "expected_path": "src/SearchService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "SEARCH_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "16-search-question",
@@ -893,7 +1099,9 @@
       "query_class": "question",
       "expected_repository": "16-search",
       "expected_path": "src/SearchService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadSearchRecord"
     },
     {
       "id": "17-reviews-symbol",
@@ -901,7 +1109,9 @@
       "query_class": "symbol",
       "expected_repository": "17-reviews",
       "expected_path": "src/ReviewsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadReviewsRecord"
     },
     {
       "id": "17-reviews-event",
@@ -909,7 +1119,9 @@
       "query_class": "event",
       "expected_repository": "17-reviews",
       "expected_path": "src/ReviewsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "reviews.changed.v1"
     },
     {
       "id": "17-reviews-route",
@@ -917,7 +1129,9 @@
       "query_class": "route",
       "expected_repository": "17-reviews",
       "expected_path": "src/ReviewsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/reviews/records"
     },
     {
       "id": "17-reviews-config",
@@ -925,7 +1139,9 @@
       "query_class": "config",
       "expected_repository": "17-reviews",
       "expected_path": "src/ReviewsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "REVIEWS_RETRY_LIMIT"
     },
     {
       "id": "17-reviews-log",
@@ -933,7 +1149,10 @@
       "query_class": "log",
       "expected_repository": "17-reviews",
       "expected_path": "src/ReviewsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "REVIEWS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "17-reviews-question",
@@ -941,7 +1160,9 @@
       "query_class": "question",
       "expected_repository": "17-reviews",
       "expected_path": "src/ReviewsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadReviewsRecord"
     },
     {
       "id": "18-media-symbol",
@@ -949,7 +1170,9 @@
       "query_class": "symbol",
       "expected_repository": "18-media",
       "expected_path": "src/MediaService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadMediaRecord"
     },
     {
       "id": "18-media-event",
@@ -957,7 +1180,9 @@
       "query_class": "event",
       "expected_repository": "18-media",
       "expected_path": "src/MediaService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "media.changed.v1"
     },
     {
       "id": "18-media-route",
@@ -965,7 +1190,9 @@
       "query_class": "route",
       "expected_repository": "18-media",
       "expected_path": "src/MediaService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/media/records"
     },
     {
       "id": "18-media-config",
@@ -973,7 +1200,9 @@
       "query_class": "config",
       "expected_repository": "18-media",
       "expected_path": "src/MediaService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "MEDIA_RETRY_LIMIT"
     },
     {
       "id": "18-media-log",
@@ -981,7 +1210,10 @@
       "query_class": "log",
       "expected_repository": "18-media",
       "expected_path": "src/MediaService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "MEDIA_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "18-media-question",
@@ -989,7 +1221,9 @@
       "query_class": "question",
       "expected_repository": "18-media",
       "expected_path": "src/MediaService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadMediaRecord"
     },
     {
       "id": "19-support-symbol",
@@ -997,7 +1231,9 @@
       "query_class": "symbol",
       "expected_repository": "19-support",
       "expected_path": "src/SupportService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadSupportRecord"
     },
     {
       "id": "19-support-event",
@@ -1005,7 +1241,9 @@
       "query_class": "event",
       "expected_repository": "19-support",
       "expected_path": "src/SupportService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "support.changed.v1"
     },
     {
       "id": "19-support-route",
@@ -1013,7 +1251,9 @@
       "query_class": "route",
       "expected_repository": "19-support",
       "expected_path": "src/SupportService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/support/records"
     },
     {
       "id": "19-support-config",
@@ -1021,7 +1261,9 @@
       "query_class": "config",
       "expected_repository": "19-support",
       "expected_path": "src/SupportService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "SUPPORT_RETRY_LIMIT"
     },
     {
       "id": "19-support-log",
@@ -1029,7 +1271,10 @@
       "query_class": "log",
       "expected_repository": "19-support",
       "expected_path": "src/SupportService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "SUPPORT_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "19-support-question",
@@ -1037,7 +1282,9 @@
       "query_class": "question",
       "expected_repository": "19-support",
       "expected_path": "src/SupportService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadSupportRecord"
     },
     {
       "id": "20-reports-symbol",
@@ -1045,7 +1292,9 @@
       "query_class": "symbol",
       "expected_repository": "20-reports",
       "expected_path": "src/ReportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadReportsRecord"
     },
     {
       "id": "20-reports-event",
@@ -1053,7 +1302,9 @@
       "query_class": "event",
       "expected_repository": "20-reports",
       "expected_path": "src/ReportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "reports.changed.v1"
     },
     {
       "id": "20-reports-route",
@@ -1061,7 +1312,9 @@
       "query_class": "route",
       "expected_repository": "20-reports",
       "expected_path": "src/ReportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/reports/records"
     },
     {
       "id": "20-reports-config",
@@ -1069,7 +1322,9 @@
       "query_class": "config",
       "expected_repository": "20-reports",
       "expected_path": "src/ReportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "REPORTS_RETRY_LIMIT"
     },
     {
       "id": "20-reports-log",
@@ -1077,7 +1332,10 @@
       "query_class": "log",
       "expected_repository": "20-reports",
       "expected_path": "src/ReportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "REPORTS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "20-reports-question",
@@ -1085,7 +1343,9 @@
       "query_class": "question",
       "expected_repository": "20-reports",
       "expected_path": "src/ReportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadReportsRecord"
     },
     {
       "id": "21-exports-symbol",
@@ -1093,7 +1353,9 @@
       "query_class": "symbol",
       "expected_repository": "21-exports",
       "expected_path": "src/ExportsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadExportsRecord"
     },
     {
       "id": "21-exports-event",
@@ -1101,7 +1363,9 @@
       "query_class": "event",
       "expected_repository": "21-exports",
       "expected_path": "src/ExportsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "exports.changed.v1"
     },
     {
       "id": "21-exports-route",
@@ -1109,7 +1373,9 @@
       "query_class": "route",
       "expected_repository": "21-exports",
       "expected_path": "src/ExportsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/exports/records"
     },
     {
       "id": "21-exports-config",
@@ -1117,7 +1383,9 @@
       "query_class": "config",
       "expected_repository": "21-exports",
       "expected_path": "src/ExportsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "EXPORTS_RETRY_LIMIT"
     },
     {
       "id": "21-exports-log",
@@ -1125,7 +1393,10 @@
       "query_class": "log",
       "expected_repository": "21-exports",
       "expected_path": "src/ExportsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "EXPORTS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "21-exports-question",
@@ -1133,7 +1404,9 @@
       "query_class": "question",
       "expected_repository": "21-exports",
       "expected_path": "src/ExportsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadExportsRecord"
     },
     {
       "id": "22-imports-symbol",
@@ -1141,7 +1414,9 @@
       "query_class": "symbol",
       "expected_repository": "22-imports",
       "expected_path": "src/ImportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadImportsRecord"
     },
     {
       "id": "22-imports-event",
@@ -1149,7 +1424,9 @@
       "query_class": "event",
       "expected_repository": "22-imports",
       "expected_path": "src/ImportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "imports.changed.v1"
     },
     {
       "id": "22-imports-route",
@@ -1157,7 +1434,9 @@
       "query_class": "route",
       "expected_repository": "22-imports",
       "expected_path": "src/ImportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/imports/records"
     },
     {
       "id": "22-imports-config",
@@ -1165,7 +1444,9 @@
       "query_class": "config",
       "expected_repository": "22-imports",
       "expected_path": "src/ImportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "IMPORTS_RETRY_LIMIT"
     },
     {
       "id": "22-imports-log",
@@ -1173,7 +1454,10 @@
       "query_class": "log",
       "expected_repository": "22-imports",
       "expected_path": "src/ImportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "IMPORTS_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "22-imports-question",
@@ -1181,7 +1465,9 @@
       "query_class": "question",
       "expected_repository": "22-imports",
       "expected_path": "src/ImportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadImportsRecord"
     },
     {
       "id": "23-security-symbol",
@@ -1189,7 +1475,9 @@
       "query_class": "symbol",
       "expected_repository": "23-security",
       "expected_path": "src/SecurityService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadSecurityRecord"
     },
     {
       "id": "23-security-event",
@@ -1197,7 +1485,9 @@
       "query_class": "event",
       "expected_repository": "23-security",
       "expected_path": "src/SecurityService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "security.changed.v1"
     },
     {
       "id": "23-security-route",
@@ -1205,7 +1495,9 @@
       "query_class": "route",
       "expected_repository": "23-security",
       "expected_path": "src/SecurityService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/security/records"
     },
     {
       "id": "23-security-config",
@@ -1213,7 +1505,9 @@
       "query_class": "config",
       "expected_repository": "23-security",
       "expected_path": "src/SecurityService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "SECURITY_RETRY_LIMIT"
     },
     {
       "id": "23-security-log",
@@ -1221,7 +1515,10 @@
       "query_class": "log",
       "expected_repository": "23-security",
       "expected_path": "src/SecurityService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "SECURITY_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "23-security-question",
@@ -1229,7 +1526,9 @@
       "query_class": "question",
       "expected_repository": "23-security",
       "expected_path": "src/SecurityService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadSecurityRecord"
     },
     {
       "id": "24-workflow-symbol",
@@ -1237,7 +1536,9 @@
       "query_class": "symbol",
       "expected_repository": "24-workflow",
       "expected_path": "src/WorkflowService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadWorkflowRecord"
     },
     {
       "id": "24-workflow-event",
@@ -1245,7 +1546,9 @@
       "query_class": "event",
       "expected_repository": "24-workflow",
       "expected_path": "src/WorkflowService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "workflow.changed.v1"
     },
     {
       "id": "24-workflow-route",
@@ -1253,7 +1556,9 @@
       "query_class": "route",
       "expected_repository": "24-workflow",
       "expected_path": "src/WorkflowService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "/api/workflow/records"
     },
     {
       "id": "24-workflow-config",
@@ -1261,7 +1566,9 @@
       "query_class": "config",
       "expected_repository": "24-workflow",
       "expected_path": "src/WorkflowService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "WORKFLOW_RETRY_LIMIT"
     },
     {
       "id": "24-workflow-log",
@@ -1269,7 +1576,10 @@
       "query_class": "log",
       "expected_repository": "24-workflow",
       "expected_path": "src/WorkflowService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 7,
+      "expected_snippet": "WORKFLOW_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "24-workflow-question",
@@ -1277,7 +1587,9 @@
       "query_class": "question",
       "expected_repository": "24-workflow",
       "expected_path": "src/WorkflowService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "loadWorkflowRecord"
     },
     {
       "id": "25-gateway-symbol",
@@ -1285,7 +1597,9 @@
       "query_class": "symbol",
       "expected_repository": "25-gateway",
       "expected_path": "src/GatewayService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadGatewayRecord"
     },
     {
       "id": "25-gateway-event",
@@ -1293,7 +1607,9 @@
       "query_class": "event",
       "expected_repository": "25-gateway",
       "expected_path": "src/GatewayService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 3,
+      "expected_snippet": "gateway.changed.v1"
     },
     {
       "id": "25-gateway-route",
@@ -1301,7 +1617,9 @@
       "query_class": "route",
       "expected_repository": "25-gateway",
       "expected_path": "src/GatewayService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 4,
+      "expected_snippet": "/api/gateway/records"
     },
     {
       "id": "25-gateway-config",
@@ -1309,7 +1627,9 @@
       "query_class": "config",
       "expected_repository": "25-gateway",
       "expected_path": "src/GatewayService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "GATEWAY_RETRY_LIMIT"
     },
     {
       "id": "25-gateway-log",
@@ -1317,7 +1637,10 @@
       "query_class": "log",
       "expected_repository": "25-gateway",
       "expected_path": "src/GatewayService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 6,
+      "expected_snippet": "GATEWAY_SYNC_FAILED",
+      "expected_predicate": "EMITS_ERROR"
     },
     {
       "id": "25-gateway-question",
@@ -1325,7 +1648,9 @@
       "query_class": "question",
       "expected_repository": "25-gateway",
       "expected_path": "src/GatewayService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 5,
+      "expected_snippet": "loadGatewayRecord"
     },
     {
       "id": "negative-absent-symbol",
@@ -1337,7 +1662,10 @@
       "id": "unknown-event-topology",
       "query": "__unresolved_dynamic_event_48370__",
       "query_class": "event_trace_unknown",
-      "expected_state": "unknown"
+      "expected_state": "unknown",
+      "expected_repository": "25-gateway",
+      "expected_path": "contracts/dynamic-events.proto",
+      "expected_coverage_gap": "contracts/dynamic-events.proto"
     },
     {
       "id": "01-orders-path",
@@ -1345,7 +1673,9 @@
       "query_class": "path",
       "expected_repository": "01-orders",
       "expected_path": "src/OrdersService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "01-orders-caller",
@@ -1353,15 +1683,21 @@
       "query_class": "caller",
       "expected_repository": "01-orders",
       "expected_path": "src/OrdersConsumer.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "consumeOrdersRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "01-orders-impact",
-      "query": "routeImpactOrders",
+      "query": "What calls loadOrdersRecord?",
       "query_class": "impact",
       "expected_repository": "01-orders",
       "expected_path": "src/OrdersConsumer.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "loadOrdersRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "02-accounts-path",
@@ -1369,7 +1705,9 @@
       "query_class": "path",
       "expected_repository": "02-accounts",
       "expected_path": "src/AccountsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "02-accounts-caller",
@@ -1377,15 +1715,21 @@
       "query_class": "caller",
       "expected_repository": "02-accounts",
       "expected_path": "src/AccountsConsumer.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "consumeAccountsRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "02-accounts-impact",
-      "query": "routeImpactAccounts",
+      "query": "What calls loadAccountsRecord?",
       "query_class": "impact",
       "expected_repository": "02-accounts",
       "expected_path": "src/AccountsConsumer.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "loadAccountsRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "03-catalog-path",
@@ -1393,7 +1737,9 @@
       "query_class": "path",
       "expected_repository": "03-catalog",
       "expected_path": "src/CatalogService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "03-catalog-caller",
@@ -1401,15 +1747,21 @@
       "query_class": "caller",
       "expected_repository": "03-catalog",
       "expected_path": "src/CatalogConsumer.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "consumeCatalogRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "03-catalog-impact",
-      "query": "routeImpactCatalog",
+      "query": "What calls loadCatalogRecord?",
       "query_class": "impact",
       "expected_repository": "03-catalog",
       "expected_path": "src/CatalogConsumer.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "loadCatalogRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "04-billing-path",
@@ -1417,7 +1769,9 @@
       "query_class": "path",
       "expected_repository": "04-billing",
       "expected_path": "src/BillingService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "04-billing-caller",
@@ -1425,15 +1779,21 @@
       "query_class": "caller",
       "expected_repository": "04-billing",
       "expected_path": "src/BillingConsumer.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "consumeBillingRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "04-billing-impact",
-      "query": "routeImpactBilling",
+      "query": "What calls loadBillingRecord?",
       "query_class": "impact",
       "expected_repository": "04-billing",
       "expected_path": "src/BillingConsumer.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "loadBillingRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "05-shipping-path",
@@ -1441,7 +1801,9 @@
       "query_class": "path",
       "expected_repository": "05-shipping",
       "expected_path": "src/ShippingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "05-shipping-caller",
@@ -1449,15 +1811,21 @@
       "query_class": "caller",
       "expected_repository": "05-shipping",
       "expected_path": "src/ShippingConsumer.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "consumeShippingRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "05-shipping-impact",
-      "query": "routeImpactShipping",
+      "query": "What calls loadShippingRecord?",
       "query_class": "impact",
       "expected_repository": "05-shipping",
       "expected_path": "src/ShippingConsumer.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 2,
+      "expected_snippet": "loadShippingRecord",
+      "expected_predicate": "CALLS"
     },
     {
       "id": "06-inventory-path",
@@ -1465,7 +1833,9 @@
       "query_class": "path",
       "expected_repository": "06-inventory",
       "expected_path": "src/InventoryService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "07-pricing-path",
@@ -1473,7 +1843,9 @@
       "query_class": "path",
       "expected_repository": "07-pricing",
       "expected_path": "src/PricingService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "08-offers-path",
@@ -1481,7 +1853,9 @@
       "query_class": "path",
       "expected_repository": "08-offers",
       "expected_path": "src/OffersService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "09-returns-path",
@@ -1489,7 +1863,9 @@
       "query_class": "path",
       "expected_repository": "09-returns",
       "expected_path": "src/ReturnsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "10-payments-path",
@@ -1497,7 +1873,9 @@
       "query_class": "path",
       "expected_repository": "10-payments",
       "expected_path": "src/PaymentsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "11-profiles-path",
@@ -1505,7 +1883,9 @@
       "query_class": "path",
       "expected_repository": "11-profiles",
       "expected_path": "src/ProfilesService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "12-sessions-path",
@@ -1513,7 +1893,9 @@
       "query_class": "path",
       "expected_repository": "12-sessions",
       "expected_path": "src/SessionsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "13-notifications-path",
@@ -1521,7 +1903,9 @@
       "query_class": "path",
       "expected_repository": "13-notifications",
       "expected_path": "src/NotificationsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "14-audit-path",
@@ -1529,7 +1913,9 @@
       "query_class": "path",
       "expected_repository": "14-audit",
       "expected_path": "src/AuditService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "15-analytics-path",
@@ -1537,7 +1923,9 @@
       "query_class": "path",
       "expected_repository": "15-analytics",
       "expected_path": "src/AnalyticsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "16-search-path",
@@ -1545,7 +1933,9 @@
       "query_class": "path",
       "expected_repository": "16-search",
       "expected_path": "src/SearchService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "17-reviews-path",
@@ -1553,7 +1943,9 @@
       "query_class": "path",
       "expected_repository": "17-reviews",
       "expected_path": "src/ReviewsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "18-media-path",
@@ -1561,7 +1953,9 @@
       "query_class": "path",
       "expected_repository": "18-media",
       "expected_path": "src/MediaService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "19-support-path",
@@ -1569,7 +1963,9 @@
       "query_class": "path",
       "expected_repository": "19-support",
       "expected_path": "src/SupportService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "20-reports-path",
@@ -1577,7 +1973,9 @@
       "query_class": "path",
       "expected_repository": "20-reports",
       "expected_path": "src/ReportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "21-exports-path",
@@ -1585,7 +1983,9 @@
       "query_class": "path",
       "expected_repository": "21-exports",
       "expected_path": "src/ExportsService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "22-imports-path",
@@ -1593,7 +1993,9 @@
       "query_class": "path",
       "expected_repository": "22-imports",
       "expected_path": "src/ImportsService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "23-security-path",
@@ -1601,7 +2003,9 @@
       "query_class": "path",
       "expected_repository": "23-security",
       "expected_path": "src/SecurityService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "24-workflow-path",
@@ -1609,7 +2013,9 @@
       "query_class": "path",
       "expected_repository": "24-workflow",
       "expected_path": "src/WorkflowService.java",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     },
     {
       "id": "25-gateway-path",
@@ -1617,7 +2023,9 @@
       "query_class": "path",
       "expected_repository": "25-gateway",
       "expected_path": "src/GatewayService.ts",
-      "expected_state": "found"
+      "expected_state": "found",
+      "expected_line": 1,
+      "expected_snippet": ""
     }
   ],
   "independent_review": false,

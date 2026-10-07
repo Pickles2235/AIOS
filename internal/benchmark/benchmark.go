@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/compiler"
 	contextpkg "github.com/AdamNi-7080/AIOS/internal/context"
 	"github.com/AdamNi-7080/AIOS/internal/discover"
@@ -36,29 +37,34 @@ type Repository struct {
 	Exclude  []string `json:"exclude,omitempty"`
 }
 type Case struct {
-	ID                 string `json:"id"`
-	Query              string `json:"query"`
-	QueryClass         string `json:"query_class"`
-	ExpectedRepository string `json:"expected_repository"`
-	ExpectedPath       string `json:"expected_path"`
-	ExpectedPredicate  string `json:"expected_predicate,omitempty"`
-	ExpectedState      string `json:"expected_state,omitempty"`
+	ID                  string `json:"id"`
+	Query               string `json:"query"`
+	QueryClass          string `json:"query_class"`
+	ExpectedRepository  string `json:"expected_repository"`
+	ExpectedPath        string `json:"expected_path"`
+	ExpectedLine        int    `json:"expected_line,omitempty"`
+	ExpectedSnippet     string `json:"expected_snippet,omitempty"`
+	ExpectedCoverageGap string `json:"expected_coverage_gap,omitempty"`
+	ExpectedPredicate   string `json:"expected_predicate,omitempty"`
+	ExpectedState       string `json:"expected_state,omitempty"`
 }
 type Result struct {
-	ID               string                 `json:"id"`
-	Revision         string                 `json:"revision"`
-	QueryClass       string                 `json:"query_class"`
-	Expected         map[string]string      `json:"expected"`
-	Canonical        Measurement            `json:"canonical"`
-	Baseline         Measurement            `json:"baseline"`
-	Retrievers       map[string]Measurement `json:"retrievers"`
-	HybridVsSingle   map[string]bool        `json:"hybrid_vs_single"`
-	Context          PackageMeasurement     `json:"context_package"`
-	UnboundedContext PackageMeasurement     `json:"unbounded_context_package"`
-	ExpectedState    string                 `json:"expected_state"`
-	ResultState      string                 `json:"result_state"`
-	StateCorrect     bool                   `json:"state_correct"`
-	CoverageComplete bool                   `json:"coverage_complete"`
+	ID                           string                 `json:"id"`
+	Revision                     string                 `json:"revision"`
+	QueryClass                   string                 `json:"query_class"`
+	Expected                     map[string]string      `json:"expected"`
+	Canonical                    Measurement            `json:"canonical"`
+	Baseline                     Measurement            `json:"baseline"`
+	Retrievers                   map[string]Measurement `json:"retrievers"`
+	HybridVsSingle               map[string]bool        `json:"hybrid_vs_single"`
+	Context                      PackageMeasurement     `json:"context_package"`
+	UnboundedContext             PackageMeasurement     `json:"unbounded_context_package"`
+	ExpectedState                string                 `json:"expected_state"`
+	ResultState                  string                 `json:"result_state"`
+	StateCorrect                 bool                   `json:"state_correct"`
+	CoverageComplete             bool                   `json:"coverage_complete"`
+	InvestigationState           string                 `json:"investigation_state"`
+	InvestigationEvidenceCorrect bool                   `json:"investigation_evidence_correct"`
 }
 type PackageMeasurement struct {
 	Correct           bool `json:"correct"`
@@ -186,9 +192,16 @@ func Run(ctx context.Context, fixturePath, dataDir string) (Report, error) {
 			return Report{}, err
 		}
 	}
+	configured := make([]model.Repository, 0, len(fixture.Repositories))
+	for _, repo := range fixture.Repositories {
+		configured = append(configured, model.Repository{ID: repo.ID, Root: filepath.Join(base, repo.Path)})
+	}
+	investigation := knowledge.New(catalog.Config{Repositories: configured}, db)
 	report := Report{Fixture: fixturePath}
 	for _, c := range fixture.Cases {
-		report.Results = append(report.Results, runCase(ctx, db, fixture, base, c))
+		measurement := runCase(ctx, db, fixture, base, c)
+		measurement.InvestigationState, measurement.InvestigationEvidenceCorrect = scoreInvestigation(ctx, investigation, c)
+		report.Results = append(report.Results, measurement)
 	}
 	sort.Slice(report.Results, func(i, j int) bool { return report.Results[i].ID < report.Results[j].ID })
 	report.Indexing.ColdIndexMS = float64(time.Since(coldStarted).Microseconds()) / 1000
@@ -252,6 +265,72 @@ func Run(ctx context.Context, fixturePath, dataDir string) (Report, error) {
 	return report, nil
 }
 
+func scoreInvestigation(ctx context.Context, service *knowledge.Service, c Case) (string, bool) {
+	text := c.Query
+	if c.ExpectedRepository != "" {
+		text = "@" + c.ExpectedRepository + " " + text
+	}
+	switch c.QueryClass {
+	case "event", "event_trace_unknown":
+		text = "/event " + text
+	case "route":
+		text = "/route " + text
+	case "path":
+		text = "/path " + text
+	case "config":
+		text = "/config " + text
+	case "log":
+		text = "/log " + text
+	case "symbol":
+		text = "/symbol " + text
+	}
+	result, err := service.Investigation(ctx, text)
+	if err != nil {
+		return "error", false
+	}
+	if result.Status != c.ExpectedState {
+		return result.Status, false
+	}
+	if c.ExpectedState == "not_found" {
+		return result.Status, result.Coverage != nil && result.Coverage.Complete && len(result.Findings) == 0
+	}
+	if c.ExpectedState == "unknown" {
+		if result.Coverage == nil || result.Coverage.Complete {
+			return result.Status, false
+		}
+		return result.Status, c.ExpectedCoverageGap == "" || strings.Contains(strings.Join(append(result.Coverage.Exclusions, result.Coverage.Uncertainty...), "\n"), c.ExpectedCoverageGap)
+	}
+	for i, finding := range result.Findings {
+		if i >= len(result.CanonicalEvidence) {
+			break
+		}
+		evidence := result.CanonicalEvidence[i]
+		if evidence.Repository != c.ExpectedRepository || evidence.Path != c.ExpectedPath || finding.Entity.Generation != evidence.Generation {
+			continue
+		}
+		if c.ExpectedLine > 0 && (evidence.StartLine > c.ExpectedLine || evidence.EndLine < c.ExpectedLine) {
+			continue
+		}
+		if c.ExpectedSnippet != "" && !strings.Contains(strings.Join(evidence.Lines, "\n"), c.ExpectedSnippet) {
+			continue
+		}
+		if c.ExpectedPredicate != "" {
+			matched := false
+			for _, relation := range result.Relationships {
+				if relation.Predicate == c.ExpectedPredicate {
+					matched = true
+					break
+				}
+			}
+			if !matched {
+				continue
+			}
+		}
+		return result.Status, true
+	}
+	return result.Status, false
+}
+
 func benchmarkRuntime(fixturePath string) model.CompilerRuntime {
 	r := model.CompilerRuntime{}
 	if node, err := exec.LookPath("node"); err == nil {
@@ -269,7 +348,7 @@ func benchmarkRuntime(fixturePath string) model.CompilerRuntime {
 }
 
 func runCase(ctx context.Context, db *store.Store, fixture Fixture, base string, c Case) Result {
-	expected := map[string]string{"repository": c.ExpectedRepository, "path": c.ExpectedPath}
+	expected := map[string]string{"repository": c.ExpectedRepository, "path": c.ExpectedPath, "snippet": c.ExpectedSnippet, "line": fmt.Sprint(c.ExpectedLine)}
 	searchText := knowledge.SearchTerm("question", c.Query)
 	searchStarted := time.Now()
 	hits, err := db.SearchCandidates(ctx, searchText, store.QueryFilter{})
@@ -322,8 +401,8 @@ func runCase(ctx context.Context, db *store.Store, fixture Fixture, base string,
 	canonical := hybrid
 	if c.ExpectedPredicate != "" {
 		var n int
-		_ = db.DB().QueryRowContext(ctx, `SELECT count(*) FROM claims c JOIN active_generations a ON a.generation_id=c.generation_id WHERE c.predicate=? AND c.generation_id=(SELECT generation_id FROM active_generations WHERE repo_id=?)`, c.ExpectedPredicate, c.ExpectedRepository).Scan(&n)
-		canonical.ProvenanceCorrect = n > 0
+		_ = db.DB().QueryRowContext(ctx, `SELECT count(*) FROM claims c JOIN evidence v ON v.evidence_id=c.evidence_id JOIN active_generations a ON a.generation_id=c.generation_id WHERE c.predicate=? AND c.generation_id=(SELECT generation_id FROM active_generations WHERE repo_id=?) AND v.path=? AND (?=0 OR v.start_line<=? AND v.end_line>=?)`, c.ExpectedPredicate, c.ExpectedRepository, c.ExpectedPath, c.ExpectedLine, c.ExpectedLine, c.ExpectedLine).Scan(&n)
+		canonical.ProvenanceCorrect = canonical.Correct && n > 0
 	} else {
 		canonical.ProvenanceCorrect = canonical.Correct
 	}
@@ -383,7 +462,11 @@ func runCase(ctx context.Context, db *store.Store, fixture Fixture, base string,
 	if strings.Contains(c.QueryClass, "event") || strings.Contains(c.QueryClass, "trace") || strings.Contains(c.QueryClass, "caller") || strings.Contains(c.QueryClass, "path") {
 		capability = "structural"
 	}
-	basis, _ := db.Coverage(ctx, "", capability, nil)
+	coverageRepo := ""
+	if expectedState == "unknown" {
+		coverageRepo = c.ExpectedRepository
+	}
+	basis, _ := db.Coverage(ctx, coverageRepo, capability, nil)
 	resultState := "found"
 	if len(hits)+len(structural) == 0 {
 		if basis.Complete {
@@ -393,6 +476,9 @@ func runCase(ctx context.Context, db *store.Store, fixture Fixture, base string,
 		}
 	}
 	stateCorrect := resultState == expectedState
+	if c.ExpectedCoverageGap != "" && !strings.Contains(strings.Join(append(basis.Exclusions, basis.Uncertainty...), "\n"), c.ExpectedCoverageGap) {
+		stateCorrect = false
+	}
 	// A complete, evidence-backed absence is a correct canonical result even
 	// though there is deliberately no positive entity to rank or cite.
 	if expectedState == "not_found" && stateCorrect && basis.Complete {
@@ -489,8 +575,8 @@ func measure(c Case, hits []store.Candidate, trace string) Measurement {
 	m := Measurement{Trace: []string{trace}}
 	for index, h := range hits {
 		m.ResultCount++
-		m.Evidence = append(m.Evidence, map[string]any{"repository": h.Evidence.RepoID, "path": h.Evidence.Path, "start_line": h.Evidence.Span.StartLine})
-		if h.Evidence.RepoID == c.ExpectedRepository && h.Evidence.Path == c.ExpectedPath {
+		m.Evidence = append(m.Evidence, map[string]any{"repository": h.Evidence.RepoID, "path": h.Evidence.Path, "start_line": h.Evidence.Span.StartLine, "end_line": h.Evidence.Span.EndLine})
+		if expectedCandidate(c, h) {
 			m.Correct = true
 			if m.Rank == 0 {
 				m.Rank = index + 1
@@ -501,6 +587,11 @@ func measure(c Case, hits []store.Candidate, trace string) Measurement {
 	m.LatencyMS = float64(time.Since(started).Microseconds()) / 1000
 	finalizeMeasurement(&m)
 	return m
+}
+func expectedCandidate(c Case, h store.Candidate) bool {
+	return h.Evidence.RepoID == c.ExpectedRepository && h.Evidence.Path == c.ExpectedPath &&
+		(c.ExpectedLine == 0 || (h.Evidence.Span.StartLine <= c.ExpectedLine && h.Evidence.Span.EndLine >= c.ExpectedLine)) &&
+		(c.ExpectedSnippet == "" || strings.Contains(h.Evidence.Excerpt, c.ExpectedSnippet))
 }
 func hybridMeasure(c Case, lexical, structural []store.Candidate) Measurement {
 	started := time.Now()
@@ -527,8 +618,8 @@ func hybridMeasure(c Case, lexical, structural []store.Candidate) Measurement {
 	for index, h := range planner.Fuse(inputs) {
 		x := byKey[h.Key]
 		m.ResultCount++
-		m.Evidence = append(m.Evidence, map[string]any{"repository": x.Evidence.RepoID, "path": x.Evidence.Path, "start_line": x.Evidence.Span.StartLine})
-		if x.Evidence.RepoID == c.ExpectedRepository && x.Evidence.Path == c.ExpectedPath {
+		m.Evidence = append(m.Evidence, map[string]any{"repository": x.Evidence.RepoID, "path": x.Evidence.Path, "start_line": x.Evidence.Span.StartLine, "end_line": x.Evidence.Span.EndLine})
+		if expectedCandidate(c, x) {
 			m.Correct = true
 			if m.Rank == 0 {
 				m.Rank = index + 1

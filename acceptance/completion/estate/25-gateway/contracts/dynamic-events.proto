@@ -1,0 +1,4 @@
+syntax = "proto3";
+package gateway;
+// Dynamic event topology is outside the supported structural extractors.
+message DynamicEvent { string topic = 1; }

@@ -95,7 +95,18 @@ func (s *Service) Investigation(ctx context.Context, text string) (Investigation
 		return out, nil
 	}
 	out.SearchTerm = SearchTerm(intent, query)
-	result, err := s.Query(ctx, Query{Text: out.SearchTerm, Repository: repo, Limit: 12})
+	before, err := s.Status(ctx)
+	if err != nil {
+		return Investigation{}, err
+	}
+	capability := "lexical"
+	if intent == "route" || intent == "event" {
+		capability = "structural"
+	}
+	if intent == "path" {
+		capability = "path"
+	}
+	result, err := s.Query(ctx, Query{Text: out.SearchTerm, Repository: repo, Capability: capability, Limit: 12})
 	if err != nil {
 		return out, err
 	}
@@ -103,12 +114,8 @@ func (s *Service) Investigation(ctx context.Context, text string) (Investigation
 	if result.Coverage != nil {
 		out.Generations = append(out.Generations, result.Coverage.Generations...)
 	}
-	status, statusErr := s.Status(ctx)
-	if statusErr != nil {
-		return Investigation{}, statusErr
-	}
-	for _, active := range status.Repositories {
-		if active.Active && (repo == "" || repo == active.ID) {
+	for _, active := range before.Repositories {
+		if active.Active {
 			out.Freshness = append(out.Freshness, active)
 		}
 	}
@@ -127,6 +134,13 @@ func (s *Service) Investigation(ctx context.Context, text string) (Investigation
 			out.Status = "unknown"
 		}
 	}
+	if intent == "question" && out.SearchTerm == query && len(strings.Fields(query)) > 1 {
+		out.Unknowns = append(out.Unknowns, "question subject could not be identified deterministically")
+		if out.Status == "not_found" {
+			out.Status = "unknown"
+		}
+	}
+	seenClaims := map[string]bool{}
 	for _, entity := range result.Entities {
 		excerpt, e := s.Excerpt(ctx, entity.Evidence, 0, 0, 12)
 		if e != nil {
@@ -144,16 +158,23 @@ func (s *Service) Investigation(ctx context.Context, text string) (Investigation
 		if excerpt.Truncated {
 			out.Truncated = true
 		}
-		if len(out.Relationships) < out.Budget["relationships"] {
-			claims, truncated, e := s.Neighbors(ctx, entity.Handle, nil, 2)
-			if e != nil {
-				out.Unknowns = append(out.Unknowns, "relationship projection unavailable or stale")
+		claims, truncated, e := s.claimsAtLocation(ctx, excerpt, out.Budget["relationships"])
+		if e != nil {
+			return Investigation{}, e
+		}
+		for _, claim := range claims {
+			if seenClaims[claim.Handle] {
 				continue
 			}
-			out.Relationships = append(out.Relationships, claims...)
-			if truncated {
+			if len(out.Relationships) == out.Budget["relationships"] {
 				out.Truncated = true
+				break
 			}
+			seenClaims[claim.Handle] = true
+			out.Relationships = append(out.Relationships, claim)
+		}
+		if truncated {
+			out.Truncated = true
 		}
 	}
 	if out.Truncated {
@@ -162,5 +183,58 @@ func (s *Service) Investigation(ctx context.Context, text string) (Investigation
 	if out.Status == "not_found" && out.Coverage != nil && !out.Coverage.Complete {
 		out.Status = "unknown"
 	}
+	after, err := s.Status(ctx)
+	if err != nil {
+		return Investigation{}, err
+	}
+	if !sameActiveGenerations(before, after) {
+		return Investigation{}, fmt.Errorf("active generation changed during investigation")
+	}
 	return out, nil
+}
+
+func (s *Service) claimsAtLocation(ctx context.Context, excerpt Excerpt, limit int) ([]Claim, bool, error) {
+	rows, err := s.db.QueryCanonical(ctx, `SELECT c.claim_id FROM claims c JOIN evidence v ON v.evidence_id=c.evidence_id WHERE c.generation_id=? AND v.path=? AND v.start_line<=? AND v.end_line>=? ORDER BY c.predicate,c.claim_id LIMIT ?`, excerpt.Generation, excerpt.Path, excerpt.EndLine, excerpt.StartLine, limit+1)
+	if err != nil {
+		return nil, false, err
+	}
+	ids := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return nil, false, err
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return nil, false, err
+	}
+	rows.Close()
+	truncated := len(ids) > limit
+	if truncated {
+		ids = ids[:limit]
+	}
+	out := make([]Claim, 0, len(ids))
+	for _, id := range ids {
+		c, e := s.claim(ctx, excerpt.Generation, id)
+		if e != nil {
+			return nil, false, e
+		}
+		out = append(out, c)
+	}
+	return out, truncated, nil
+}
+
+func sameActiveGenerations(a, b Status) bool {
+	if len(a.Repositories) != len(b.Repositories) {
+		return false
+	}
+	for i := range a.Repositories {
+		if a.Repositories[i].ID != b.Repositories[i].ID || a.Repositories[i].Active != b.Repositories[i].Active || a.Repositories[i].Generation != b.Repositories[i].Generation {
+			return false
+		}
+	}
+	return true
 }

@@ -128,7 +128,7 @@ function App() {
       {selected && <p>{selected.repository}/{selected.path} · generation {selected.generation} · lines {selected.span.start_line}–{selected.span.end_line}</p>}
       {evidence && <><p>{evidence.working_tree?"Working-tree snapshot · Git HEAD:":"Captured commit:"} {evidence.git_commit} · SHA256: {evidence.sha256}</p><p>Excerpt generation {evidence.generation} · lines {evidence.start_line}–{evidence.end_line}{evidence.truncated ? " · bounded excerpt" : ""}</p><pre>{evidence.lines.join("\n")}</pre></>}
     </aside></div>
-    <Spotlight open={spotlight} close={() => setSpotlight(false)} search={(text, signal) => request<Investigation>("/api/v1/investigation", {text}, signal)} history={async () => (await request<{entries:string[]}>("/api/v1/history")).entries} clearHistory={async () => {await request("/api/v1/history/clear", {});}} select={inspect}/>
+    <Spotlight open={spotlight} close={() => setSpotlight(false)} search={(text, signal) => request<Investigation>("/api/v1/investigation", {text}, signal)} history={async () => (await request<{entries:string[]}>("/api/v1/history")).entries} clearHistory={async () => {await request("/api/v1/history/clear", {});}} validate={async investigation => {const current=await request<Status>("/api/v1/status"); const active=current.repositories.filter(r=>r.active); return active.length===investigation.freshness.length && active.every(r=>investigation.freshness.some(g=>g.id===r.id && g.generation===r.generation));}} select={inspect}/>
   </main>;
 }
 createRoot(document.getElementById("root")!).render(<App/>);

@@ -914,10 +914,12 @@ class ProductScenarios(unittest.TestCase):
         self.check(corpus.is_file(), 'independently reviewed 150-case gold corpus required')
         data = json.loads(corpus.read_text())
         self.check(len(data['cases']) >= 150 and data['independent_review'], 'reviewed gold corpus minimum')
+        self.check(len(data['repositories']) >= 25 and all(sum(c.get('expected_repository') == repo['id'] for c in data['cases']) >= 4 for repo in data['repositories']), '25 repositories with four or more predeclared cases each')
+        self.check(all(c.get('expected_line', 0) > 0 and 'expected_snippet' in c for c in data['cases'] if c.get('expected_state', 'found') == 'found'), 'positive gold cases declare source lines and snippets before scoring')
         result = self.cli('benchmark', '--fixture', corpus, '--data-dir', self.root / 'gold')
         self.check(len(result['results']) == len(data['cases']), 'every reviewed gold question executed')
-        self.check(all(r['state_correct'] and r['canonical']['provenance_correct'] for r in result['results']),
-                   'reviewed evidence/state correctness')
+        self.check(all(r['state_correct'] and r['canonical']['provenance_correct'] and r['investigation_state'] == r['expected_state'] and r['investigation_evidence_correct'] for r in result['results']),
+                   'reviewed canonical and real investigation evidence/state correctness')
 
     def browser(self, name):
         run = subprocess.run(['npm', 'exec', '--', 'playwright', 'test',

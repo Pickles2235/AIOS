@@ -108,6 +108,7 @@ test.describe("real installed-product UI", () => {
     await expect(result).toContainText("generation");
     await expect(page.getByRole("listbox", {name: "Spotlight results"})).toContainText("Worker");
     await page.getByRole("button", {name: "Copy investigation payload"}).click();
+    await expect(page.getByText("Copied the displayed version 1 evidence payload.")).toBeVisible();
     const copied = JSON.parse(await page.evaluate(() => navigator.clipboard.readText()));
     expect(copied.schema_version).toBe(1);
     expect(copied.findings[0].entity.path).toBe(copied.canonical_evidence[0].path);
@@ -123,6 +124,30 @@ test.describe("real installed-product UI", () => {
     await query.press("Escape");
     await expect(page.getByRole("dialog")).not.toBeVisible();
     await expect(page.getByRole("button", {name: "Open Spotlight"})).toBeFocused();
+  });
+
+  test("Spotlight cancellation, truncation and stale generation", async ({page}) => {
+    await build(page, source);
+    await page.getByRole("button", {name: "Open Spotlight"}).click();
+    const query = page.getByRole("combobox", {name: "Spotlight query"});
+    await page.route("**/api/v1/investigation", async route => {
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      await route.continue().catch(() => {});
+    });
+    await query.fill("/symbol @fixture Worker"); await query.press("Enter");
+    await page.getByRole("button", {name: "Cancel search"}).click();
+    await expect(page.getByRole("alert")).toContainText("Search cancelled");
+    await expect(page.getByLabel("Investigation result")).toHaveCount(0);
+    await page.unroute("**/api/v1/investigation");
+    await query.fill("/symbol @fixture Worker"); await query.press("Enter");
+    await expect(page.getByLabel("Investigation result")).toContainText("truncated", {timeout: 30000});
+    await page.route("**/api/v1/status", async route => {
+      const response = await route.fetch(); const status = await response.json();
+      status.repositories[0].generation = "promoted-generation";
+      await route.fulfill({response, json: status});
+    });
+    await expect(page.getByRole("alert")).toContainText("Stale result", {timeout: 10000});
+    await expect(page.getByRole("button", {name: "Copy investigation payload"})).toBeDisabled();
   });
 
   test("contextual modules and reconnect", async ({page}) => {

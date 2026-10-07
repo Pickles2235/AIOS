@@ -136,14 +136,24 @@ func (s *Store) Coverage(ctx context.Context, repository, capability string, fie
 		}
 		erows.Close()
 		if capability == "structural" || capability == "path" {
-			var missing int
-			if err := s.db.QueryRowContext(ctx, `SELECT count(*) FROM coverage_entries WHERE coverage_id=? AND outcome='included' AND language IN ('java','typescript','tsx','javascript','jsx','kotlin') AND instr(',' || capability || ',', ',structural,')=0`, coverage).Scan(&missing); err != nil {
+			missingRows, err := s.db.QueryContext(ctx, `SELECT path FROM coverage_entries WHERE coverage_id=? AND outcome='included' AND classification='source' AND (language<>'text' OR path GLOB '*.*') AND instr(',' || capability || ',', ',structural,')=0 ORDER BY path LIMIT 100`, coverage)
+			if err != nil {
 				return b, err
 			}
-			if missing > 0 {
+			for missingRows.Next() {
+				var path string
+				if err := missingRows.Scan(&path); err != nil {
+					missingRows.Close()
+					return b, err
+				}
 				b.Complete = false
-				b.Uncertainty = append(b.Uncertainty, "unsupported_structural_extractor:"+repo)
+				b.Uncertainty = append(b.Uncertainty, "unsupported_structural_extractor:"+repo+":"+path)
 			}
+			if err := missingRows.Err(); err != nil {
+				missingRows.Close()
+				return b, err
+			}
+			missingRows.Close()
 			var diagnostics int
 			if err := s.db.QueryRowContext(ctx, `SELECT count(*) FROM compiler_diagnostics WHERE generation_id=?`, generation).Scan(&diagnostics); err != nil {
 				return b, err

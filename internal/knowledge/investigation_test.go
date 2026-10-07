@@ -45,4 +45,23 @@ func TestInvestigationCommandsAndCanonicalCopy(t *testing.T) {
 	if err != nil || unsupported.Status != "unknown" || len(unsupported.Unknowns) == 0 {
 		t.Fatalf("unsupported=%+v err=%v", unsupported, err)
 	}
+	if _, err := db.DB().ExecContext(context.Background(), `UPDATE coverage_runs SET status='incomplete'`); err != nil {
+		t.Fatal(err)
+	}
+	event, err := service.Investigation(context.Background(), "/event @repo __unresolved_event__")
+	if err != nil || event.Status != "unknown" || event.Coverage == nil || event.Coverage.Capability != "structural" {
+		t.Fatalf("event gap=%+v err=%v", event, err)
+	}
+	question, err := service.Investigation(context.Background(), "Why does the system fail here?")
+	if err != nil || question.Status != "unknown" || len(question.Unknowns) == 0 {
+		t.Fatalf("unsupported depth=%+v err=%v", question, err)
+	}
+}
+
+func TestInvestigationGenerationComparison(t *testing.T) {
+	a := Status{Repositories: []RepositoryStatus{{ID: "repo", Active: true, Generation: "one"}}}
+	b := Status{Repositories: []RepositoryStatus{{ID: "repo", Active: true, Generation: "two"}}}
+	if !sameActiveGenerations(a, a) || sameActiveGenerations(a, b) {
+		t.Fatal("generation comparison lost promotion")
+	}
 }
