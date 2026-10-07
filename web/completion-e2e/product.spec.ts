@@ -296,6 +296,8 @@ test.describe("real installed-product UI", () => {
     ).toBeLessThan(moved.yaw);
     await page
       .getByLabel("Evidence navigation")
+      .getByRole("listitem")
+      .filter({ has: page.getByText("symbol:class", { exact: true }) })
       .getByRole("button", { name: "Worker", exact: true })
       .click();
     await expect(page.getByLabel("Evidence inspector")).toContainText(
@@ -304,7 +306,9 @@ test.describe("real installed-product UI", () => {
     await expect(
       page.getByLabel("Revision-aware source actions"),
     ).toContainText("Validated generation");
-    const selected = symbols.nodes.find((n) => n.entity?.label === "Worker")!;
+    const selected = symbols.nodes.find(
+      (n) => n.entity?.label === "Worker" && n.entity.kind === "symbol:class",
+    )!;
     const canonical = await api<{ handle: string; generation: string }>(
       page,
       "/api/v1/entity",
@@ -384,10 +388,14 @@ test.describe("real installed-product UI", () => {
     await expect(
       page
         .getByLabel("Evidence navigation")
+        .getByRole("listitem")
+        .filter({ has: page.getByText("symbol:class", { exact: true }) })
         .getByRole("button", { name: "Worker", exact: true }),
     ).toBeVisible();
     await page
       .getByLabel("Evidence navigation")
+      .getByRole("listitem")
+      .filter({ has: page.getByText("symbol:class", { exact: true }) })
       .getByRole("button", { name: "Worker", exact: true })
       .click();
     await expect(page.getByLabel("Evidence inspector")).toContainText(
