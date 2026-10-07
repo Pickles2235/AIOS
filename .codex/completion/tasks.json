@@ -273,7 +273,7 @@
         "core",
         "web"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "plan": ".codex/completion/plans/10-investigation-search.md",
       "completion_commit": null,
       "review": null,
@@ -374,7 +374,7 @@
     },
     {
       "id": "14-scale-performance",
-      "title": "Validate 1–100 repositories and large knowledge clouds",
+      "title": "Validate 1\u2013100 repositories and large knowledge clouds",
       "dependencies": [
         "12-contextual-modules",
         "13-benchmark-lab"

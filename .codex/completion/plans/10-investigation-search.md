@@ -11,11 +11,11 @@ Requirements: R15, R16, R17
 
 ## Decisions
 
-Inspect current implementation before selecting changes.
+The approved product contract requires a deterministic, versioned investigation payload and actual Spotlight UI behavior; no runtime model calls are in scope. Preserve the canonical IR/planner evidence semantics and keep diagnostic redaction separate from user-requested source copy. Task 09 was published and its completion bookkeeping verified before this task started.
 
 ## Progress
 
-Pending.
+Started 2026-10-07 on dedicated branch `codex/completion-investigation-search`, based on fetched `origin/main` at `c9637783e9cca819b3e2c0afb683683e63b92f8b`. Delivery owner is conducting a current implementation/gap audit and will own code and tests. Manager owns task/plan/evidence integration. Independent reviewer will inspect the corrected committed result and evidence before readiness.
 
 ## Scenario scope
 
