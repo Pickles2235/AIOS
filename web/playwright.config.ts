@@ -1,5 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const configuredPort = process.env.PLAYWRIGHT_PORT ?? "4173";
+if (!/^[0-9]+$/.test(configuredPort) || !Number.isSafeInteger(Number(configuredPort)) || Number(configuredPort) < 1 || Number(configuredPort) > 65535) {
+  throw new Error("PLAYWRIGHT_PORT must be an integer from 1 to 65535");
+}
+const port = Number(configuredPort);
+const url = `http://127.0.0.1:${port}`;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -7,7 +14,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: url,
     browserName: "chromium",
     channel: process.env.PLAYWRIGHT_CHANNEL || "chrome",
     headless: true,
@@ -16,8 +23,8 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   webServer: {
-    command: "npm run build && npm exec vite preview -- --host 127.0.0.1 --port 4173 --strictPort",
-    url: "http://127.0.0.1:4173",
+    command: `npm run build && npm exec vite preview -- --host 127.0.0.1 --port ${port} --strictPort`,
+    url,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },
