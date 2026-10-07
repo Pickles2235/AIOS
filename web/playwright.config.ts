@@ -6,10 +6,16 @@ if (!/^[0-9]+$/.test(configuredPort) || !Number.isSafeInteger(Number(configuredP
 }
 const port = Number(configuredPort);
 const url = `http://127.0.0.1:${port}`;
+const configuredWorkers = process.env.PLAYWRIGHT_WORKERS;
+if (configuredWorkers !== undefined && (!/^[0-9]+$/.test(configuredWorkers) || !Number.isSafeInteger(Number(configuredWorkers)) || Number(configuredWorkers) < 1 || Number(configuredWorkers) > 16)) {
+  throw new Error("PLAYWRIGHT_WORKERS must be an integer from 1 to 16");
+}
 
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
+  workers: configuredWorkers === undefined ? undefined : Number(configuredWorkers),
+  globalTimeout: 15 * 60_000,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
