@@ -58,6 +58,7 @@ test.describe("real installed-product UI", () => {
     writeFileSync(join(source, "src", "Worker.java"), "package example; class Worker {\n" +
       Array.from({length: 1000}, (_, i) => `void work${i}() {}\n`).join("") + "}\n");
     writeFileSync(join(source, "src", "client.ts"), 'export function requestOrder() { return fetch("/api/orders"); }\n');
+    writeFileSync(join(source, "src", "other.ts"), 'export function requestOrder() { return "local"; }\n');
     execFileSync("git", ["-C", source, "add", "."]);
     execFileSync("git", ["-C", source, "-c", "user.name=Fixture", "-c",
       "user.email=fixture@example.invalid", "commit", "-qm", "dense generic fixture"]);
@@ -130,6 +131,19 @@ test.describe("real installed-product UI", () => {
     await build(page, source);
     await page.getByRole("button", {name: "Open Spotlight"}).click();
     const query = page.getByRole("combobox", {name: "Spotlight query"});
+    await query.fill("/symbol @fixture requestOrder"); await query.press("Enter");
+    const options = page.getByRole("listbox", {name: "Spotlight results"}).getByRole("option");
+    await expect.poll(() => options.count()).toBeGreaterThanOrEqual(2);
+    await query.press("ArrowDown");
+    await expect(query).toHaveAttribute("aria-activedescendant", "spotlight-result-1");
+    await query.press("ArrowUp");
+    await expect(query).toHaveAttribute("aria-activedescendant", "spotlight-result-0");
+    await query.press("ArrowDown");
+    const selected = await options.nth(1).getByRole("button").textContent();
+    const path = selected!.match(/fixture\/(src\/[^:]+):/)![1];
+    await query.press("Enter");
+    await expect(page.getByLabel("Evidence inspector")).toContainText(path);
+    await page.getByRole("button", {name: "Open Spotlight"}).click();
     await page.route("**/api/v1/investigation", async route => {
       await new Promise(resolve => setTimeout(resolve, 1200));
       await route.continue().catch(() => {});

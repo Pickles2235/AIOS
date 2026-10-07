@@ -88,7 +88,7 @@ func (s *Service) Investigation(ctx context.Context, text string) (Investigation
 	intent, repo, query, ok := ParseInvestigation(text)
 	out := Investigation{SchemaVersion: 1, Query: strings.TrimSpace(text), Intent: intent, Repository: repo,
 		Generations: []string{}, Freshness: []RepositoryStatus{}, Findings: []Finding{}, CanonicalEvidence: []Excerpt{},
-		Relationships: []Claim{}, Unknowns: []string{}, Budget: map[string]int{"results": 12, "excerpt_lines": 12, "relationships": 24}}
+		Relationships: []Claim{}, Unknowns: []string{}, Budget: map[string]int{"results": 12, "excerpt_lines": 12, "relationships": 24, "evidence": 36}}
 	if len(text) > 256 || !ok {
 		out.Status = "unknown"
 		out.Unknowns = append(out.Unknowns, "unsupported command or input bounds; use /question, /symbol, /path, /log, /event, /route, /config and optional @repository")
@@ -141,6 +141,9 @@ func (s *Service) Investigation(ctx context.Context, text string) (Investigation
 		}
 	}
 	seenClaims := map[string]bool{}
+	seenEvidence := map[string]bool{}
+	queuedEvidence := map[string]bool{}
+	relationshipEvidence := []string{}
 	for _, entity := range result.Entities {
 		excerpt, e := s.Excerpt(ctx, entity.Evidence, 0, 0, 12)
 		if e != nil {
@@ -155,6 +158,7 @@ func (s *Service) Investigation(ctx context.Context, text string) (Investigation
 			}
 		}
 		out.CanonicalEvidence = append(out.CanonicalEvidence, excerpt)
+		seenEvidence[excerpt.Evidence] = true
 		if excerpt.Truncated {
 			out.Truncated = true
 		}
@@ -172,8 +176,33 @@ func (s *Service) Investigation(ctx context.Context, text string) (Investigation
 			}
 			seenClaims[claim.Handle] = true
 			out.Relationships = append(out.Relationships, claim)
+			if !seenEvidence[claim.Evidence] && !queuedEvidence[claim.Evidence] {
+				queuedEvidence[claim.Evidence] = true
+				relationshipEvidence = append(relationshipEvidence, claim.Evidence)
+			}
 		}
 		if truncated {
+			out.Truncated = true
+		}
+	}
+	for _, handle := range relationshipEvidence {
+		if seenEvidence[handle] {
+			continue
+		}
+		excerpt, e := s.Excerpt(ctx, handle, 0, 0, 12)
+		if e != nil {
+			return Investigation{}, fmt.Errorf("investigation relationship evidence changed: %w", e)
+		}
+		for i, line := range excerpt.Lines {
+			runes := []rune(line)
+			if len(runes) > 2048 {
+				excerpt.Lines[i] = string(runes[:2048])
+				excerpt.Truncated = true
+			}
+		}
+		out.CanonicalEvidence = append(out.CanonicalEvidence, excerpt)
+		seenEvidence[handle] = true
+		if excerpt.Truncated {
 			out.Truncated = true
 		}
 	}

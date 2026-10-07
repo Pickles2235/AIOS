@@ -80,7 +80,10 @@ export function Spotlight({open, close, search, history, clearHistory, validate,
       {result.coverage?.uncertainty?.length ? <p>Coverage uncertainty: {result.coverage.uncertainty.join(" · ")}</p> : null}
       {result.unknowns.length ? <p>Unknowns: {result.unknowns.join(" · ")}</p> : null}
       <p>Bounds: {Object.entries(result.budget).map(([name, value]) => `${name} ${value}`).join(" · ")}</p>
-      {result.relationships.length ? <details><summary>Cited relationships</summary><ul>{result.relationships.map((claim, i) => <li key={i}>{claim.predicate} · {claim.subject} → {claim.object} · evidence {claim.evidence}</li>)}</ul></details> : null}
+      {result.relationships.length ? <details><summary>Cited relationships</summary><ul>{result.relationships.map((claim, i) => {
+        const source = result.canonical_evidence.find(item => item.evidence === claim.evidence);
+        return <li key={i}>{claim.predicate} · {claim.subject} → {claim.object} · {source ? `${source.repository}/${source.path}:${source.start_line}` : "source unavailable"} · evidence {claim.evidence}{source && <pre>{source.lines.join("\n")}</pre>}</li>;
+      })}</ul></details> : null}
       <button type="button" disabled={stale} onClick={() => void copy()}>Copy investigation payload</button>{copied && <span role="status">Copied the displayed version 1 evidence payload.</span>}
     </section>}
     <ul id="spotlight-results" role="listbox" aria-label="Spotlight results">{result?.findings.map(({entity, evidence}, i) => {

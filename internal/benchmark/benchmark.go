@@ -288,6 +288,15 @@ func scoreInvestigation(ctx context.Context, service *knowledge.Service, c Case)
 	if err != nil {
 		return "error", false
 	}
+	byEvidence := make(map[string]knowledge.Excerpt, len(result.CanonicalEvidence))
+	for _, excerpt := range result.CanonicalEvidence {
+		byEvidence[excerpt.Evidence] = excerpt
+	}
+	for _, relation := range result.Relationships {
+		if excerpt, ok := byEvidence[relation.Evidence]; !ok || excerpt.Generation != relation.Generation || excerpt.Path == "" || excerpt.StartLine < 1 || len(excerpt.Lines) == 0 {
+			return result.Status, false
+		}
+	}
 	if result.Status != c.ExpectedState {
 		return result.Status, false
 	}
@@ -317,7 +326,8 @@ func scoreInvestigation(ctx context.Context, service *knowledge.Service, c Case)
 		if c.ExpectedPredicate != "" {
 			matched := false
 			for _, relation := range result.Relationships {
-				if relation.Predicate == c.ExpectedPredicate {
+				claimSource := byEvidence[relation.Evidence]
+				if relation.Predicate == c.ExpectedPredicate && claimSource.Repository == c.ExpectedRepository && claimSource.Path == c.ExpectedPath && (c.ExpectedLine == 0 || claimSource.StartLine <= c.ExpectedLine && claimSource.EndLine >= c.ExpectedLine) && (c.ExpectedSnippet == "" || strings.Contains(strings.Join(claimSource.Lines, "\n"), c.ExpectedSnippet)) {
 					matched = true
 					break
 				}

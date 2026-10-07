@@ -28,13 +28,28 @@ func TestInvestigationCommandsAndCanonicalCopy(t *testing.T) {
 	db, service := fixture(t)
 	defer db.Close()
 	result, err := service.Investigation(context.Background(), "@repo /symbol Publish")
-	if err != nil || result.SchemaVersion != 1 || result.Status != "found" || len(result.Findings) == 0 || len(result.CanonicalEvidence) != len(result.Findings) || result.Coverage == nil || len(result.Generations) == 0 {
+	if err != nil || result.SchemaVersion != 1 || result.Status != "found" || len(result.Findings) == 0 || len(result.CanonicalEvidence) < len(result.Findings) || result.Coverage == nil || len(result.Generations) == 0 {
 		t.Fatalf("investigation=%+v err=%v", result, err)
 	}
 	for i, finding := range result.Findings {
 		excerpt := result.CanonicalEvidence[i]
 		if excerpt.Evidence != finding.Evidence || excerpt.Generation != finding.Entity.Generation || excerpt.Repository != finding.Entity.Repository || excerpt.Path != finding.Entity.Path || excerpt.StartLine < 1 || len(excerpt.Lines) == 0 {
 			t.Fatalf("copy source mismatch: %+v %+v", finding, excerpt)
+		}
+	}
+	if len(result.Relationships) == 0 {
+		t.Fatal("expected canonical relationship")
+	}
+	for _, claim := range result.Relationships {
+		found := false
+		for _, excerpt := range result.CanonicalEvidence {
+			if excerpt.Evidence == claim.Evidence && excerpt.Generation == claim.Generation && excerpt.Path != "" && excerpt.StartLine > 0 && len(excerpt.Lines) > 0 {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("claim has no copied source location: %+v", claim)
 		}
 	}
 	negative, err := service.Investigation(context.Background(), "/symbol @repo __absent__")
