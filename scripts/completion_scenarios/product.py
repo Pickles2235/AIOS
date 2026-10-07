@@ -955,7 +955,7 @@ class ProductScenarios(unittest.TestCase):
             self.check(not list(data.glob('.benchmark-work-*')), 'temporary corpus removed')
             self.check(all(r['estimated_tokens'] == (r['context_bytes'] + 3) // 4 for r in run['results']),
                        'explicit token formula over actual JSON bytes')
-        source = fixture(self.root / 'benchmark-source')
+        source = fixture(self.root, 'benchmark-source')
         fingerprint = source_fingerprint(source)
         with self.server() as (api, data, origin):
             self.configure(api, source)
