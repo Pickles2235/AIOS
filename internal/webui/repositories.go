@@ -485,7 +485,7 @@ func (s *Server) runManagedRebuild(ctx context.Context, cfg catalog.Config, reg 
 			if entry.ID == id {
 				for _, repo := range cfg.SourceRepositories() {
 					if repo.ID == id {
-						discovery, err = adapter.CaptureLocalScoped(ctx, entry, s.dataDir, cfg.Limits, repo)
+						discovery, err = adapter.CaptureLocalScopedWithPrepare(ctx, entry, s.dataDir, cfg.Limits, repo, func(ctx context.Context, root string) error { return app.QueueOwnedSnapshot(ctx, s.dataDir, root) })
 					}
 				}
 				break
@@ -496,7 +496,7 @@ func (s *Server) runManagedRebuild(ctx context.Context, cfg catalog.Config, reg 
 			if entry.ID == id {
 				one := mirror.Registry{Version: 1, Repositories: []mirror.Repository{entry}}
 				if _, err = mirror.Sync(ctx, one, s.dataDir); err == nil {
-					discovery, err = (adapter.RepositoryGit{Registry: one, DataDir: s.dataDir}).Discover(ctx, id)
+					discovery, err = (adapter.RepositoryGit{Registry: one, DataDir: s.dataDir, BeforeSnapshot: func(ctx context.Context, root string) error { return app.QueueOwnedSnapshot(ctx, s.dataDir, root) }}).Discover(ctx, id)
 				}
 				break
 			}

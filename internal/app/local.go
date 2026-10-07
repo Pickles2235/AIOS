@@ -75,7 +75,7 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 		}
 	}()
 	for i, repo := range selected {
-		discovery, e := adapter.CaptureLocalScoped(ctx, byID[repo.ID], dataDir, cfg.Limits, repo)
+		discovery, e := adapter.CaptureLocalScopedWithPrepare(ctx, byID[repo.ID], dataDir, cfg.Limits, repo, db.QueueSnapshotGC)
 		if e != nil {
 			return out, e
 		}

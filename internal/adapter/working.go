@@ -142,6 +142,11 @@ func CaptureLocal(ctx context.Context, entry LocalRepository, dataDir string, li
 }
 
 func CaptureLocalScoped(ctx context.Context, entry LocalRepository, dataDir string, limits model.Limits, scope model.Repository) (Discovery, error) {
+	return CaptureLocalScopedWithPrepare(ctx, entry, dataDir, limits, scope, nil)
+}
+
+// CaptureLocalScopedWithPrepare registers the known final root before publication.
+func CaptureLocalScopedWithPrepare(ctx context.Context, entry LocalRepository, dataDir string, limits model.Limits, scope model.Repository, beforePublish func(context.Context, string) error) (Discovery, error) {
 	if err := catalog.Validate(catalog.Config{Version: 1, Limits: limits, Sources: []catalog.Source{{Kind: model.SourceKindRepository, ID: entry.ID}}}); err != nil {
 		return Discovery{}, err
 	}
@@ -301,6 +306,12 @@ func CaptureLocalScoped(ctx context.Context, entry LocalRepository, dataDir stri
 		return Discovery{}, err
 	}
 	keepLease := false
+	if beforePublish != nil {
+		if err = beforePublish(ctx, final); err != nil {
+			_ = lease.Close()
+			return Discovery{}, err
+		}
+	}
 	defer func() {
 		if !keepLease {
 			_ = lease.Close()

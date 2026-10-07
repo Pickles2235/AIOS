@@ -355,17 +355,20 @@ func TestRestartOverBudgetPreflightReclaimsDurableOrphan(t *testing.T) {
 	ctx := context.Background()
 	data := t.TempDir()
 	root := filepath.Join(data, "snapshots", "repo", "rev", "manifest")
-	if err := os.MkdirAll(root, 0700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "orphan.bin"), make([]byte, 2<<20), 0400); err != nil {
-		t.Fatal(err)
-	}
 	db, err := store.OpenWriter(data)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := db.QueueSnapshotGC(ctx, root); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(root); !os.IsNotExist(err) {
+		t.Fatalf("root published before durable registration: %v", err)
+	}
+	if err := os.MkdirAll(root, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "orphan.bin"), make([]byte, 2<<20), 0400); err != nil {
 		t.Fatal(err)
 	}
 	if err := db.Close(); err != nil {

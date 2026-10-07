@@ -187,3 +187,26 @@ func ReclaimPendingSnapshots(ctx context.Context, dataDir string) error {
 	}
 	return reclaimPrunedSnapshots(ctx, db, dataDir, roots)
 }
+
+// QueueOwnedSnapshot records a production capture before the immutable root
+// is published, allowing restart cleanup even across a publish-time crash.
+func QueueOwnedSnapshot(ctx context.Context, dataDir, root string) error {
+	base, err := filepath.Abs(filepath.Join(dataDir, "snapshots"))
+	if err != nil {
+		return err
+	}
+	candidate, err := filepath.Abs(root)
+	if err != nil {
+		return err
+	}
+	rel, err := filepath.Rel(base, candidate)
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || len(strings.Split(rel, string(filepath.Separator))) != 3 {
+		return fmt.Errorf("snapshot registration escapes owned root")
+	}
+	db, err := store.OpenWriter(dataDir)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	return db.QueueSnapshotGC(ctx, root)
+}

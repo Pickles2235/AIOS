@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"errors"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/model"
 	"os"
@@ -156,5 +157,40 @@ func TestWorkingCaptureExcludesBeforeOpeningOrApplyingEligibleBounds(t *testing.
 	indexAfter, err := os.ReadFile(filepath.Join(entry.Path, ".git/index"))
 	if err != nil || string(indexBefore) != string(indexAfter) {
 		t.Fatal("source index changed")
+	}
+}
+
+func TestWorkingCapturePreparesRootBeforePublish(t *testing.T) {
+	entry, data := workingFixture(t)
+	stopped := errors.New("stop after durable registration")
+	var prepared string
+	_, err := CaptureLocalScopedWithPrepare(context.Background(), entry, data, catalog.Defaults(), model.Repository{ID: entry.ID}, func(_ context.Context, root string) error {
+		prepared = root
+		if _, e := os.Stat(root); !os.IsNotExist(e) {
+			t.Fatalf("root existed before registration: %v", e)
+		}
+		return stopped
+	})
+	if !errors.Is(err, stopped) || prepared == "" {
+		t.Fatalf("capture crossed preparation boundary: %v", err)
+	}
+	if _, err := os.Stat(prepared); !os.IsNotExist(err) {
+		t.Fatalf("unregistered root published: %v", err)
+	}
+	discovered, err := CaptureLocalScopedWithPrepare(context.Background(), entry, data, catalog.Defaults(), model.Repository{ID: entry.ID}, func(_ context.Context, root string) error {
+		if root != prepared {
+			t.Fatalf("unstable final root: %s != %s", root, prepared)
+		}
+		if _, e := os.Stat(root); !os.IsNotExist(e) {
+			t.Fatalf("root existed before registration: %v", e)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer discovered.Close()
+	if discovered.Root != prepared {
+		t.Fatal("published root differs from registered path")
 	}
 }

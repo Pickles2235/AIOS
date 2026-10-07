@@ -68,7 +68,8 @@ them after their capture/ingest lease ends. Cleanup validates owned paths and
 canonical/staged references before deletion; a crash leaves the cleanup record
 for the next successful ingest. Empty owned revision directories are removed.
 External source workspaces and active or retained snapshots are never deleted.
-Every captured owned root is recorded for cleanup before compilation. Failed
+The known final owned root is recorded durably before local rename or mirror
+archive publication, while its capture lease is held. Failed
 ingests discard unreferenced snapshots after the capture lease ends; staged
 references retain their snapshot until staged work is discarded. Cleanup
 candidates survive a restart. Background work reclaims up to four safe

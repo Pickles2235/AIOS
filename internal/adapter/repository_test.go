@@ -84,11 +84,21 @@ func TestRepositoryGitCaptureAllowsLargeExcludedTree(t *testing.T) {
 	if _, err := mirror.Sync(context.Background(), registry, data); err != nil {
 		t.Fatal(err)
 	}
-	discovery, err := (RepositoryGit{Registry: registry, DataDir: data}).Discover(context.Background(), "repo")
+	var prepared string
+	discovery, err := (RepositoryGit{Registry: registry, DataDir: data, BeforeSnapshot: func(_ context.Context, root string) error {
+		prepared = root
+		if _, e := os.Stat(root); !os.IsNotExist(e) {
+			t.Fatalf("mirror root published before registration: %v", e)
+		}
+		return nil
+	}}).Discover(context.Background(), "repo")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer discovery.Close()
+	if prepared == "" || prepared != discovery.Root {
+		t.Fatal("mirror publication missed registered root")
+	}
 	limits := catalog.Defaults()
 	limits.MaxTotalBytesPerRepo = 64 << 10
 	limits.MaxFilesPerRepo = 1

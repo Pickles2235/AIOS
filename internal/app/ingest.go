@@ -50,7 +50,7 @@ func IngestMirrorCatalog(ctx context.Context, configPath, registryPath, dataDir 
 			_ = db.FailRevision(context.Background(), item.repositoryID, item.revision, item.fingerprint, "mirror_revision_failed")
 		}
 	}()
-	adapterSource := adapter.RepositoryGit{Registry: registry, DataDir: dataDir}
+	adapterSource := adapter.RepositoryGit{Registry: registry, DataDir: dataDir, BeforeSnapshot: db.QueueSnapshotGC}
 	revisions := make(map[string]model.GitState, len(repositories))
 	for i := range repositories {
 		repositoryID := repositories[i].ID
@@ -185,7 +185,7 @@ func IngestMirrorRevision(ctx context.Context, configPath, registryPath, dataDir
 	if err = db.DiscardStagedRepository(ctx, repositoryID); err != nil {
 		return IndexResult{}, err
 	}
-	discovery, err := (adapter.RepositoryGit{Registry: r, DataDir: dataDir}).Discover(ctx, repositoryID)
+	discovery, err := (adapter.RepositoryGit{Registry: r, DataDir: dataDir, BeforeSnapshot: db.QueueSnapshotGC}).Discover(ctx, repositoryID)
 	if err != nil {
 		return IndexResult{}, err
 	}

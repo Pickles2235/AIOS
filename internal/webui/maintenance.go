@@ -103,7 +103,7 @@ func (s *Server) startMaintenance() {
 			}
 			for _, entry := range setup.LocalRepositories {
 				if entry.ID == id {
-					discovery, err = adapter.CaptureLocalScoped(ctx, entry, s.dataDir, cfg.Limits, scope)
+					discovery, err = adapter.CaptureLocalScopedWithPrepare(ctx, entry, s.dataDir, cfg.Limits, scope, func(ctx context.Context, root string) error { return app.QueueOwnedSnapshot(ctx, s.dataDir, root) })
 					break
 				}
 			}
@@ -117,7 +117,7 @@ func (s *Server) startMaintenance() {
 			}
 			registry := mirror.Registry{Version: 1, Repositories: []mirror.Repository{entry}}
 			if _, err = mirror.Sync(ctx, registry, s.dataDir); err == nil {
-				discovery, err = (adapter.RepositoryGit{Registry: registry, DataDir: s.dataDir}).Discover(ctx, id)
+				discovery, err = (adapter.RepositoryGit{Registry: registry, DataDir: s.dataDir, BeforeSnapshot: func(ctx context.Context, root string) error { return app.QueueOwnedSnapshot(ctx, s.dataDir, root) }}).Discover(ctx, id)
 			}
 		}
 		outcome := maintenance.Outcome{Revision: discovery.Revision}

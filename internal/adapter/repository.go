@@ -35,8 +35,9 @@ type SourceAdapter interface {
 // RepositoryGit adapts an approved, already-synchronised Git mirror. It never
 // contacts a remote; `mirrors sync` is the sole network boundary.
 type RepositoryGit struct {
-	Registry mirror.Registry
-	DataDir  string
+	Registry       mirror.Registry
+	DataDir        string
+	BeforeSnapshot func(context.Context, string) error
 }
 
 func (RepositoryGit) Kind() string    { return model.SourceKindRepository }
@@ -62,6 +63,12 @@ func (a RepositoryGit) Discover(ctx context.Context, id string) (Discovery, erro
 	lease, err := snapshotlease.Acquire(a.DataDir, expected)
 	if err != nil {
 		return Discovery{}, err
+	}
+	if a.BeforeSnapshot != nil {
+		if err = a.BeforeSnapshot(ctx, expected); err != nil {
+			lease.Close()
+			return Discovery{}, err
+		}
 	}
 	root, err := mirror.Snapshot(ctx, mirror.MirrorPath(a.DataDir, id), a.DataDir, id, revision, fingerprint, mirror.MaxSnapshotBytes, mirror.MaxSnapshotFiles)
 	if err != nil {
