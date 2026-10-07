@@ -48,3 +48,7 @@ Runner recovery commit `4092163670030770823585e372c7370e7c01f4fe` adds validated
 ## Serial web diagnosis (2026-10-07)
 
 The run at `/tmp/aios-task10-web-4092163.json` terminated with exit 2 after 437.9 seconds: 29/36 passed, 7 maintenance/repository-management cases failed waiting 30 seconds for initial jobs to become idle. The receipt reports `clean_product_tree:false` and is diagnostic only. Delivery observed actual host battery power; native resource policy bounds deferral at 5 minutes, beyond the 30 second fixture polls. These browser fixtures test maintenance/management, so delivery is adding an explicit AC-power signal on a private PATH for their owned backend. Production native policy and native resources acceptance remain unchanged. Independent reviewer is auditing this boundary. New source requires committed clean exact-SHA core/web/retrieval receipts and paired acceptance before readiness.
+
+## Corrected final validation
+
+Fixture repair `4f81e8771d555d0e267790153da00d8d2ce1ee71` passed the focused maintenance/management suite (8/8). Final clean web receipt `.codex/completion/evidence/10-web.json` passes on that exact source, Darwin arm64: 36/36 browser tests, exit 0, 184.6 seconds. Independent reviewer verified exact source, cleanliness and raw-log digest `45bdf45a6974b6c20a00cb95bee17536d44b2b7f645e7124cd07804c6708ef6f`. Core, retrieval, paired acceptance and final review remain pending. Synthetic AC fixture evidence is not native power-signal certification.

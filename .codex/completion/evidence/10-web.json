@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "web",
+  "milestone": "10-investigation-search",
+  "tested_commit": "4f81e8771d555d0e267790153da00d8d2ce1ee71",
+  "clean_product_tree": true,
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "timestamp": 1791396678.2454998,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=10-investigation-search",
+        "COMPLETION_GATE=web"
+      ],
+      "exit_code": 0,
+      "seconds": 184.6479229927063,
+      "log_sha256": "45bdf45a6974b6c20a00cb95bee17536d44b2b7f645e7124cd07804c6708ef6f"
+    }
+  ]
+}
