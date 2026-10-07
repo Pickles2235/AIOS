@@ -9,7 +9,7 @@ Finish the approved installable V1 completion mission. Acceptance is the full 15
 - Follow `.codex/completion/PRODUCT.md`, `MISSION.md`, `ACCEPTANCE.md`, `tasks.json`, and each milestone plan.
 - Preserve canonical IR, evidence semantics, browser security, source nonmutation, and truthful native evidence. Never claim a deferred check passed.
 - Task 09 implementation `f28e413a8637d4561d358ff659ade3df90b5116c` was published in `50211f88ec62fc066b121d42212b87a96b7dac90`; follow-up completion bookkeeping is `c9637783e9cca819b3e2c0afb683683e63b92f8b`.
-- Task 10 reviewed source `4d176cdd4587381d4491526dc09137b40631a77d` is published and completion bookkeeping verified in `0c3fba23fd64b68e5ab548779dcb45c40ffd3413`. Task 11 is published/completed at `780109d`, reviewed source `31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485`. Task 12 reviewed6338d77 published at ea892db; completed bookkeeping follows. Task13 is next.
+- Task 10 reviewed source `4d176cdd4587381d4491526dc09137b40631a77d` is published and completion bookkeeping verified in `0c3fba23fd64b68e5ab548779dcb45c40ffd3413`. Task 11 is published/completed at `780109d`, reviewed source `31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485`. Task12 completed at verified main e8037c4, reviewed6338d77. Task13 is in_progress on dedicated `codex/completion-benchmark-lab`.
 
 ## Team map
 
@@ -20,7 +20,7 @@ Finish the approved installable V1 completion mission. Acceptance is the full 15
 | `/root/contextual_modules_acceptance` | Senior; `gpt-6-sol` / `medium` / `fork_turns=none` | Independent runtime sequencing, contextual behavior, placement/accessibility, rendered proof | Completed: exact6338 PASS |
 | Task 11 principal delivery and independent acceptance | `gpt-6-astra` / `medium` / `fork_turns=none` | Reviewed source31c0425 published; completion780109d | Completed |
 
-Staffing rationale: R21 needs senior judgment for live state reconciliation, contextual UX and independent accessibility/error checks. One delivery owner integrates the tightly coupled browser/backend behavior; a separate senior reviewer validates real rendering and runtime failures. No nested delegation initially. Manager retains metadata/publication.
+Staffing rationale: R22 immutable snapshot isolation, generation/resource leases and honest cross-retriever measurement require Principal delivery/integration judgment. Separate Senior acceptance fixes independent expected outcomes before implementation and falsifies costs, scoring, persistence and UI behavior. One product write owner; no nested delegation. Manager retains metadata/publication.
 
 ## Efficiency and workflow
 
@@ -67,3 +67,5 @@ Independent source review blocked checkpoint48555f2: Promise.all discarded fresh
 Frozen checkpoint447d8bd: direct core validation passed, followed by trusted harness core receipt `/tmp/aios-task12-frozen-core.json` pass (104.886s, clean Darwin arm64 exact source). Formal web failed (32/38 browser cases, 179.338s), receipt `/tmp/aios-task12-frozen-web.json` and raw `-0.log`; no cloud gate started. Four daemon cases had ambiguous global alert selectors after adding module warnings; two delayed-onboarding cases asserted exactly two reads despite legitimate contextual polling. Scoped test repair `3860c6c4201600e4c375a59ea076e5015e5aec88` preserves stop/expiry/disconnection and Direct-choice races: exact delayed request IDs are tracked, every pre-release read must complete, then selected mode/path remain asserted. Latest focused repair passed 6/6 (25.0s), `/tmp/aios-task12-web-repair-focused.log`; independent reviewer found no weakened assertions. Product source unchanged by this repair. Old447 receipts are historical; collect fresh exact-source core/web/scopedcloud on the final metadata-inclusive freeze before independent final review.
 
 Task12 final independent acceptance passed exact6338d77. Clean native core/web/scopedcloud receipts and reviewer report retained; all processes terminal. Ready for publication. Task13 team map: principal delivery/integration owns immutable snapshot fairness, durable cases and end-to-end Lab; separate senior acceptance owns independent expected outcomes, losses/unknown scoring, isolation and real browser/API proof. Fresh assignments after task12 publication; no source changes during final evidence freezes.
+
+Task13 roster: `/root/benchmark_lab_acceptance`, Senior gpt-6-sol/medium/forknone, spawned read-only acceptance and exact-commit runtime review; `/root/benchmark_lab_delivery`, Principal gpt-6-astra/medium/forknone planned product integration. Deliver API/UI plus actual immutable metrics; no code changes during frozen gates. Task12 completion regression passed11legacy/14completion with isolated Python3.12, `/tmp/aios-task12-completed-harness.log`.
