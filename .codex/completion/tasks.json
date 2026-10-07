@@ -333,9 +333,9 @@
       "gates": [
         "web"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/12-contextual-modules.md",
-      "completion_commit": null,
+      "completion_commit": "6338d77b57eb171eab8981a200ede32dd9ae8372",
       "review": ".codex/completion/evidence/12-review.json",
       "product_gates": [
         "web",

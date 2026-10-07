@@ -9,15 +9,15 @@ Finish the approved installable V1 completion mission. Acceptance is the full 15
 - Follow `.codex/completion/PRODUCT.md`, `MISSION.md`, `ACCEPTANCE.md`, `tasks.json`, and each milestone plan.
 - Preserve canonical IR, evidence semantics, browser security, source nonmutation, and truthful native evidence. Never claim a deferred check passed.
 - Task 09 implementation `f28e413a8637d4561d358ff659ade3df90b5116c` was published in `50211f88ec62fc066b121d42212b87a96b7dac90`; follow-up completion bookkeeping is `c9637783e9cca819b3e2c0afb683683e63b92f8b`.
-- Task 10 reviewed source `4d176cdd4587381d4491526dc09137b40631a77d` is published and completion bookkeeping verified in `0c3fba23fd64b68e5ab548779dcb45c40ffd3413`. Task 11 is published/completed at `780109d`, reviewed source `31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485`. Task 12 now runs from that fetched main on `codex/completion-contextual-modules`.
+- Task 10 reviewed source `4d176cdd4587381d4491526dc09137b40631a77d` is published and completion bookkeeping verified in `0c3fba23fd64b68e5ab548779dcb45c40ffd3413`. Task 11 is published/completed at `780109d`, reviewed source `31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485`. Task 12 reviewed6338d77 published at ea892db; completed bookkeeping follows. Task13 is next.
 
 ## Team map
 
 | Owner | Level and role | Scope | Status |
 |---|---|---|---|
 | `/root` | Manager | Scope, plans/evidence, publication and mission sign-off | Active |
-| `/root/contextual_modules_delivery` | Senior; `gpt-6-sol` / `medium` / `fork_turns=none` | Task 12 R21 delivery/integration; product code/tests/assets/docs | Active |
-| `/root/contextual_modules_acceptance` | Senior; `gpt-6-sol` / `medium` / `fork_turns=none` | Independent runtime sequencing, contextual behavior, placement/accessibility, rendered proof | Active read-only design review |
+| `/root/contextual_modules_delivery` | Senior; `gpt-6-sol` / `medium` / `fork_turns=none` | Task 12 R21 delivery/integration; product code/tests/assets/docs | Completed |
+| `/root/contextual_modules_acceptance` | Senior; `gpt-6-sol` / `medium` / `fork_turns=none` | Independent runtime sequencing, contextual behavior, placement/accessibility, rendered proof | Completed: exact6338 PASS |
 | Task 11 principal delivery and independent acceptance | `gpt-6-astra` / `medium` / `fork_turns=none` | Reviewed source31c0425 published; completion780109d | Completed |
 
 Staffing rationale: R21 needs senior judgment for live state reconciliation, contextual UX and independent accessibility/error checks. One delivery owner integrates the tightly coupled browser/backend behavior; a separate senior reviewer validates real rendering and runtime failures. No nested delegation initially. Manager retains metadata/publication.
