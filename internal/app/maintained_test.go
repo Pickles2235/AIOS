@@ -94,6 +94,10 @@ func TestMaintainedHealthyBootstrapCancellationAndNewRevisionRepair(t *testing.T
 	if _, e = IngestMaintained(ctx, cfg, failedDiscovery, fingerprint, data); e == nil {
 		t.Fatal("canceled staged input activated")
 	}
+	var queued int
+	if e := db.DB().QueryRow(`SELECT count(*) FROM snapshot_gc_candidates WHERE root=?`, failedDiscovery.Root).Scan(&queued); e != nil || queued != 1 {
+		t.Fatalf("staged failure lost durable cleanup candidate: %d %v", queued, e)
+	}
 	after, e := db.ActiveCatalogRevision(context.Background())
 	if e != nil || after.ID != before.ID {
 		t.Fatal("cancel replaced last-good catalog")
@@ -118,6 +122,12 @@ func TestMaintainedHealthyBootstrapCancellationAndNewRevisionRepair(t *testing.T
 	}
 	if _, e = IngestMaintained(context.Background(), cfg, newDiscovery, fingerprint, data); e != nil {
 		t.Fatal(e)
+	}
+	if _, e = os.Stat(failedDiscovery.Root); !os.IsNotExist(e) {
+		t.Fatalf("failed staged snapshot survived recovery: %v", e)
+	}
+	if _, e = os.Stat(newDiscovery.Root); e != nil {
+		t.Fatalf("active repaired snapshot removed: %v", e)
 	}
 	if query("RepairedWorker").Status != "found" || query("InterruptedWorker").Status == "found" {
 		t.Fatal("new revision repair lost canonical isolation")

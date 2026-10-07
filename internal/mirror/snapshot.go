@@ -16,10 +16,16 @@ func SnapshotPath(dataDir, repositoryID, revision, fingerprint string) string {
 	return filepath.Join(dataDir, "snapshots", repositoryID, revision, fingerprint)
 }
 
+// Full mirror capture is bounded separately from eligible source discovery.
+// Its 6 GiB payload plus up to 300,000 entries and bounded tar framing fits
+// the 8 GiB capture reserve.
+const MaxSnapshotBytes int64 = 6 << 30
+const MaxSnapshotFiles = 300_000
+
 // Snapshot materializes a Git archive below the data directory. It is not a
 // worktree: it has no .git directory and becomes read-only once complete.
 func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, fingerprint string, maxBytes int64, maxFiles int) (string, error) {
-	if maxBytes <= 0 || maxBytes > 2<<30 || maxFiles <= 0 || maxFiles > 200_000 {
+	if maxBytes <= 0 || maxBytes > MaxSnapshotBytes || maxFiles <= 0 || maxFiles > MaxSnapshotFiles {
 		return "", fmt.Errorf("invalid snapshot bounds")
 	}
 	root := SnapshotPath(dataDir, repositoryID, revision, fingerprint)
@@ -126,6 +132,13 @@ func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, 
 		return "", err
 	}
 	if err = makeReadOnly(root); err != nil {
+		_ = filepath.Walk(root, func(path string, info os.FileInfo, walkErr error) error {
+			if walkErr == nil && info.IsDir() {
+				return os.Chmod(path, 0700)
+			}
+			return walkErr
+		})
+		_ = os.RemoveAll(root)
 		return "", err
 	}
 	return root, nil

@@ -335,16 +335,24 @@ func within(root, candidate string) bool {
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
-func finishSnapshotRetention(ctx context.Context, db *store.Store, dataDir string, cfg catalog.Config, result *IndexResult) {
+func finishSnapshotRetention(db *store.Store, dataDir string, cfg catalog.Config, result *IndexResult, succeeded bool) {
+	cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	retention := cfg.RetentionGenerations
 	if retention == 0 {
 		retention = 3
 	}
-	roots, err := db.RetainPrunedRoots(ctx, retention-1)
-	if err == nil {
-		err = reclaimPrunedSnapshots(ctx, db, dataDir, roots)
+	var roots []string
+	var err error
+	if succeeded {
+		roots, err = db.RetainPrunedRoots(cleanupCtx, retention-1)
+	} else {
+		roots, err = db.SnapshotGCCandidates(cleanupCtx)
 	}
-	if err != nil {
+	if err == nil {
+		err = reclaimPrunedSnapshots(cleanupCtx, db, dataDir, roots)
+	}
+	if err != nil && succeeded {
 		result.RetentionWarning = "Historical generation retention needs repair; active knowledge remains available."
 	}
 }

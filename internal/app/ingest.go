@@ -32,9 +32,7 @@ func IngestMirrorCatalog(ctx context.Context, configPath, registryPath, dataDir 
 	}
 	defer db.Close()
 	defer func() {
-		if retErr == nil {
-			finishSnapshotRetention(ctx, db, dataDir, cfg, &out)
-		}
+		finishSnapshotRetention(db, dataDir, cfg, &out, retErr == nil)
 	}()
 	ctx, finishObservation := observeIngest(ctx, dataDir, "catalog")
 	defer func() { finishObservation(retErr) }()
@@ -52,7 +50,7 @@ func IngestMirrorCatalog(ctx context.Context, configPath, registryPath, dataDir 
 			_ = db.FailRevision(context.Background(), item.repositoryID, item.revision, item.fingerprint, "mirror_revision_failed")
 		}
 	}()
-	adapterSource := adapter.RepositoryGit{Registry: registry, DataDir: dataDir, Limits: cfg.Limits}
+	adapterSource := adapter.RepositoryGit{Registry: registry, DataDir: dataDir}
 	revisions := make(map[string]model.GitState, len(repositories))
 	for i := range repositories {
 		repositoryID := repositories[i].ID
@@ -77,6 +75,9 @@ func IngestMirrorCatalog(ctx context.Context, configPath, registryPath, dataDir 
 			return IndexResult{}, e
 		}
 		defer discovery.Close()
+		if e = db.QueueSnapshotGC(ctx, discovery.Root); e != nil {
+			return IndexResult{}, e
+		}
 		changes, e := mirror.TreeChanges(ctx, mirror.MirrorPath(dataDir, repositoryID), queue.CurrentRevision, discovery.Revision)
 		if e != nil {
 			return IndexResult{}, e
@@ -161,9 +162,7 @@ func IngestMirrorRevision(ctx context.Context, configPath, registryPath, dataDir
 	}
 	defer db.Close()
 	defer func() {
-		if retErr == nil {
-			finishSnapshotRetention(ctx, db, dataDir, cfg, &out)
-		}
+		finishSnapshotRetention(db, dataDir, cfg, &out, retErr == nil)
 	}()
 	ctx, finishObservation := observeIngest(ctx, dataDir, repositoryID)
 	defer func() { finishObservation(retErr) }()
@@ -186,11 +185,14 @@ func IngestMirrorRevision(ctx context.Context, configPath, registryPath, dataDir
 	if err = db.DiscardStagedRepository(ctx, repositoryID); err != nil {
 		return IndexResult{}, err
 	}
-	discovery, err := (adapter.RepositoryGit{Registry: r, DataDir: dataDir, Limits: cfg.Limits}).Discover(ctx, repositoryID)
+	discovery, err := (adapter.RepositoryGit{Registry: r, DataDir: dataDir}).Discover(ctx, repositoryID)
 	if err != nil {
 		return IndexResult{}, err
 	}
 	defer discovery.Close()
+	if err = db.QueueSnapshotGC(ctx, discovery.Root); err != nil {
+		return IndexResult{}, err
+	}
 	changes, err := mirror.TreeChanges(ctx, mirror.MirrorPath(dataDir, repositoryID), q.CurrentRevision, discovery.Revision)
 	if err != nil {
 		return IndexResult{}, err

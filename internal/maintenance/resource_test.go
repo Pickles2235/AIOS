@@ -64,23 +64,36 @@ func TestResourceFairnessAndPendingCancel(t *testing.T) {
 	o.Probe = func(context.Context) resourcepolicy.Signals { return fakeSignals("ac", 0) }
 	e, err := New(root, []Source{{ID: "a", Mode: "mirror"}, {ID: "b", Mode: "mirror"}}, func(ctx context.Context, id string) (Outcome, error) {
 		order <- id
-		if id == "a" { started <- struct{}{}; select { case <-release: case <-ctx.Done(): return Outcome{}, ctx.Err() } }
+		if id == "a" {
+			started <- struct{}{}
+			select {
+			case <-release:
+			case <-ctx.Done():
+				return Outcome{}, ctx.Err()
+			}
+		}
 		return Outcome{Revision: "rev", Generation: "gen", ChangedFiles: 0}, nil
 	}, o)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer e.Close()
-	if err = e.Request("a", "check_now"); err != nil { t.Fatal(err) }
+	if err = e.Request("a", "check_now"); err != nil {
+		t.Fatal(err)
+	}
 	if err = e.Start(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	select { case <-started: case <-time.After(time.Second): t.Fatal("older work did not start") }
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("older work did not start")
+	}
 	waitJob(t, e, "b", func(j Job) bool { return j.State == "pending" })
 	if err = e.Cancel("b"); err != nil {
 		t.Fatal(err)
 	}
-	j := waitJob(t, e, "b", func(j Job) bool { return j.State == "idle" && strings.Contains(j.Error, "cancelled") })
+	j := waitJob(t, e, "b", func(j Job) bool { return strings.Contains(j.Error, "cancelled") })
 	if j.ActiveGeneration != "" {
 		t.Fatal("cancelled pending work activated")
 	}

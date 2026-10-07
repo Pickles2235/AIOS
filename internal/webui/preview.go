@@ -162,7 +162,7 @@ func (s *Server) previewAPI(w http.ResponseWriter, r *http.Request) {
 			reg := mirror.Registry{Version: 1, Repositories: []mirror.Repository{in.Mirrors[i]}}
 			_, err = mirror.Sync(ctx, reg, temp)
 			if err == nil {
-				snapshot, err = (adapter.RepositoryGit{Registry: reg, DataDir: temp, Limits: cfg.Limits}).Discover(ctx, source.ID)
+				snapshot, err = (adapter.RepositoryGit{Registry: reg, DataDir: temp}).Discover(ctx, source.ID)
 			}
 		}
 		if err == nil {

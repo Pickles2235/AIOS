@@ -855,6 +855,42 @@ func (s *Store) RetainPrunedRoots(ctx context.Context, historical int) ([]string
 	return pruned, nil
 }
 
+// QueueSnapshotGC records every owned capture before compilation. Published and
+// staged references protect it until canonical retention makes it obsolete.
+func (s *Store) QueueSnapshotGC(ctx context.Context, root string) error {
+	if s.readOnly {
+		return fmt.Errorf("store is read-only")
+	}
+	if _, err := s.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS snapshot_gc_candidates (root TEXT PRIMARY KEY)`); err != nil {
+		return err
+	}
+	_, err := s.db.ExecContext(ctx, `INSERT OR IGNORE INTO snapshot_gc_candidates(root) VALUES(?)`, root)
+	return err
+}
+
+func (s *Store) SnapshotGCCandidates(ctx context.Context) ([]string, error) {
+	if s.readOnly {
+		return nil, fmt.Errorf("store is read-only")
+	}
+	if _, err := s.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS snapshot_gc_candidates (root TEXT PRIMARY KEY)`); err != nil {
+		return nil, err
+	}
+	rows, err := s.db.QueryContext(ctx, `SELECT root FROM snapshot_gc_candidates ORDER BY root`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []string{}
+	for rows.Next() {
+		var root string
+		if err = rows.Scan(&root); err != nil {
+			return nil, err
+		}
+		out = append(out, root)
+	}
+	return out, rows.Err()
+}
+
 // CompleteSnapshotGC acknowledges an owned root only after filesystem removal.
 func (s *Store) CompleteSnapshotGC(ctx context.Context, root string) error {
 	if s.readOnly {

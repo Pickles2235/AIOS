@@ -496,7 +496,7 @@ func (s *Server) runManagedRebuild(ctx context.Context, cfg catalog.Config, reg 
 			if entry.ID == id {
 				one := mirror.Registry{Version: 1, Repositories: []mirror.Repository{entry}}
 				if _, err = mirror.Sync(ctx, one, s.dataDir); err == nil {
-					discovery, err = (adapter.RepositoryGit{Registry: one, DataDir: s.dataDir, Limits: cfg.Limits}).Discover(ctx, id)
+					discovery, err = (adapter.RepositoryGit{Registry: one, DataDir: s.dataDir}).Discover(ctx, id)
 				}
 				break
 			}

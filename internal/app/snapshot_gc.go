@@ -98,8 +98,8 @@ func reclaimPrunedSnapshots(ctx context.Context, db *store.Store, dataDir string
 		if !acquired {
 			continue
 		}
-		e = reclaimOneSnapshot(ctx, db, candidate)
-		if e == nil {
+		removed, e := reclaimOneSnapshot(ctx, db, candidate)
+		if e == nil && removed {
 			e = db.CompleteSnapshotGC(ctx, candidate)
 		}
 		_ = lease.Close()
@@ -110,10 +110,10 @@ func reclaimPrunedSnapshots(ctx context.Context, db *store.Store, dataDir string
 	return nil
 }
 
-func reclaimOneSnapshot(ctx context.Context, db *store.Store, candidate string) error {
+func reclaimOneSnapshot(ctx context.Context, db *store.Store, candidate string) (bool, error) {
 	referenced, err := db.SnapshotRootReferenced(ctx, candidate)
 	if err != nil || referenced {
-		return err
+		return false, err
 	}
 	if err = filepath.Walk(candidate, func(path string, info os.FileInfo, walkErr error) error {
 		if walkErr != nil {
@@ -124,23 +124,23 @@ func reclaimOneSnapshot(ctx context.Context, db *store.Store, candidate string) 
 		}
 		return nil
 	}); err != nil {
-		return fmt.Errorf("owned snapshot cleanup unavailable: %w", err)
+		return false, fmt.Errorf("owned snapshot cleanup unavailable: %w", err)
 	}
 	if err = os.RemoveAll(candidate); err != nil {
-		return fmt.Errorf("owned snapshot cleanup unavailable: %w", err)
+		return false, fmt.Errorf("owned snapshot cleanup unavailable: %w", err)
 	}
 	// The repository lease prevents concurrent capture while removing empty owned parents.
 	revisionParent := filepath.Dir(candidate)
 	if err = os.Remove(revisionParent); err != nil && !os.IsNotExist(err) && !isNotEmpty(err) {
-		return err
+		return false, err
 	}
 	if err == nil {
 		repoParent := filepath.Dir(revisionParent)
 		if e := os.Remove(repoParent); e != nil && !os.IsNotExist(e) && !isNotEmpty(e) {
-			return e
+			return false, e
 		}
 	}
-	return nil
+	return true, nil
 }
 
 func verifyDirectoryAncestors(dataDir, path string) error {

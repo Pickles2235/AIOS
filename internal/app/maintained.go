@@ -49,11 +49,12 @@ func IngestMaintained(ctx context.Context, cfg catalog.Config, discovery adapter
 		return out, err
 	}
 	defer db.Close()
+	if err = db.QueueSnapshotGC(ctx, discovery.Root); err != nil {
+		return out, err
+	}
 	defer func() {
 		_ = discovery.Close()
-		if retErr == nil {
-			finishSnapshotRetention(ctx, db, dataDir, cfg, &out)
-		}
+		finishSnapshotRetention(db, dataDir, cfg, &out, retErr == nil)
 	}()
 	ctx, finishObservation := observeIngest(ctx, dataDir, selected.ID)
 	defer func() { finishObservation(retErr) }()

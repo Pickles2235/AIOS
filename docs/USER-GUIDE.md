@@ -96,7 +96,10 @@ is separately capped at 512 KiB. By default, activation retains the active
 catalog and two earlier catalog revisions; the configured retention count can
 change that finite history window. Retention also reclaims owned snapshots of superseded generations after
 captures finish; it never deletes the source workspace or active generation.
-Mirror archives stream through the configured per-repository byte/file limits.
+Mirror archives stream through a separate full-capture bound of 6 GiB and
+300,000 entries (plus bounded tar framing); the configured per-repository
+limits apply to eligible files after exclusions. Failed captures are queued for
+owned cleanup, including after a restart.
 Free owned space or reduce approved scope to resume a deferred build.
 
 To uninstall, choose explicitly: `"$AIOS_BIN" uninstall --preserve-data --json`

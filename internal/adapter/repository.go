@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
 	"github.com/AdamNi-7080/AIOS/internal/model"
 	"github.com/AdamNi-7080/AIOS/internal/snapshotlease"
@@ -38,7 +37,6 @@ type SourceAdapter interface {
 type RepositoryGit struct {
 	Registry mirror.Registry
 	DataDir  string
-	Limits   model.Limits
 }
 
 func (RepositoryGit) Kind() string    { return model.SourceKindRepository }
@@ -60,16 +58,12 @@ func (a RepositoryGit) Discover(ctx context.Context, id string) (Discovery, erro
 		return Discovery{}, err
 	}
 	fingerprint := mirror.Fingerprint(a.Registry)
-	limits := a.Limits
-	if limits == (model.Limits{}) {
-		limits = catalog.Defaults()
-	}
 	expected := mirror.SnapshotPath(a.DataDir, id, revision, fingerprint)
 	lease, err := snapshotlease.Acquire(a.DataDir, expected)
 	if err != nil {
 		return Discovery{}, err
 	}
-	root, err := mirror.Snapshot(ctx, mirror.MirrorPath(a.DataDir, id), a.DataDir, id, revision, fingerprint, limits.MaxTotalBytesPerRepo, limits.MaxFilesPerRepo)
+	root, err := mirror.Snapshot(ctx, mirror.MirrorPath(a.DataDir, id), a.DataDir, id, revision, fingerprint, mirror.MaxSnapshotBytes, mirror.MaxSnapshotFiles)
 	if err != nil {
 		lease.Close()
 		return Discovery{}, err

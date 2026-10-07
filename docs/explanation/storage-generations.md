@@ -68,5 +68,10 @@ them after their capture/ingest lease ends. Cleanup validates owned paths and
 canonical/staged references before deletion; a crash leaves the cleanup record
 for the next successful ingest. Empty owned revision directories are removed.
 External source workspaces and active or retained snapshots are never deleted.
-Mirror archives are streamed into owned staging under configured file, extracted
-byte and transport bounds; an overflow cannot publish a partial snapshot.
+Every captured owned root is recorded for cleanup before compilation. Failed
+ingests discard unreferenced snapshots after the capture lease ends; staged
+references retain their snapshot until staged work is discarded. Cleanup
+candidates survive a restart. Mirror archives stream into owned staging under
+a separate 6 GiB extracted payload and 300,000-entry cap, with bounded tar
+framing. Eligible file limits apply after exclusions; an overflow cannot
+publish a partial snapshot.

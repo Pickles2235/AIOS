@@ -50,9 +50,7 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 	}
 	defer db.Close()
 	defer func() {
-		if retErr == nil {
-			finishSnapshotRetention(ctx, db, dataDir, cfg, &out)
-		}
+		finishSnapshotRetention(db, dataDir, cfg, &out, retErr == nil)
 	}()
 	ctx, finishObservation := observeIngest(ctx, dataDir, repositoryID)
 	defer func() { finishObservation(retErr) }()
@@ -82,6 +80,9 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 			return out, e
 		}
 		defer discovery.Close()
+		if e = db.QueueSnapshotGC(ctx, discovery.Root); e != nil {
+			return out, e
+		}
 		coverage[repo.ID] = discovery.Coverage
 		if _, e = db.Discover(ctx, repo.ID, discovery.Revision, fingerprint); e != nil {
 			return out, e

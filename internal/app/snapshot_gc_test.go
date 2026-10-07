@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/AdamNi-7080/AIOS/internal/model"
+	"github.com/AdamNi-7080/AIOS/internal/resourcepolicy"
 	"github.com/AdamNi-7080/AIOS/internal/snapshotlease"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
@@ -224,5 +225,127 @@ func TestLocalActivationReclaimsOldOwnedSnapshots(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join(data, "snapshots", ".leases"))
 	if err != nil || len(entries) != 1 {
 		t.Fatalf("lease metadata=%d err=%v", len(entries), err)
+	}
+}
+
+func TestFailedCapturesAreReclaimedAndNextRevisionCanActivate(t *testing.T) {
+	source, data := canonicalTempDir(t), canonicalTempDir(t)
+	t.Cleanup(func() {
+		_ = filepath.Walk(data, func(path string, info os.FileInfo, e error) error {
+			if e == nil && info.IsDir() {
+				return os.Chmod(path, 0700)
+			}
+			return e
+		})
+	})
+	git := func(args ...string) {
+		t.Helper()
+		b, e := exec.Command("git", append([]string{"-C", source}, args...)...).CombinedOutput()
+		if e != nil {
+			t.Fatalf("git: %v %s", e, b)
+		}
+	}
+	git("init", "-q", "--initial-branch=main")
+	file := filepath.Join(source, "Worker.java")
+	if err := os.WriteFile(file, []byte("class Worker0 {}"), 0640); err != nil {
+		t.Fatal(err)
+	}
+	git("add", ".")
+	git("-c", "user.name=t", "-c", "user.email=t@e", "commit", "-qm", "one")
+	cfg := catalog.Config{Version: 1, Limits: catalog.Defaults(), Sources: []catalog.Source{{Kind: model.SourceKindRepository, ID: "repo"}}}
+	reg := adapter.LocalRegistry{Version: 1, Repositories: []adapter.LocalRepository{{ID: "repo", Path: source}}}
+	first, err := IngestLocal(context.Background(), cfg, reg, data, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	activeRoot := first.Snapshots[0].Root
+	baseline, err := resourcepolicy.CheckBudget(data, 1<<30, 0, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 1; i <= 5; i++ {
+		if err := os.WriteFile(file, []byte(fmt.Sprintf("class Worker%d {}", i)), 0640); err != nil {
+			t.Fatal(err)
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		ctx = WithProgress(ctx, func(p Progress) {
+			if p.Stage == "discovered" {
+				cancel()
+			}
+		})
+		if _, err := IngestLocal(ctx, cfg, reg, data, ""); err == nil {
+			t.Fatal("canceled capture activated")
+		}
+		entries, err := os.ReadDir(filepath.Dir(activeRoot))
+		if err != nil {
+			t.Fatal(err)
+		}
+		roots := 0
+		for _, entry := range entries {
+			if entry.IsDir() && strings.HasPrefix(entry.Name(), "local-") {
+				roots++
+			}
+		}
+		if roots != 1 {
+			t.Fatalf("failed capture %d left %d snapshot roots", i, roots)
+		}
+	}
+	if _, err := os.Stat(activeRoot); err != nil {
+		t.Fatal(err)
+	}
+	after, err := resourcepolicy.CheckBudget(data, baseline.OwnedBytes+5<<20, 0, 1<<20)
+	if err != nil || after.StorageState != "available" {
+		t.Fatalf("failed captures exhausted admission: %+v %v", after, err)
+	}
+	final, err := IngestLocal(context.Background(), cfg, reg, data, "")
+	if err != nil {
+		t.Fatalf("retry failed: %v", err)
+	}
+	if final.Snapshots[0].Root == activeRoot {
+		t.Fatal("new revision not activated")
+	}
+	if b, err := os.ReadFile(file); err != nil || string(b) != "class Worker5 {}" {
+		t.Fatalf("source changed: %q %v", b, err)
+	}
+}
+
+func TestFailedCaptureCandidateSurvivesRestart(t *testing.T) {
+	ctx := context.Background()
+	data := t.TempDir()
+	root := filepath.Join(data, "snapshots", "repo", "rev", "manifest")
+	if err := os.MkdirAll(root, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "orphan"), []byte("discard"), 0400); err != nil {
+		t.Fatal(err)
+	}
+	db, err := store.OpenWriter(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueueSnapshotGC(ctx, root); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db, err = store.OpenWriter(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	pending, err := db.SnapshotGCCandidates(ctx)
+	if err != nil || len(pending) != 1 || pending[0] != root {
+		t.Fatalf("restart candidates=%v err=%v", pending, err)
+	}
+	if err := reclaimPrunedSnapshots(ctx, db, data, pending); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(root); !os.IsNotExist(err) {
+		t.Fatalf("orphan survived restart: %v", err)
+	}
+	pending, err = db.SnapshotGCCandidates(ctx)
+	if err != nil || len(pending) != 0 {
+		t.Fatalf("candidate not acknowledged: %v %v", pending, err)
 	}
 }
