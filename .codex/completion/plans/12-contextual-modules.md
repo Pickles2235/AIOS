@@ -10,11 +10,11 @@ Requirements: R21
 
 ## Decisions
 
-Inspect current implementation before selecting changes.
+Reuse actual jobs/resources/activity/status and canonical query/coverage state. Wire contextual floating modules into main.tsx; idle view remains uncluttered, useful warnings remain visible. Persist viewport-bounded placement with accessible move/reset. Event sequencing/reconnect must reconcile durable state and disclose gaps without fake activity. Delivery owns architecture and full implementation choices within R21.
 
 ## Progress
 
-Pending.
+Started on `codex/completion-contextual-modules` from fetched main `780109d`. Dependencies 09 and 11 completed, independently reviewed and reachable from HEAD/main. Senior delivery/integration owner and separate senior independent acceptance mapped before staffing. Manager owns plan/tasks/evidence/publication.
 
 ## Scenario scope
 

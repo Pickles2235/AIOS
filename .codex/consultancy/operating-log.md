@@ -9,20 +9,18 @@ Finish the approved installable V1 completion mission. Acceptance is the full 15
 - Follow `.codex/completion/PRODUCT.md`, `MISSION.md`, `ACCEPTANCE.md`, `tasks.json`, and each milestone plan.
 - Preserve canonical IR, evidence semantics, browser security, source nonmutation, and truthful native evidence. Never claim a deferred check passed.
 - Task 09 implementation `f28e413a8637d4561d358ff659ade3df90b5116c` was published in `50211f88ec62fc066b121d42212b87a96b7dac90`; follow-up completion bookkeeping is `c9637783e9cca819b3e2c0afb683683e63b92f8b`.
-- Task 10 reviewed source `4d176cdd4587381d4491526dc09137b40631a77d` is published and completion bookkeeping verified in `0c3fba23fd64b68e5ab548779dcb45c40ffd3413`. Task 11 now runs on `codex/completion-volumetric-cloud` from that fetched main.
+- Task 10 reviewed source `4d176cdd4587381d4491526dc09137b40631a77d` is published and completion bookkeeping verified in `0c3fba23fd64b68e5ab548779dcb45c40ffd3413`. Task 11 is published/completed at `780109d`, reviewed source `31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485`. Task 12 now runs from that fetched main on `codex/completion-contextual-modules`.
 
 ## Team map
 
 | Owner | Level and role | Scope | Status |
 |---|---|---|---|
-| `/root` | Manager / integration | Scope, plans/evidence, publication and mission sign-off | Active |
-| `/root/volumetric_cloud_delivery` | Principal; `gpt-6-astra` / `medium` / `fork_turns=none` | Task 11 API, renderer, safe source actions and motion integration; may delegate one bounded contributor | Active |
-| `/root/volumetric_cloud_acceptance` | Principal; `gpt-6-astra` / `medium` / `fork_turns=none` | Independent R18-R20 evidence, security and native rendering acceptance | Active |
-| `/root/volumetric_cloud_delivery/cloud_backend` | Senior backend contributor; `gpt-6-sol` / `medium` / `fork_turns=none` | Go-only canonical cloud API, membership and safe source actions; reports to delivery lead | Active |
-| Completed task 10 delivery/review | Senior delivery and independent review | Task 10 passed and published; reviewed source4d176cd, publication6e16126, completion0c3fba2 | Completed |
-| Completed cloud gap auditor | Principal read-only audit | Task 11 current gap map, retained below | Completed |
+| `/root` | Manager | Scope, plans/evidence, publication and mission sign-off | Active |
+| Contextual modules delivery (fresh agent pending) | Senior; `gpt-6-sol` / `medium` / `fork_turns=none` | Task 12 R21 delivery/integration; product code/tests/assets/docs | Launch now |
+| Contextual modules acceptance (fresh agent pending) | Senior; `gpt-6-sol` / `medium` / `fork_turns=none` | Independent runtime sequencing, contextual behavior, placement/accessibility, rendered proof | Launch after design/source checkpoint |
+| Task 11 principal delivery and independent acceptance | `gpt-6-astra` / `medium` / `fork_turns=none` | Reviewed source31c0425 published; completion780109d | Completed |
 
-Staffing rationale: task 11 spans canonical aggregate semantics, renderer behavior, source-action security and native GPU evidence, requiring principal integration judgment and separate principal acceptance. One delivery lead keeps these contracts coordinated; one optional disjoint contributor is allowed only after the lead defines interfaces. Manager retains plan/state/evidence writes.
+Staffing rationale: R21 needs senior judgment for live state reconciliation, contextual UX and independent accessibility/error checks. One delivery owner integrates the tightly coupled browser/backend behavior; a separate senior reviewer validates real rendering and runtime failures. No nested delegation initially. Manager retains metadata/publication.
 
 ## Efficiency and workflow
 
@@ -55,3 +53,5 @@ Task 11 independent final acceptance passed at 31c0425fc9ac78b0f0b6cc10259fa3dc2
 Task 11 published at1b008c5, fetched main verified; marked completed with reviewed implementation31c0425. Python3.12 ready-state harness-test passed11legacy/14completion. Next work map: task12 contextual modules, one senior delivery/integration owner plus separate senior independent acceptance; runtime sequencing/error retention and viewport/accessibility need end-to-end proofs. Fresh staffing after clean dedicated branch.
 
 Completed-state bookkeeping validation: Python3.12 harness-test initially failed twice only during TemporaryDirectory cleanup of synthetic `.git` directories (logs `/tmp/aios-task11-completed-harness.log` and `/tmp/aios-task11-completed-harness-isolated.log`); owned separate TMPDIR did not resolve it. Leftover info/refs and objects/info/packs suggest asynchronous Git work, but cause remains under investigation. Invocation-only isolation `GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=maintenance.auto GIT_CONFIG_VALUE_0=false GIT_CONFIG_KEY_1=gc.auto GIT_CONFIG_VALUE_1=0 PATH=/opt/homebrew/opt/python@3.12/libexec/bin:$PATH make harness-test` passed exit0 (11 legacy/14 completion), log `/tmp/aios-task11-completed-harness-git-isolated.log`. No global configuration or product source changed.
+
+Task11 cleanup cause confirmed by delivery single focused TRACE2 experiment: commit launches detached git maintenance/repack/pack-objects/multi-pack-index that outlives final Git calls and races temporary directory deletion. Per-process maintenance.auto=false/gc.auto=0 isolation passed full harness. Private raw trace contains a local key path and stays outside checkout; do not commit or print it. No product/global Git changes required. Task12 in_progress; task13 benchmark/task14 scale/task15 assembled acceptance remain pending.

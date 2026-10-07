@@ -333,7 +333,7 @@
       "gates": [
         "web"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "plan": ".codex/completion/plans/12-contextual-modules.md",
       "completion_commit": null,
       "review": null,
