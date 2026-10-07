@@ -212,19 +212,13 @@ func (s *Server) benchmarkAPI(w http.ResponseWriter, r *http.Request) {
 			}
 			old := filepath.Join(s.dataDir, entry.Name())
 			marker, readErr := os.ReadFile(filepath.Join(old, ".owner"))
-			parts := strings.Split(string(marker), "\n")
-			ownerPID, parseErr := 0, fmt.Errorf("invalid owner")
-			if len(parts) == 2 {
-				ownerPID, parseErr = strconv.Atoi(parts[1])
-			}
-			ownerAlive := true
-			if parseErr == nil && ownerPID > 0 {
-				if process, err := os.FindProcess(ownerPID); err == nil {
-					signalErr := process.Signal(syscall.Signal(0))
-					ownerAlive = !errors.Is(signalErr, os.ErrProcessDone) && !errors.Is(signalErr, syscall.ESRCH)
+			if readErr == nil && benchmarkOwnerDead(marker, func(pid int) error {
+				process, e := os.FindProcess(pid)
+				if e != nil {
+					return e
 				}
-			}
-			if readErr == nil && len(parts) == 2 && parts[0] == "aios-benchmark-v1" && !ownerAlive {
+				return process.Signal(syscall.Signal(0))
+			}) {
 				if e := os.RemoveAll(old); e != nil {
 					fail(w, 500, "cannot clean interrupted benchmark")
 					return
@@ -365,4 +359,19 @@ func (s *Server) benchmarkAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fail(w, 404, "unknown benchmark route")
+}
+
+// Ambiguous ownership fails closed: only a valid product marker and an explicit
+// no-such-process result authorize cleanup, including on non-Unix platforms.
+func benchmarkOwnerDead(marker []byte, probe func(int) error) bool {
+	parts := strings.Split(string(marker), "\n")
+	if len(parts) != 2 || parts[0] != "aios-benchmark-v1" {
+		return false
+	}
+	pid, e := strconv.Atoi(parts[1])
+	if e != nil || pid <= 0 {
+		return false
+	}
+	e = probe(pid)
+	return errors.Is(e, os.ErrProcessDone) || errors.Is(e, syscall.ESRCH)
 }

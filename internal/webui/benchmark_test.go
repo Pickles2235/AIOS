@@ -3,6 +3,7 @@ package webui
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/AdamNi-7080/AIOS/internal/benchmark"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/store"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 )
 
@@ -140,5 +142,44 @@ func TestBenchmarkMyKnowledgeFrozenReplay(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &second)
 	if second.SourceSnapshotSHA256 != first.SourceSnapshotSHA256 || second.Results[0].StaleExpectation {
 		t.Fatal("frozen replay drift")
+	}
+}
+
+func TestBenchmarkCleanupRequiresProvenDeadOwner(t *testing.T) {
+	marker := []byte(fmt.Sprintf("aios-benchmark-v1\n%d", os.Getpid()))
+	for _, e := range []error{nil, syscall.EPERM, fmt.Errorf("unsupported signal")} {
+		if benchmarkOwnerDead(marker, func(int) error { return e }) {
+			t.Fatal("ambiguous/live ownership deleted")
+		}
+	}
+	if !benchmarkOwnerDead(marker, func(int) error { return syscall.ESRCH }) {
+		t.Fatal("dead owned directory retained")
+	}
+	if benchmarkOwnerDead([]byte("malformed"), func(int) error { return syscall.ESRCH }) {
+		t.Fatal("malformed ownership deleted")
+	}
+	s := server(t)
+	defer s.Close()
+	s.session = "session"
+	s.csrf = "csrf"
+	live := filepath.Join(s.dataDir, ".benchmark-work-other-live")
+	if e := os.Mkdir(live, 0700); e != nil {
+		t.Fatal(e)
+	}
+	if e := os.WriteFile(filepath.Join(live, ".owner"), marker, 0600); e != nil {
+		t.Fatal(e)
+	}
+	unowned := filepath.Join(s.dataDir, ".benchmark-work-unowned")
+	if e := os.Mkdir(unowned, 0700); e != nil {
+		t.Fatal(e)
+	}
+	w := labRequest(t, s, "/api/v1/benchmarks/run", `{"mode":"demo"}`, true)
+	if w.Code != 200 {
+		t.Fatal(w.Body)
+	}
+	for _, path := range []string{live, unowned} {
+		if _, e := os.Stat(path); e != nil {
+			t.Fatal("other workspace removed", e)
+		}
 	}
 }
