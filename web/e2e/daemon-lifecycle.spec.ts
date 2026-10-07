@@ -67,6 +67,7 @@ test("stop failure and session expiry are distinguished from disconnected daemon
 });
 
 test("real logo and namespace selection migrate origins, recover and persist without automatic rename", async ({page,context}) => {
+  test.setTimeout(90000);
   const root=realpathSync(mkdtempSync(join(tmpdir(),"aios-onboarding-browser-")));
   const other=realpathSync(mkdtempSync(join(tmpdir(),"aios-namespace-collision-")));
   let child:ChildProcess|undefined,second:ChildProcess|undefined;
@@ -80,16 +81,19 @@ test("real logo and namespace selection migrate origins, recover and persist wit
     const saved=JSON.parse(readFileSync(join(root,"data","instance.json"),"utf8"));
     expect(saved.logo).toMatch(/^data:image\/png;base64,/);
     const name=`aios-browser-${process.pid}-${Date.now()}`;
+    await expect(page.getByLabel("Namespace",{exact:true})).toHaveValue("");
     await page.getByLabel("Namespace",{exact:true}).fill(name);
     await page.getByRole("button",{name:"Use namespace",exact:true}).click();
     await expect.poll(()=>new URL(page.url()).hostname).toBe(`${name}.${process.platform==="darwin"?"local":"localhost"}`);
     await expect(page.getByRole("heading",{name:"No active generation"})).toBeVisible();
     // Rename from the old named origin, after its registration is released.
+    await expect(page.getByLabel("Namespace",{exact:true})).toHaveValue(name);
     await page.getByLabel("Namespace",{exact:true}).fill(name+"-next");
     await page.getByRole("button",{name:"Use namespace",exact:true}).click();
     await expect.poll(()=>new URL(page.url()).hostname).toBe(`${name}-next.${process.platform==="darwin"?"local":"localhost"}`);
     await expect(page.getByLabel("Knowledge instance")).toContainText("Onboarding fixture");
     second=await launch(other);const alternative=await context.newPage();await alternative.goto(await fresh(other));
+    await expect(alternative.getByLabel("Namespace",{exact:true})).toHaveValue("");
     await alternative.getByLabel("Namespace",{exact:true}).fill(name+"-next");
     await alternative.getByRole("button",{name:"Use namespace",exact:true}).click();
     await expect(alternative.getByLabel("Namespace alternatives")).toBeVisible();

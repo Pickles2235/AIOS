@@ -47,17 +47,18 @@ test("Spotlight keyboard, truthful result states, cloud boundaries and stale evi
  await page.route("**/api/v1/projection?repo=repo",r=>r.fulfill({json:{repository:"repo",generation:"g",nodes:[entity],edges:[],truncated:true,applied_limits:{nodes:20,edges:20}}}));
  await page.route("**/api/v1/entity",r=>r.fulfill(stale?{status:409,json:{error:"handle is stale or unknown"}}:{json:entity}));
  await page.route("**/api/v1/evidence",r=>r.fulfill({json:{path:entity.path,generation:"g",git_commit:"commit",sha256:"hash",start_line:1,end_line:1,lines:["func Publish() {}"]}}));
- await page.route("**/api/v1/query",r=>{
+ await page.route("**/api/v1/investigation",r=>{
   expect(r.request().headers()["x-csrf-token"]).toBe("csrf");
   const kind=state==="empty"?"empty_query":state==="unsupported"?"unsupported_query":state==="unavailable"?"projection_unavailable":state==="unknown"?"coverage_incomplete":"deterministic_planner";
-  return r.fulfill({json:{status:["found","truncated"].includes(state)?"found":state==="not_found"?"not_found":"unknown",entities:["found","truncated"].includes(state)?[entity]:[],trace:[{kind,detail:kind}],truncated:state==="truncated",coverage:{complete:!["unknown","unavailable"].includes(state),generations:["g"],repositories:["repo"]},applied_limits:{results:20}}});
+  const found=["found","truncated"].includes(state);
+  return r.fulfill({json:{schema_version:1,query:"Publish",search_term:"Publish",intent:"question",status:found?"found":state==="not_found"?"not_found":"unknown",generations:["g"],freshness:[{id:"repo",generation:"g",revision:"r",active:true}],findings:found?[{entity,evidence:"v"}]:[],canonical_evidence:found?[{evidence:"v",repository:"repo",path:"src/a.go",generation:"g",start_line:1,end_line:1,lines:["func Publish() {}"]}]:[],relationships:[],unknowns:found?[]:[kind],budget:{results:12},truncated:state==="truncated",coverage:{complete:!["unknown","unavailable"].includes(state),generations:["g"],repositories:["repo"]}}});
  });
  await page.goto("/#token=test");await expect(page.getByLabel("Knowledge cloud",{exact:true})).toContainText("generation g · 1 nodes · 0 evidence-backed edges");
  const opener=page.getByRole("button",{name:"Open Spotlight"});await opener.focus();await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");
  const dialog=page.getByRole("dialog"),input=page.getByRole("combobox",{name:"Spotlight query"});await expect(input).toBeFocused();
  await page.keyboard.press("Escape");await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();
  await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");await input.fill("Publish");await input.press("Enter");await expect(page.getByRole("dialog").getByRole("option")).toContainText("Publish");await input.press("ArrowDown");await input.press("Enter");await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();await expect(page.getByLabel("Evidence inspector")).toContainText("Captured commit: commit · SHA256: hash");
- for(const [next,feedback] of [["empty","Enter a query"],["unsupported","Unsupported query:"],["unavailable","Search projection unavailable or stale"],["unknown","Unknown: coverage is incomplete"],["not_found","Not found:"],["truncated","Found bounded results"]]) {
+ for(const [next,feedback] of [["empty","Unknown: available evidence"],["unsupported","Unknown: available evidence"],["unavailable","Unknown: available evidence"],["unknown","Unknown: available evidence"],["not_found","Not found within complete"],["truncated","truncated"]]) {
   state=next;await opener.click();await input.fill(next==="empty"?"":next);await dialog.getByRole("button",{name:"Search captured evidence"}).click();await expect(dialog.getByRole("status")).toContainText(feedback);await page.keyboard.press("Escape");
  }
  stale=true;await page.getByRole("button",{name:"Publish",exact:true}).click();await expect(page.getByRole("alert")).toContainText("Stale selection");await expect(page.getByLabel("Evidence inspector")).not.toContainText("func Publish");
