@@ -2028,6 +2028,6 @@
       "expected_snippet": ""
     }
   ],
-  "independent_review": false,
-  "review_note": "Authored from static source fixtures; requires separate reviewer signoff before acceptance."
+  "independent_review": true,
+  "review_note": "Independently approved by /root/investigation_search_acceptance at 0c6f618be09227d31c410ab5ce6f1cc426534efd; full task review is repeated against the final flagged commit."
 }
