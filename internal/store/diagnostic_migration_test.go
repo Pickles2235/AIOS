@@ -29,7 +29,7 @@ func TestLegacyOperationalLedgerScrubPreservesCanonicalEvidence(t *testing.T) {
 	if err = db.ActivateGeneration(ctx, g.ID); err != nil {
 		t.Fatal(err)
 	}
-	_, err = db.DB().Exec(`INSERT INTO diagnostic_events VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, "legacy-"+secret, "EXTRACTION_FAILURE", "warning", time.Now().UTC().Format(time.RFC3339Nano), "repo", "revision", "generation", "/Users/planted-private/source", "lookup", "query-text", secret, "repair "+secret, `{"language":"java","build":"`+secret+`"}`, "", "resolved "+secret)
+	_, err = db.DB().Exec(`INSERT INTO diagnostic_events VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, "diag-h_"+secret, "EXTRACTION_FAILURE", "warning", time.Now().UTC().Format(time.RFC3339Nano), "repo", "revision", "generation", "/Users/planted-private/source", "lookup", "query-text", secret, "repair "+secret, `{"language":"java","build":"`+secret+`"}`, "", "resolved "+secret)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,6 +84,32 @@ func TestLegacyOperationalLedgerScrubPreservesCanonicalEvidence(t *testing.T) {
 	}
 	if strings.Contains(ledger, secret) || strings.Contains(ledger, "/Users/planted") || strings.Contains(failure, secret) || failure != "operation_failed" {
 		t.Fatal("legacy operational content remained")
+	}
+}
+
+func TestFreshOperationalIDThatLooksOpaqueIsHashed(t *testing.T) {
+	db, err := OpenWriter(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	secret := "sk-test-PLANTED_ID_SECRET_836"
+	provided := "diag-h_" + secret
+	event, err := db.RecordDiagnostic(context.Background(), model.DiagnosticEvent{
+		ID: provided, Code: DiagnosticIngestionFailure, Severity: model.DiagnosticWarning,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if event.ID != "diag-"+observability.Opaque(provided) {
+		t.Fatalf("untrusted ID was not hashed: %q", event.ID)
+	}
+	var persisted string
+	if err := db.DB().QueryRow(`SELECT diagnostic_id FROM diagnostic_events WHERE diagnostic_id=?`, event.ID).Scan(&persisted); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(persisted, secret) {
+		t.Fatal("planted ID secret persisted")
 	}
 }
 

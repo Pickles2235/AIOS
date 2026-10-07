@@ -41,7 +41,8 @@ func safeDiagnostic(event model.DiagnosticEvent) (model.DiagnosticEvent, error) 
 	if event.Resolution != "" {
 		event.Resolution = "resolved"
 	}
-	if event.ID != "" && !strings.HasPrefix(event.ID, "diag-h_") {
+	// Caller and legacy IDs are untrusted even when they resemble our output.
+	if event.ID != "" {
 		event.ID = "diag-" + observability.Opaque(event.ID)
 	}
 	if _, err := time.Parse(time.RFC3339Nano, event.Timestamp); err != nil {
