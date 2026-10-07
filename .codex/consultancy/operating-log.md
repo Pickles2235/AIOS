@@ -16,7 +16,8 @@ Finish the approved installable V1 completion mission. Acceptance is the full 15
 | Owner | Level and role | Scope | Status |
 |---|---|---|---|
 | `/root` | Manager / integration, senior | Mission scope, plan/state, integration, publication, final sign-off | Active |
-| `/root/investigation_search_delivery` | Senior delivery lead; `gpt-6-sol` / `medium` / `fork_turns=none` | Task 10 implementation and focused checks; code/tests only | Active |
+| `/root/investigation_search_delivery` | Senior delivery lead; `gpt-6-sol` / `medium` / `fork_turns=none` | Task 10 implementation; committed `917dab2c833b8c944b13f770a231c3a117090f36`; clean-tree core/web gates in progress | Active |
+| `/root/investigation_search_acceptance` | Senior independent reviewer; `gpt-6-sol` / `high` / `fork_turns=none` | Task 10 source/corpus review at `917dab2`; source-only pass first while gates run | Active |
 | `/root/cloud_gap_audit` | Principal read-only audit; `gpt-6-sol` / `high` / `fork_turns=none` | Task 11 baseline/gap analysis, no writes; completed audit, delivery dependency-blocked |
 | Reserved fresh agent | Mid or senior independent reviewer | Inspect task 10 corrected commit, evidence, and acceptance behavior | Required after candidate |
 
