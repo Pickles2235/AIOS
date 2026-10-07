@@ -38,7 +38,7 @@ export function KnowledgeCloud({
   selected?: string;
   inspect: (entity: Entity) => void;
   inspectClaim: (claim: Claim) => void;
-  onPromotion: () => void;
+  onPromotion: (invalidate: boolean) => void;
   investigation?: Investigation;
   resultHandles?: string[];
 }) {
@@ -92,7 +92,7 @@ export function KnowledgeCloud({
       );
       if (id !== requestID.current) return;
       const previous = current.current;
-      if (previous && previous.snapshot !== next.snapshot) onPromotion();
+      if (previous && previous.snapshot !== next.snapshot) onPromotion(false);
       if (poll && previous?.snapshot === next.snapshot) {
         setError("");
         return;
@@ -118,7 +118,7 @@ export function KnowledgeCloud({
       if (id !== requestID.current) return;
       // A removed scope cannot return a newer snapshot. Invalidate consumers
       // before attempting recovery so the inspector never keeps old evidence.
-      onPromotion();
+      onPromotion(true);
       setPicked(undefined);
       setError(
         `Cloud page unavailable or stale. ${e instanceof Error ? e.message : "Refresh to retry."}`,

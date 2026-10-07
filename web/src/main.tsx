@@ -491,8 +491,8 @@ function App() {
       <div className="knowledge-workspace">
         <div>
           <KnowledgeCloud
-            onPromotion={() => {
-              clearSelection();
+            onPromotion={(invalidate) => {
+              if (invalidate) clearSelection();
               void load();
             }}
             inspectClaim={(claim) => void inspectClaim(claim)}

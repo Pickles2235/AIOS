@@ -1,101 +1,648 @@
-import {expect, test} from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-test.beforeEach(async({page})=>{await page.route("**/api/v1/jobs",route=>route.fulfill({json:{jobs:[],mirror_interval_seconds:900,durable:true}}))});
+function cloud(entity?: any) {
+  return {
+    snapshot: entity?.generation || "empty",
+    level: entity ? "file" : "estate",
+    scope: entity ? "mock-file" : "",
+    label: entity?.path || "Estate",
+    nodes: entity
+      ? [
+          {
+            handle: entity.handle,
+            kind: entity.kind,
+            label: entity.label,
+            repository: entity.repository,
+            path: entity.path,
+            generation: entity.generation,
+            aggregate: false,
+            member_count: 1,
+            file_count: 1,
+            entity,
+          },
+        ]
+      : [],
+    edges: [],
+    total_nodes: entity ? 1 : 0,
+    total_entities: entity ? 1 : 0,
+    total_files: entity ? 1 : 0,
+    total_claims: 0,
+    edge_count: 0,
+    edges_truncated: false,
+    truncated: false,
+    generations: entity
+      ? [
+          {
+            id: entity.repository,
+            generation: entity.generation,
+            revision: "r",
+            active: true,
+          },
+        ]
+      : [],
+    coverage: { complete: true },
+    count_scope: "all captured descendants",
+  };
+}
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/v1/cloud?*", (r) => r.fulfill({ json: cloud() }));
+  await page.route("**/api/v1/activity", (r) =>
+    r.fulfill({ json: { events: [] } }),
+  );
+  await page.route("**/api/v1/source-actions", (r) =>
+    r.fulfill({ json: { generation: "g", revision: "r", actions: [] } }),
+  );
+});
 
-test.beforeEach(async({page})=>{await page.route("**/api/v1/resources",route=>route.fulfill({json:{state:"normal",power_source:"ac",load:.1,idle_seconds:0,queue_depth:0,running:0,oldest_job_age_seconds:0,oldest_job_max_wait_seconds:300,max_workers:1,max_queue:100,retention_bytes:524288,available_bytes:1<<30,owned_bytes:0,max_owned_bytes:100*(1<<30),storage_state:"available",observed_at:new Date(0).toISOString()}}))});
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/v1/jobs", (route) =>
+    route.fulfill({
+      json: { jobs: [], mirror_interval_seconds: 900, durable: true },
+    }),
+  );
+});
 
-test.beforeEach(async({page})=>{await page.route("**/api/v1/onboarding",route=>route.fulfill({json:{state:"unconfigured",completed_repositories:0}}));await page.route("**/api/v1/instance",route=>route.fulfill({json:{id:"instance",name:"AgentOS",seed_colour:"#5865f2"}}))});
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/v1/resources", (route) =>
+    route.fulfill({
+      json: {
+        state: "normal",
+        power_source: "ac",
+        load: 0.1,
+        idle_seconds: 0,
+        queue_depth: 0,
+        running: 0,
+        oldest_job_age_seconds: 0,
+        oldest_job_max_wait_seconds: 300,
+        max_workers: 1,
+        max_queue: 100,
+        retention_bytes: 524288,
+        available_bytes: 1 << 30,
+        owned_bytes: 0,
+        max_owned_bytes: 100 * (1 << 30),
+        storage_state: "available",
+        observed_at: new Date(0).toISOString(),
+      },
+    }),
+  );
+});
 
-test("renders only canonical generation data and supports keyboard selection", async ({page}) => {
-  await page.route("**/api/v1/session", route => route.fulfill({json:{csrf_token:"csrf"}}));
-  await page.route("**/api/v1/status", route => route.fulfill({json:{projection_state:"ready",repositories:[{id:"repo",generation:"g",revision:"r",active:true}]}}));
-  await page.route("**/api/v1/projection?repo=repo", route => route.fulfill({json:{repository:"repo",generation:"g",nodes:[{handle:"e",kind:"function",label:"Publish",identity:"",repository:"repo",path:"src/a.go",generation:"g",evidence:"v",confidence:.9,evidence_count:1,span:{start_line:1,end_line:1}}],edges:[{handle:"c",subject:"e",object:"e",predicate:"EMITS_EVENT",evidence:"v",confidence:.9,derivation:"syntax"}],truncated:false}}));
-  await page.route("**/api/v1/entity", route => route.fulfill({json:{handle:"e",kind:"function",label:"Publish",repository:"repo",path:"src/a.go",generation:"g",evidence:"v",span:{start_line:1,end_line:1}}}));
-  await page.route("**/api/v1/evidence", route => route.fulfill({json:{path:"src/a.go",start_line:1,end_line:1,lines:["func Publish() {}"]}}));
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/v1/onboarding", (route) =>
+    route.fulfill({
+      json: { state: "unconfigured", completed_repositories: 0 },
+    }),
+  );
+  await page.route("**/api/v1/instance", (route) =>
+    route.fulfill({
+      json: { id: "instance", name: "AgentOS", seed_colour: "#5865f2" },
+    }),
+  );
+});
+
+test("renders only canonical generation data and supports keyboard selection", async ({
+  page,
+}) => {
+  const canonical = {
+    handle: "e",
+    kind: "function",
+    label: "Publish",
+    identity: "",
+    repository: "repo",
+    path: "src/a.go",
+    generation: "g",
+    evidence: "v",
+    confidence: 0.9,
+    evidence_count: 1,
+    span: { start_line: 1, end_line: 1 },
+  };
+  await page.route("**/api/v1/cloud?*", (r) =>
+    r.fulfill({ json: cloud(canonical) }),
+  );
+  await page.route("**/api/v1/session", (route) =>
+    route.fulfill({ json: { csrf_token: "csrf" } }),
+  );
+  await page.route("**/api/v1/status", (route) =>
+    route.fulfill({
+      json: {
+        projection_state: "ready",
+        repositories: [
+          { id: "repo", generation: "g", revision: "r", active: true },
+        ],
+      },
+    }),
+  );
+  await page.route("**/api/v1/projection?repo=repo", (route) =>
+    route.fulfill({
+      json: {
+        repository: "repo",
+        generation: "g",
+        nodes: [
+          {
+            handle: "e",
+            kind: "function",
+            label: "Publish",
+            identity: "",
+            repository: "repo",
+            path: "src/a.go",
+            generation: "g",
+            evidence: "v",
+            confidence: 0.9,
+            evidence_count: 1,
+            span: { start_line: 1, end_line: 1 },
+          },
+        ],
+        edges: [
+          {
+            handle: "c",
+            subject: "e",
+            object: "e",
+            predicate: "EMITS_EVENT",
+            evidence: "v",
+            confidence: 0.9,
+            derivation: "syntax",
+          },
+        ],
+        truncated: false,
+      },
+    }),
+  );
+  await page.route("**/api/v1/entity", (route) =>
+    route.fulfill({
+      json: {
+        handle: "e",
+        kind: "function",
+        label: "Publish",
+        repository: "repo",
+        path: "src/a.go",
+        generation: "g",
+        evidence: "v",
+        span: { start_line: 1, end_line: 1 },
+      },
+    }),
+  );
+  await page.route("**/api/v1/evidence", (route) =>
+    route.fulfill({
+      json: {
+        path: "src/a.go",
+        start_line: 1,
+        end_line: 1,
+        lines: ["func Publish() {}"],
+      },
+    }),
+  );
   await page.goto("/#token=test");
-  await expect(page.getByRole("heading",{name:"Knowledge map"})).toBeVisible();
-  const entity=page.getByRole("button",{name:"Publish",exact:true});await entity.focus();await page.keyboard.press("Enter");await expect(page.getByLabel("Evidence inspector")).toContainText("src/a.go");
+  await expect(
+    page.getByRole("heading", { name: "Knowledge map" }),
+  ).toBeVisible();
+  const entity = page.getByRole("button", { name: "Publish", exact: true });
+  await entity.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Evidence inspector")).toContainText("src/a.go");
 });
-test("reports no active generation without claiming loss",async({page})=>{await page.route("**/api/v1/session",route=>route.fulfill({json:{csrf_token:"csrf"}}));await page.route("**/api/v1/status",route=>route.fulfill({json:{projection_state:"no_active_generation",repositories:[]}}));await page.goto("/#token=test");await expect(page.getByText("No repository checkout has been changed.")).toBeVisible()});
-test("keeps canonical knowledge safe when a projection is unavailable",async({page})=>{await page.route("**/api/v1/session",route=>route.fulfill({json:{csrf_token:"csrf"}}));await page.route("**/api/v1/status",route=>route.fulfill({json:{projection_state:"unavailable",repositories:[{id:"repo",active:true}]}}));await page.goto("/#token=test");await expect(page.getByText("Knowledge is safe")).toBeVisible();await expect(page.getByText("Canonical source evidence remains intact")).toBeVisible()});
-
-test("saves and displays instance branding in the live entry point",async({page})=>{
- let instance={id:"stable",name:"AgentOS",seed_colour:"#5865f2"};
- await page.route("**/api/v1/instance",route=>{if(route.request().method()==="POST")instance={...instance,...route.request().postDataJSON()};return route.fulfill({json:instance})});
- await page.route("**/api/v1/session",r=>r.fulfill({json:{csrf_token:"csrf"}}));
- await page.route("**/api/v1/status",r=>r.fulfill({json:{projection_state:"no_active_generation",repositories:[]}}));
- await page.goto("/#token=test");await page.getByRole("button",{name:"Edit instance"}).click();await page.getByLabel("Instance name").fill("Research");await page.getByRole("button",{name:"Save instance"}).click();await expect(page.getByLabel("Knowledge instance")).toContainText("Research");expect(instance.id).toBe("stable");
+test("reports no active generation without claiming loss", async ({ page }) => {
+  await page.route("**/api/v1/session", (route) =>
+    route.fulfill({ json: { csrf_token: "csrf" } }),
+  );
+  await page.route("**/api/v1/status", (route) =>
+    route.fulfill({
+      json: { projection_state: "no_active_generation", repositories: [] },
+    }),
+  );
+  await page.goto("/#token=test");
+  await expect(
+    page.getByText("No repository checkout has been changed."),
+  ).toBeVisible();
 });
-
-test("first-run setup renders staged status before promotion",async({page})=>{
- let state="unconfigured",ready=false;
- await page.route("**/api/v1/session",r=>r.fulfill({json:{csrf_token:"csrf"}}));
- await page.route("**/api/v1/status",r=>r.fulfill({json:{projection_state:ready?"ready":"no_active_generation",repositories:[]}}));
- await page.route("**/api/v1/onboarding/configure",r=>{expect(r.request().headers()["x-csrf-token"]).toBe("csrf");return r.fulfill({json:{state:"configured"}})});
- await page.route("**/api/v1/onboarding/preview",r=>r.fulfill({json:{valid:true,repositories:[{id:"repo",valid:true,files:1,languages:["java"],frameworks:[],exclusions:{}}]}}));
- await page.route("**/api/v1/activity",r=>r.fulfill({json:{events:[]}}));
- await page.route("**/api/v1/onboarding/start",r=>{state="ingesting";return r.fulfill({status:202,json:{state,completed_repositories:1}})});
- await page.route("**/api/v1/onboarding",r=>r.fulfill({json:{state,completed_repositories:state==="ingesting"?1:0}}));
- await page.goto("/#token=test");await page.getByLabel("id 1",{exact:true}).fill("repo");await page.getByLabel("url 1",{exact:true}).fill("https://github.com/example/approved.git");await page.getByRole("button",{name:"Preview scope"}).click();await expect(page.getByText("Sources validated")).toBeVisible();await page.getByRole("button",{name:"Sync and index"}).click();await expect(page.getByText("1 mirrors synchronized. Compiling snapshots…")).toBeVisible();await expect(page.getByLabel("Repository setup")).not.toBeVisible();state="ready";ready=true;await expect(page.getByRole("heading",{name:"Knowledge map"})).toBeVisible();
-});
-
-test("Spotlight keyboard, truthful result states, cloud boundaries and stale evidence", async({page}) => {
- const entity={handle:"e",kind:"function",label:"Publish",identity:"",repository:"repo",path:"src/a.go",generation:"g",evidence:"v",confidence:.9,evidence_count:1,span:{start_line:1,end_line:1}};
- let state="found",stale=false;
- await page.route("**/api/v1/session",r=>r.fulfill({json:{csrf_token:"csrf"}}));
- await page.route("**/api/v1/status",r=>r.fulfill({json:{projection_state:"ready",repositories:[{id:"repo",generation:"g",active:true}]}}));
- await page.route("**/api/v1/projection?repo=repo",r=>r.fulfill({json:{repository:"repo",generation:"g",nodes:[entity],edges:[],truncated:true,applied_limits:{nodes:20,edges:20}}}));
- await page.route("**/api/v1/entity",r=>r.fulfill(stale?{status:409,json:{error:"handle is stale or unknown"}}:{json:entity}));
- await page.route("**/api/v1/evidence",r=>r.fulfill({json:{path:entity.path,generation:"g",git_commit:"commit",sha256:"hash",start_line:1,end_line:1,lines:["func Publish() {}"]}}));
- await page.route("**/api/v1/investigation",r=>{
-  expect(r.request().headers()["x-csrf-token"]).toBe("csrf");
-  const kind=state==="empty"?"empty_query":state==="unsupported"?"unsupported_query":state==="unavailable"?"projection_unavailable":state==="unknown"?"coverage_incomplete":"deterministic_planner";
-  const found=["found","truncated"].includes(state);
-  return r.fulfill({json:{schema_version:1,query:"Publish",search_term:"Publish",intent:"question",status:found?"found":state==="not_found"?"not_found":"unknown",generations:["g"],freshness:[{id:"repo",generation:"g",revision:"r",active:true}],findings:found?[{entity,evidence:"v"}]:[],canonical_evidence:found?[{evidence:"v",repository:"repo",path:"src/a.go",generation:"g",start_line:1,end_line:1,lines:["func Publish() {}"]}]:[],relationships:[],unknowns:found?[]:[kind],budget:{results:12},truncated:state==="truncated",coverage:{complete:!["unknown","unavailable"].includes(state),generations:["g"],repositories:["repo"]}}});
- });
- await page.goto("/#token=test");await expect(page.getByLabel("Knowledge cloud",{exact:true})).toContainText("generation g · 1 nodes · 0 evidence-backed edges");
- const opener=page.getByRole("button",{name:"Open Spotlight"});await opener.focus();await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");
- const dialog=page.getByRole("dialog"),input=page.getByRole("combobox",{name:"Spotlight query"});await expect(input).toBeFocused();
- await page.keyboard.press("Escape");await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();
- await page.keyboard.press(process.platform === "darwin" ? "Meta+k" : "Control+k");await input.fill("Publish");await input.press("Enter");await expect(page.getByRole("dialog").getByRole("option")).toContainText("Publish");await input.press("ArrowDown");await input.press("Enter");await expect(dialog).not.toBeVisible();await expect(opener).toBeFocused();await expect(page.getByLabel("Evidence inspector")).toContainText("Captured commit: commit · SHA256: hash");
- for(const [next,feedback] of [["empty","Unknown: available evidence"],["unsupported","Unknown: available evidence"],["unavailable","Unknown: available evidence"],["unknown","Unknown: available evidence"],["not_found","Not found within complete"],["truncated","truncated"]]) {
-  state=next;await opener.click();await input.fill(next==="empty"?"":next);await dialog.getByRole("button",{name:"Search captured evidence"}).click();await expect(dialog.getByRole("status")).toContainText(feedback);await page.keyboard.press("Escape");
- }
- stale=true;await page.getByRole("button",{name:"Publish",exact:true}).click();await expect(page.getByRole("alert")).toContainText("Stale selection");await expect(page.getByLabel("Evidence inspector")).not.toContainText("func Publish");
+test("keeps canonical knowledge safe when a projection is unavailable", async ({
+  page,
+}) => {
+  await page.route("**/api/v1/session", (route) =>
+    route.fulfill({ json: { csrf_token: "csrf" } }),
+  );
+  await page.route("**/api/v1/status", (route) =>
+    route.fulfill({
+      json: {
+        projection_state: "unavailable",
+        repositories: [{ id: "repo", active: true }],
+      },
+    }),
+  );
+  await page.goto("/#token=test");
+  await expect(page.getByText("Knowledge is safe")).toBeVisible();
+  await expect(
+    page.getByText("Canonical source evidence remains intact"),
+  ).toBeVisible();
 });
 
-test("completion refresh preserves current evidence and retires old views",async({page})=>{
- let state="ingesting",generation="new",holdStatus=false,releaseStatus:()=>void=()=>{},statusStarted:()=>void=()=>{};
- const entity=()=>({handle:`e-${generation}`,kind:"function",label:"Publish",repository:"repo",path:"src/a.go",generation,evidence:"v",confidence:.9,evidence_count:1,span:{start_line:1,end_line:1}});
- await page.route("**/api/v1/session",r=>r.fulfill({json:{csrf_token:"csrf"}}));
- await page.route("**/api/v1/onboarding",r=>r.fulfill({json:{state,completed_repositories:1}}));
- await page.route("**/api/v1/activity",r=>r.fulfill({json:{events:[]}}));
- await page.route("**/api/v1/status",async r=>{
-  const snapshot=generation;
-  if(holdStatus){holdStatus=false;statusStarted();await new Promise<void>(done=>{releaseStatus=done})}
-  await r.fulfill({json:{projection_state:"ready",repositories:[{id:"repo",generation:snapshot,active:true}]}});
- });
- await page.route("**/api/v1/projection?repo=repo",r=>r.fulfill({json:{repository:"repo",generation,nodes:[entity()],edges:[],truncated:false}}));
- await page.route("**/api/v1/entity",r=>r.fulfill({json:entity()}));
- await page.route("**/api/v1/evidence",r=>r.fulfill({json:{path:"src/a.go",generation,start_line:1,end_line:1,lines:["func Publish() {}"]}}));
- await page.route("**/api/v1/query",r=>r.fulfill({json:{status:"found",entities:[entity()],trace:[],coverage:{complete:true,generations:[generation],repositories:["repo"]}}}));
- await page.goto("/#token=test");await expect(page.getByLabel("Indexing activity")).toBeVisible();
- // Capture the completion status before a promotion, then let newer evidence
- // arrive before that response. The refresh must re-read instead of retiring it.
- holdStatus=true;const started=new Promise<void>(done=>{statusStarted=done});state="ready";await started;
- generation="promoted";await page.getByLabel("Query",{exact:true}).fill("Publish");await page.getByRole("button",{name:"Search",exact:true}).click();
- await expect(page.getByLabel("Evidence inspector")).toContainText("generation promoted");releaseStatus();
- await expect(page.getByLabel("Indexing activity")).not.toBeVisible();
- await expect(page.getByLabel("Knowledge cloud",{exact:true})).toContainText("generation promoted");
- await expect(page.getByLabel("Evidence inspector")).toContainText("func Publish() {}");
- await expect(page.getByLabel("Query results")).toContainText("Publish");
- await page.getByRole("button",{name:"Refresh",exact:true}).click();
- await expect(page.getByLabel("Evidence inspector")).toContainText("func Publish() {}");
- generation="retired-replacement";await page.getByRole("button",{name:"Refresh",exact:true}).click();
- await expect(page.getByLabel("Knowledge cloud",{exact:true})).toContainText("generation retired-replacement");
- await expect(page.getByLabel("Evidence inspector")).toContainText("Select an entity");await expect(page.getByLabel("Query results")).not.toBeVisible();
- // Removing the final repository during a build must leave no polling card.
- state="ingesting";await page.getByRole("button",{name:"Refresh",exact:true}).click();await expect(page.getByLabel("Indexing activity")).toBeVisible();
- state="unconfigured";await page.route("**/api/v1/status",r=>r.fulfill({json:{projection_state:"no_active_generation",repositories:[]}}));
- await page.getByRole("button",{name:"Refresh",exact:true}).click();await expect(page.getByLabel("Indexing activity")).not.toBeVisible();await expect(page.getByRole("heading",{name:"No active generation"})).toBeVisible();
+test("saves and displays instance branding in the live entry point", async ({
+  page,
+}) => {
+  let instance = { id: "stable", name: "AgentOS", seed_colour: "#5865f2" };
+  await page.route("**/api/v1/instance", (route) => {
+    if (route.request().method() === "POST")
+      instance = { ...instance, ...route.request().postDataJSON() };
+    return route.fulfill({ json: instance });
+  });
+  await page.route("**/api/v1/session", (r) =>
+    r.fulfill({ json: { csrf_token: "csrf" } }),
+  );
+  await page.route("**/api/v1/status", (r) =>
+    r.fulfill({
+      json: { projection_state: "no_active_generation", repositories: [] },
+    }),
+  );
+  await page.goto("/#token=test");
+  await page.getByRole("button", { name: "Edit instance" }).click();
+  await page.getByLabel("Instance name").fill("Research");
+  await page.getByRole("button", { name: "Save instance" }).click();
+  await expect(page.getByLabel("Knowledge instance")).toContainText("Research");
+  expect(instance.id).toBe("stable");
+});
+
+test("first-run setup renders staged status before promotion", async ({
+  page,
+}) => {
+  let state = "unconfigured",
+    ready = false;
+  await page.route("**/api/v1/session", (r) =>
+    r.fulfill({ json: { csrf_token: "csrf" } }),
+  );
+  await page.route("**/api/v1/status", (r) =>
+    r.fulfill({
+      json: {
+        projection_state: ready ? "ready" : "no_active_generation",
+        repositories: [],
+      },
+    }),
+  );
+  await page.route("**/api/v1/onboarding/configure", (r) => {
+    expect(r.request().headers()["x-csrf-token"]).toBe("csrf");
+    return r.fulfill({ json: { state: "configured" } });
+  });
+  await page.route("**/api/v1/onboarding/preview", (r) =>
+    r.fulfill({
+      json: {
+        valid: true,
+        repositories: [
+          {
+            id: "repo",
+            valid: true,
+            files: 1,
+            languages: ["java"],
+            frameworks: [],
+            exclusions: {},
+          },
+        ],
+      },
+    }),
+  );
+  await page.route("**/api/v1/activity", (r) =>
+    r.fulfill({ json: { events: [] } }),
+  );
+  await page.route("**/api/v1/onboarding/start", (r) => {
+    state = "ingesting";
+    return r.fulfill({
+      status: 202,
+      json: { state, completed_repositories: 1 },
+    });
+  });
+  await page.route("**/api/v1/onboarding", (r) =>
+    r.fulfill({
+      json: { state, completed_repositories: state === "ingesting" ? 1 : 0 },
+    }),
+  );
+  await page.goto("/#token=test");
+  await page.getByLabel("id 1", { exact: true }).fill("repo");
+  await page
+    .getByLabel("url 1", { exact: true })
+    .fill("https://github.com/example/approved.git");
+  await page.getByRole("button", { name: "Preview scope" }).click();
+  await expect(page.getByText("Sources validated")).toBeVisible();
+  await page.getByRole("button", { name: "Sync and index" }).click();
+  await expect(
+    page.getByText("1 mirrors synchronized. Compiling snapshots…"),
+  ).toBeVisible();
+  await expect(page.getByLabel("Repository setup")).not.toBeVisible();
+  state = "ready";
+  ready = true;
+  await expect(
+    page.getByRole("heading", { name: "Knowledge map" }),
+  ).toBeVisible();
+});
+
+test("Spotlight keyboard, truthful result states, cloud boundaries and stale evidence", async ({
+  page,
+}) => {
+  const entity = {
+    handle: "e",
+    kind: "function",
+    label: "Publish",
+    identity: "",
+    repository: "repo",
+    path: "src/a.go",
+    generation: "g",
+    evidence: "v",
+    confidence: 0.9,
+    evidence_count: 1,
+    span: { start_line: 1, end_line: 1 },
+  };
+  let state = "found",
+    stale = false;
+  await page.route("**/api/v1/cloud?*", (r) =>
+    r.fulfill({ json: cloud(entity) }),
+  );
+  await page.route("**/api/v1/session", (r) =>
+    r.fulfill({ json: { csrf_token: "csrf" } }),
+  );
+  await page.route("**/api/v1/status", (r) =>
+    r.fulfill({
+      json: {
+        projection_state: "ready",
+        repositories: [{ id: "repo", generation: "g", active: true }],
+      },
+    }),
+  );
+  await page.route("**/api/v1/projection?repo=repo", (r) =>
+    r.fulfill({
+      json: {
+        repository: "repo",
+        generation: "g",
+        nodes: [entity],
+        edges: [],
+        truncated: true,
+        applied_limits: { nodes: 20, edges: 20 },
+      },
+    }),
+  );
+  await page.route("**/api/v1/entity", (r) =>
+    r.fulfill(
+      stale
+        ? { status: 409, json: { error: "handle is stale or unknown" } }
+        : { json: entity },
+    ),
+  );
+  await page.route("**/api/v1/evidence", (r) =>
+    r.fulfill({
+      json: {
+        path: entity.path,
+        generation: "g",
+        git_commit: "commit",
+        sha256: "hash",
+        start_line: 1,
+        end_line: 1,
+        lines: ["func Publish() {}"],
+      },
+    }),
+  );
+  await page.route("**/api/v1/investigation", (r) => {
+    expect(r.request().headers()["x-csrf-token"]).toBe("csrf");
+    const kind =
+      state === "empty"
+        ? "empty_query"
+        : state === "unsupported"
+          ? "unsupported_query"
+          : state === "unavailable"
+            ? "projection_unavailable"
+            : state === "unknown"
+              ? "coverage_incomplete"
+              : "deterministic_planner";
+    const found = ["found", "truncated"].includes(state);
+    return r.fulfill({
+      json: {
+        schema_version: 1,
+        query: "Publish",
+        search_term: "Publish",
+        intent: "question",
+        status: found
+          ? "found"
+          : state === "not_found"
+            ? "not_found"
+            : "unknown",
+        generations: ["g"],
+        freshness: [
+          { id: "repo", generation: "g", revision: "r", active: true },
+        ],
+        findings: found ? [{ entity, evidence: "v" }] : [],
+        canonical_evidence: found
+          ? [
+              {
+                evidence: "v",
+                repository: "repo",
+                path: "src/a.go",
+                generation: "g",
+                start_line: 1,
+                end_line: 1,
+                lines: ["func Publish() {}"],
+              },
+            ]
+          : [],
+        relationships: [],
+        unknowns: found ? [] : [kind],
+        budget: { results: 12 },
+        truncated: state === "truncated",
+        coverage: {
+          complete: !["unknown", "unavailable"].includes(state),
+          generations: ["g"],
+          repositories: ["repo"],
+        },
+      },
+    });
+  });
+  await page.goto("/#token=test");
+  await expect(
+    page.getByLabel("Knowledge cloud", { exact: true }),
+  ).toContainText("1 of 1 items on this page");
+  const opener = page.getByRole("button", { name: "Open Spotlight" });
+  await opener.focus();
+  await page.keyboard.press(
+    process.platform === "darwin" ? "Meta+k" : "Control+k",
+  );
+  const dialog = page.getByRole("dialog"),
+    input = page.getByRole("combobox", { name: "Spotlight query" });
+  await expect(input).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(opener).toBeFocused();
+  await page.keyboard.press(
+    process.platform === "darwin" ? "Meta+k" : "Control+k",
+  );
+  await input.fill("Publish");
+  await input.press("Enter");
+  await expect(page.getByRole("dialog").getByRole("option")).toContainText(
+    "Publish",
+  );
+  await input.press("ArrowDown");
+  await input.press("Enter");
+  await expect(dialog).not.toBeVisible();
+  await expect(opener).toBeFocused();
+  await expect(page.getByLabel("Evidence inspector")).toContainText(
+    "Captured commit: commit · SHA256: hash",
+  );
+  for (const [next, feedback] of [
+    ["empty", "Unknown: available evidence"],
+    ["unsupported", "Unknown: available evidence"],
+    ["unavailable", "Unknown: available evidence"],
+    ["unknown", "Unknown: available evidence"],
+    ["not_found", "Not found within complete"],
+    ["truncated", "truncated"],
+  ]) {
+    state = next;
+    await opener.click();
+    await input.fill(next === "empty" ? "" : next);
+    await dialog
+      .getByRole("button", { name: "Search captured evidence" })
+      .click();
+    await expect(dialog.getByRole("status")).toContainText(feedback);
+    await page.keyboard.press("Escape");
+  }
+  stale = true;
+  await page
+    .getByLabel("Evidence navigation")
+    .getByRole("button", { name: "Publish", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("Stale selection");
+  await expect(page.getByLabel("Evidence inspector")).not.toContainText(
+    "func Publish",
+  );
+});
+
+test("completion refresh preserves current evidence and retires old views", async ({
+  page,
+}) => {
+  let state = "ingesting",
+    generation = "new",
+    holdStatus = false,
+    releaseStatus: () => void = () => {},
+    statusStarted: () => void = () => {};
+  const entity = () => ({
+    handle: `e-${generation}`,
+    kind: "function",
+    label: "Publish",
+    repository: "repo",
+    path: "src/a.go",
+    generation,
+    evidence: "v",
+    confidence: 0.9,
+    evidence_count: 1,
+    span: { start_line: 1, end_line: 1 },
+  });
+  await page.route("**/api/v1/session", (r) =>
+    r.fulfill({ json: { csrf_token: "csrf" } }),
+  );
+  await page.route("**/api/v1/onboarding", (r) =>
+    r.fulfill({ json: { state, completed_repositories: 1 } }),
+  );
+  await page.route("**/api/v1/activity", (r) =>
+    r.fulfill({ json: { events: [] } }),
+  );
+  await page.route("**/api/v1/status", async (r) => {
+    const snapshot = generation;
+    if (holdStatus) {
+      holdStatus = false;
+      statusStarted();
+      await new Promise<void>((done) => {
+        releaseStatus = done;
+      });
+    }
+    await r.fulfill({
+      json: {
+        projection_state: "ready",
+        repositories: [{ id: "repo", generation: snapshot, active: true }],
+      },
+    });
+  });
+  await page.route("**/api/v1/projection?repo=repo", (r) =>
+    r.fulfill({
+      json: {
+        repository: "repo",
+        generation,
+        nodes: [entity()],
+        edges: [],
+        truncated: false,
+      },
+    }),
+  );
+  await page.route("**/api/v1/cloud?*", (r) =>
+    r.fulfill({ json: cloud(entity()) }),
+  );
+  await page.route("**/api/v1/entity", (r) => r.fulfill({ json: entity() }));
+  await page.route("**/api/v1/evidence", (r) =>
+    r.fulfill({
+      json: {
+        path: "src/a.go",
+        generation,
+        start_line: 1,
+        end_line: 1,
+        lines: ["func Publish() {}"],
+      },
+    }),
+  );
+  await page.route("**/api/v1/query", (r) =>
+    r.fulfill({
+      json: {
+        status: "found",
+        entities: [entity()],
+        trace: [],
+        coverage: {
+          complete: true,
+          generations: [generation],
+          repositories: ["repo"],
+        },
+      },
+    }),
+  );
+  await page.goto("/#token=test");
+  await expect(page.getByLabel("Indexing activity")).toBeVisible();
+  // Capture the completion status before a promotion, then let newer evidence
+  // arrive before that response. The refresh must re-read instead of retiring it.
+  holdStatus = true;
+  const started = new Promise<void>((done) => {
+    statusStarted = done;
+  });
+  state = "ready";
+  await started;
+  generation = "promoted";
+  await page.getByLabel("Query", { exact: true }).fill("Publish");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.getByLabel("Evidence inspector")).toContainText(
+    "generation promoted",
+  );
+  releaseStatus();
+  await expect(page.getByLabel("Indexing activity")).not.toBeVisible();
+  await expect(
+    page.getByLabel("Knowledge cloud", { exact: true }),
+  ).toContainText("generation promoted");
+  await expect(page.getByLabel("Evidence inspector")).toContainText(
+    "func Publish() {}",
+  );
+  await expect(page.getByLabel("Query results")).toContainText("Publish");
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByLabel("Evidence inspector")).toContainText(
+    "func Publish() {}",
+  );
+  generation = "retired-replacement";
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(
+    page.getByLabel("Knowledge cloud", { exact: true }),
+  ).toContainText("generation retired-replacement");
+  await expect(page.getByLabel("Evidence inspector")).toContainText(
+    "Select an entity",
+  );
+  await expect(page.getByLabel("Query results")).not.toBeVisible();
+  // Removing the final repository during a build must leave no polling card.
+  state = "ingesting";
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByLabel("Indexing activity")).toBeVisible();
+  state = "unconfigured";
+  await page.route("**/api/v1/status", (r) =>
+    r.fulfill({
+      json: { projection_state: "no_active_generation", repositories: [] },
+    }),
+  );
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(page.getByLabel("Indexing activity")).not.toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "No active generation" }),
+  ).toBeVisible();
 });

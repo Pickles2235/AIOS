@@ -35,7 +35,8 @@ may require additional pages or a refined query.
 Build activity is labelled as staging and is never queryable evidence. The active
 cloud changes only after a real generation promotion. Comparable page changes
 animate entering and leaving members. Replacing a paginated or focused page is
-labelled as a page replacement, not as a complete knowledge delta. Reduced motion
+labelled as a page replacement, not as a complete knowledge delta. Observed member entry/removal, selection focus and stage highlights last 600 ms.
+They never delay a query or promotion. Reduced motion
 keeps the same information with immediate position changes. Graphics context
 loss leaves the evidence list usable and restores the view from the current page.
 
