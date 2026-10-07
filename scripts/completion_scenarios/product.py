@@ -950,6 +950,35 @@ class ProductScenarios(unittest.TestCase):
             self.check(api('/api/v1/status') == before, 'Demo never contaminates user knowledge')
             self.check(run['baseline_invocation'] and run['indexing_cost'] and run['temperature'] in ('cold', 'warm'),
                        'transparent baseline/index/temperature costs')
+            exported = api('/api/v1/benchmarks/export')
+            self.check(exported == run, 'persisted per-query export is exact run')
+            self.check(not list(data.glob('.benchmark-work-*')), 'temporary corpus removed')
+            self.check(all(r['estimated_tokens'] == (r['context_bytes'] + 3) // 4 for r in run['results']),
+                       'explicit token formula over actual JSON bytes')
+        source = fixture(self.root / 'benchmark-source')
+        fingerprint = source_fingerprint(source)
+        with self.server() as (api, data, origin):
+            self.configure(api, source)
+            cases = [{'id':'known-worker','query':'Worker','expected_repository':'fixture',
+                      'expected_path':'src/Worker.java','expected_state':'found'}]
+            api('/api/v1/benchmarks/cases', {'cases': cases})
+            before = api('/api/v1/status')
+            first = api('/api/v1/benchmarks/run', {'mode':'my_knowledge'})
+            self.check(first['source_snapshot_sha256'] == first['baseline_snapshot_sha256'],
+                       'My Knowledge actual manifest parity')
+            self.check(api('/api/v1/status') == before, 'My Knowledge leaves active state unchanged')
+            bound = api('/api/v1/benchmarks/cases')['cases']
+            self.check(bound[0]['declared_snapshot'] == first['source_snapshot_sha256'],
+                       'case binds to indexed snapshot')
+        with self.server(data) as (api, _, _):
+            self.check(api('/api/v1/benchmarks/cases')['cases'] == bound, 'cases survive process restart')
+            replay = api('/api/v1/benchmarks/run', {'mode':'my_knowledge'})
+            self.check(replay['source_snapshot_sha256'] == first['source_snapshot_sha256'],
+                       'replay uses identical indexed bytes')
+            self.check(not replay['results'][0]['stale_expectation'], 'unchanged expectations remain current')
+            api('/api/v1/benchmarks/run', {'mode':'arbitrary'}, expected=400)
+            api('/api/v1/benchmarks/run', {'mode':'demo'}, expected=403, authenticated=False)
+        self.check(source_fingerprint(source) == fingerprint, 'benchmark never mutates source')
 
     def test_benchmark_losses_unknown(self):
         with self.server() as (api, data, origin):
@@ -958,7 +987,18 @@ class ProductScenarios(unittest.TestCase):
             self.check(any(r['grep_wins'] for r in rows), 'demonstrated literal baseline win retained')
             self.check(any(r['kb_state'] == 'unknown' and not r['kb_correct'] for r in rows),
                        'unknown not scored as correct')
-            self.check(any(not r['kb_correct'] for r in rows), 'incorrect KB outcomes retained')
+            operator = next(r for r in rows if r['case']['id'] == 'operator-exploratory')
+            self.check(operator['case']['query'] == '->>' and
+                       operator['case']['expected_path'] == 'docs/sequence.md' and
+                       operator['case']['expected_line'] == 1 and
+                       operator['case']['expected_snippet'] == 'Client->>Ledger: refund',
+                       'operator expectation is predeclared source-grounded target')
+            self.check(operator['kb_outcome'] == 'unsupported' and not operator['kb_correct'] and
+                       operator['grep_correct'] and operator['baseline_metrics']['evidence'][0]['line'] == 1,
+                       'literal operator win is an unsupported KB miss, not a fabricated factual error')
+            ambiguous = next(r for r in rows if r['case']['id'] == 'duplicate-name-ambiguous')
+            self.check(ambiguous['kb_outcome'] == 'state_mismatch' and not ambiguous['state_correct'],
+                       'ambiguity classification miss retained separately')
             self.check(all('source_bytes_read' in r and 'context_bytes' in r and 'estimated_tokens' in r for r in rows),
                        'per-query machine-readable source/context/token metrics')
 

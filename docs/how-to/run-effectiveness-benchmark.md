@@ -27,3 +27,10 @@ see [`../acceptance-handoff.md`](../acceptance-handoff.md). It may use generic f
 or voluntarily supplied repositories. No private estate is a release prerequisite.
 The ordinary benchmark does not establish assembled-product readiness: the
 [completion acceptance contract](../../.codex/completion/ACCEPTANCE.md) defines that gate.
+
+The live [Benchmark Lab](benchmark-lab.md) adds isolated Demo and persistent My
+Knowledge regressions. The older CLI fixture runner labels its baseline as an
+in-process case-insensitive fixed-string scan of frozen owned bytes, not ripgrep.
+Its `manifest_read_ms` is an `ActiveFiles` read cost, not warm indexing. Unknown
+state classification is separate from answer correctness. See each report's
+measurement notes before comparing costs.

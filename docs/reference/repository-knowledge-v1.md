@@ -259,7 +259,9 @@ The report records each question's fixture revision and query class, expected
 and returned evidence, plus exact-only, lexical-only, structural-only,
 graph-only, and hybrid measurements. Hybrid comparisons are deterministic and
 provenance-backed; they do not claim general effectiveness beyond the checked-in
-fixture. It also retains a literal file-read baseline comparable to ripgrep.
+fixture. It also retains a Go literal file-read baseline over frozen owned bytes;
+it does not invoke ripgrep. See the live [Benchmark Lab](../how-to/benchmark-lab.md)
+for isolated Demo and saved My Knowledge regression comparisons.
 For each case it additionally reports the bounded context-package byte size,
 estimated token count, source lines, answer and provenance correctness, and a
 matching unbounded canonical-context reference for size comparison. Token

@@ -8,6 +8,7 @@ import { RepositoryManagement } from "./repository-management";
 import { InstanceBrand, type Instance } from "./instance-brand";
 import { SourceActions } from "./source-actions";
 import { KnowledgeCloud } from "./knowledge-cloud";
+import { BenchmarkLab } from "./benchmark-lab";
 import { Diagnostics } from "./diagnostics";
 import { Spotlight } from "./spotlight";
 import {
@@ -439,6 +440,7 @@ function App() {
           Stop daemon
         </button>
       </header>
+      <BenchmarkLab request={request} />
       {daemonState !== "connected" && (
         <p role="alert">
           {daemonState === "stopping"

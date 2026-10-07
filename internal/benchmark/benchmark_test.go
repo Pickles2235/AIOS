@@ -16,8 +16,11 @@ func TestFixtureIsRunnableAndReproducible(t *testing.T) {
 		t.Fatalf("results=%#v", report.Results)
 	}
 	for _, result := range report.Results {
-		if !result.StateCorrect || result.Baseline.SourceReads == 0 {
+		if !result.StateCorrect || result.Baseline.SourceReads == 0 || result.Baseline.SourceBytesRead == 0 {
 			t.Fatalf("result=%#v", result)
+		}
+		if result.ResultState == "unknown" && (result.Canonical.Correct || result.Retrievers["hybrid"].Correct) {
+			t.Fatal("unknown counted as answer correct")
 		}
 		if result.ExpectedState == "found" && (result.Revision == "" || !result.Canonical.Correct) {
 			t.Fatalf("positive result=%#v", result)

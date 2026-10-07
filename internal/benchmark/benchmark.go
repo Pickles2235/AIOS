@@ -78,6 +78,7 @@ type Measurement struct {
 	Correct           bool             `json:"correct"`
 	LatencyMS         float64          `json:"latency_ms"`
 	ResultCount       int              `json:"result_count"`
+	SourceBytesRead   int64            `json:"source_bytes_read"`
 	SourceReads       int              `json:"source_reads"`
 	Trace             []string         `json:"trace"`
 	Evidence          []map[string]any `json:"evidence"`
@@ -90,11 +91,13 @@ type Measurement struct {
 	NDCG              float64          `json:"ndcg"`
 }
 type Report struct {
-	Fixture    string               `json:"fixture"`
-	Results    []Result             `json:"results"`
-	Indexing   IncrementalMetrics   `json:"incremental_indexing"`
-	Aggregates map[string]Aggregate `json:"aggregates"`
-	Quality    QualitySummary       `json:"quality"`
+	BaselineInvocation string               `json:"baseline_invocation"`
+	MeasurementNotes   []string             `json:"measurement_notes"`
+	Fixture            string               `json:"fixture"`
+	Results            []Result             `json:"results"`
+	Indexing           IncrementalMetrics   `json:"incremental_indexing"`
+	Aggregates         map[string]Aggregate `json:"aggregates"`
+	Quality            QualitySummary       `json:"quality"`
 }
 
 type Aggregate struct {
@@ -122,7 +125,7 @@ type QualitySummary struct {
 }
 type IncrementalMetrics struct {
 	ColdIndexMS             float64        `json:"cold_index_ms"`
-	WarmIndexMS             float64        `json:"warm_index_ms"`
+	WarmIndexMS             float64        `json:"manifest_read_ms"`
 	ChangedFileVisibilityMS float64        `json:"changed_file_visibility_ms"`
 	ChangedFiles            map[string]int `json:"changed_files"`
 	Invalidations           map[string]int `json:"invalidations"`
@@ -152,6 +155,12 @@ func Run(ctx context.Context, fixturePath, dataDir string) (Report, error) {
 	}
 	defer db.Close()
 	base := filepath.Dir(fixturePath)
+	frozen := map[string][]model.File{}
+	literalRoot, err := os.MkdirTemp(dataDir, "benchmark-literal-")
+	if err != nil {
+		return Report{}, err
+	}
+	defer os.RemoveAll(literalRoot)
 	coldStarted := time.Now()
 	for _, repo := range fixture.Repositories {
 		repoRoot, err := filepath.Abs(filepath.Join(base, repo.Path))
@@ -164,6 +173,12 @@ func Run(ctx context.Context, fixturePath, dataDir string) (Report, error) {
 		files, coverage, err := readRepository(repo, repoRoot)
 		if err != nil {
 			return Report{}, err
+		}
+		frozen[repo.ID] = files
+		for _, f := range files {
+			if err = os.WriteFile(filepath.Join(literalRoot, hashBytes([]byte(repo.ID+"\x00"+f.Path))), []byte(f.Content), 0600); err != nil {
+				return Report{}, err
+			}
 		}
 		snap := model.Snapshot{RepoID: repo.ID, Root: repoRoot, Git: model.GitState{Commit: repo.Revision, Branch: "fixture"}, ContentHash: store.ContentSnapshot(files), FileCount: len(files), IndexedAt: time.Unix(0, 0).UTC(), ExtractorVersions: "benchmark-fixture"}
 		for _, f := range files {
@@ -197,14 +212,14 @@ func Run(ctx context.Context, fixturePath, dataDir string) (Report, error) {
 		configured = append(configured, model.Repository{ID: repo.ID, Root: filepath.Join(base, repo.Path)})
 	}
 	investigation := knowledge.New(catalog.Config{Repositories: configured}, db)
-	report := Report{Fixture: fixturePath}
+	report := Report{Fixture: fixturePath, BaselineInvocation: "Go fixed-string case-insensitive full-file scan of owned frozen bytes (not ripgrep)", MeasurementNotes: []string{"manifest_read_ms measures ActiveFiles reads, not warm indexing; cold_index_ms excludes queries", "Source bytes are successful logical file reads, not physical disk I/O. Baseline snapshot is frozen once before index compilation.", "Correctness is any matching evidence retrieval; precision_at_1 separately measures top rank. Unknown never counts as answer-correct."}}
+	report.Indexing.ColdIndexMS = elapsed(coldStarted)
 	for _, c := range fixture.Cases {
-		measurement := runCase(ctx, db, fixture, base, c)
+		measurement := runCase(ctx, db, fixture, frozen, literalRoot, c)
 		measurement.InvestigationState, measurement.InvestigationEvidenceCorrect = scoreInvestigation(ctx, investigation, c)
 		report.Results = append(report.Results, measurement)
 	}
 	sort.Slice(report.Results, func(i, j int) bool { return report.Results[i].ID < report.Results[j].ID })
-	report.Indexing.ColdIndexMS = float64(time.Since(coldStarted).Microseconds()) / 1000
 	for _, r := range report.Results {
 		report.Indexing.RetrievalCorrectBefore = report.Indexing.RetrievalCorrectBefore || r.Canonical.Correct
 	}
@@ -223,10 +238,8 @@ func Run(ctx context.Context, fixturePath, dataDir string) (Report, error) {
 	if len(fixture.Repositories) > 0 {
 		repo := fixture.Repositories[0]
 		root := filepath.Join(base, repo.Path)
-		files, _, e := readRepository(repo, root)
-		if e != nil {
-			return Report{}, e
-		}
+		files := append([]model.File(nil), frozen[repo.ID]...)
+		var e error
 		if len(files) > 0 {
 			files[0].Content += "\n// benchmark incremental revision\n"
 			sum := sha256.Sum256([]byte(files[0].Content))
@@ -259,7 +272,7 @@ func Run(ctx context.Context, fixturePath, dataDir string) (Report, error) {
 		report.Indexing.IndexBytes = status.IndexBytes
 	}
 	for _, c := range fixture.Cases {
-		report.Indexing.RetrievalCorrectAfter = report.Indexing.RetrievalCorrectAfter || runCase(ctx, db, fixture, base, c).Canonical.Correct
+		report.Indexing.RetrievalCorrectAfter = report.Indexing.RetrievalCorrectAfter || runCase(ctx, db, fixture, frozen, literalRoot, c).Canonical.Correct
 	}
 	report.Aggregates, report.Quality = aggregate(report.Results)
 	return report, nil
@@ -357,7 +370,7 @@ func benchmarkRuntime(fixturePath string) model.CompilerRuntime {
 	return r
 }
 
-func runCase(ctx context.Context, db *store.Store, fixture Fixture, base string, c Case) Result {
+func runCase(ctx context.Context, db *store.Store, fixture Fixture, frozen map[string][]model.File, literalRoot string, c Case) Result {
 	expected := map[string]string{"repository": c.ExpectedRepository, "path": c.ExpectedPath, "snippet": c.ExpectedSnippet, "line": fmt.Sprint(c.ExpectedLine)}
 	searchText := knowledge.SearchTerm("question", c.Query)
 	searchStarted := time.Now()
@@ -429,20 +442,21 @@ func runCase(ctx context.Context, db *store.Store, fixture Fixture, base string,
 	}
 	started := time.Now()
 	baseline := Measurement{Trace: []string{"literal_file_read_baseline"}}
-	// The baseline deliberately reopens fixture files, mirroring a bounded
-	// literal ripgrep/file-read search rather than reusing indexed content.
+	// Both index and baseline use one frozen capture. Query-time reads reopen
+	// owned copies; source workspaces are never reread after compilation.
 	for _, repo := range fixture.Repositories {
-		files, _, readErr := readRepository(repo, filepath.Join(base, repo.Path))
-		if readErr != nil {
-			baseline.Trace = append(baseline.Trace, "read_error:"+readErr.Error())
-			continue
-		}
-		for _, file := range files {
+		for _, file := range frozen[repo.ID] {
+			b, readErr := os.ReadFile(filepath.Join(literalRoot, hashBytes([]byte(repo.ID+"\x00"+file.Path))))
+			if readErr != nil {
+				baseline.Trace = append(baseline.Trace, "read_error")
+				continue
+			}
 			baseline.SourceReads++
-			if strings.Contains(strings.ToLower(file.Content), strings.ToLower(c.Query)) {
+			baseline.SourceBytesRead += int64(len(b))
+			if strings.Contains(strings.ToLower(string(b)), strings.ToLower(c.Query)) {
 				baseline.ResultCount++
-				baseline.Evidence = append(baseline.Evidence, map[string]any{"repository": repo.ID, "path": file.Path})
-				if repo.ID == c.ExpectedRepository && file.Path == c.ExpectedPath {
+				baseline.Evidence = append(baseline.Evidence, map[string]any{"repository": repo.ID, "path": file.Path, "sha256": hashBytes(b)})
+				if repo.ID == c.ExpectedRepository && file.Path == c.ExpectedPath && (c.ExpectedSnippet == "" || strings.Contains(string(b), c.ExpectedSnippet)) {
 					baseline.Correct = true
 					if baseline.Rank == 0 {
 						baseline.Rank = baseline.ResultCount
@@ -495,12 +509,12 @@ func runCase(ctx context.Context, db *store.Store, fixture Fixture, base string,
 		canonical.Correct = true
 		canonical.ProvenanceCorrect = true
 	}
-	// Unknown is correct only when the searched capability has an actual
-	// coverage gap. It must never be scored as a proven absence.
-	if expectedState == "unknown" && stateCorrect && !basis.Complete {
-		canonical.Correct = true
-		canonical.ProvenanceCorrect = true
+	// Correct state classification is separate from answering the question.
+	if resultState == "unknown" {
+		canonical.Correct = false
+		canonical.ProvenanceCorrect = false
 	}
+	retrievers["hybrid"] = canonical
 	return Result{ID: c.ID, Revision: revisionFor(fixture, c.ExpectedRepository), QueryClass: c.QueryClass, Expected: expected, Canonical: canonical, Baseline: baseline, Retrievers: retrievers, HybridVsSingle: comparison, Context: measureContext(c, contextCandidates, contextpkg.Budget{}), UnboundedContext: measureContext(c, contextCandidates, contextpkg.Budget{MaxBytes: 256 * 1024, EstimatedTokens: 64 * 1024, Entities: 100, Edges: 100, Excerpts: 100, LinesPerExcerpt: 200}), ExpectedState: expectedState, ResultState: resultState, StateCorrect: stateCorrect, CoverageComplete: basis.Complete}
 }
 

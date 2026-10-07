@@ -91,6 +91,13 @@ See [the repository-local Codex harness](.codex/README.md) for repeatable setup,
 validation, a dependency-ordered product task queue, persistent plans, and an
 optional one-task CLI launcher. Start with `make harness-test`.
 
+### Benchmark Lab
+
+Open **Benchmark Lab** in the live UI for isolated Demo comparisons or saved My
+Knowledge known-answer regressions. The [method and limits](docs/how-to/benchmark-lab.md)
+explain immutable snapshot parity, literal-baseline semantics, outcome scoring
+and export contents.
+
 ### Repository management
 
 Open **Manage repositories** in the local UI to approve another source in the configured Direct or Mirror mode, change include/exclude scope, retry source access, or force a fresh compilation. Repository health shows active and attempted revisions, last success and next check. A whole **Rebuild knowledge base** keeps identity and approved configuration, and serves last-good knowledge until every replacement generation validates and activates together. A failed build keeps the previous catalog.

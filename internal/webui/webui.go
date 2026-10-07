@@ -39,6 +39,8 @@ type Server struct {
 	read                              *knowledge.Service
 	mu                                sync.Mutex
 	historyMu                         sync.Mutex
+	benchmarkMu                       sync.Mutex
+	benchmarkCancel                   context.CancelFunc
 	dataDir                           string
 	db                                *store.Store
 	setup                             Setup
@@ -131,6 +133,11 @@ func (s *Server) FreshURL() string {
 	return origin + "/#token=" + s.capability
 }
 func (s *Server) Close() error {
+	s.mu.Lock()
+	if s.benchmarkCancel != nil {
+		s.benchmarkCancel()
+	}
+	s.mu.Unlock()
 	s.stopMaintenance()
 	s.cancelJob()
 	s.namespaceMu.Lock()
@@ -200,6 +207,9 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch r.URL.Path {
+	case "/api/v1/benchmarks/clear", "/api/v1/benchmarks/run", "/api/v1/benchmarks/cases", "/api/v1/benchmarks/latest", "/api/v1/benchmarks/export", "/api/v1/benchmarks/cancel":
+		s.benchmarkAPI(w, r)
+		return
 	case "/api/v1/cloud", "/api/v1/source-actions", "/api/v1/source-actions/open":
 		s.cloudAPI(w, r)
 		return

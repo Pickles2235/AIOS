@@ -120,3 +120,13 @@
 @media (max-width:700px) { .context-dock { grid-template-columns:1fr; } .context-module { max-height:34vh; } .context-controls { max-height:5rem; overflow:auto; } }
 .cloud-hover {position:absolute;bottom:1rem;left:1rem;max-width:calc(100% - 2rem);pointer-events:none;border:1px solid #43526c;background:#111e32ed;color:#eef4ff;padding:.6rem .8rem;border-radius:.5rem;font-size:.9rem;overflow-wrap:anywhere;}
 .cloud-hover span {display:block;color:#a8b8d2;font-size:.75rem;margin-top:.3rem;}
+
+.benchmark-lab { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border, #526078); border-radius: .5rem; }
+.benchmark-lab textarea { display: block; width: 100%; max-width: 70rem; font-family: monospace; }
+.benchmark-lab select, .benchmark-lab button { margin: .3rem; }
+.benchmark-table { overflow-x: auto; }
+.benchmark-table table { border-collapse: collapse; width: 100%; }
+.benchmark-table th, .benchmark-table td { text-align: left; padding: .6rem; border-bottom: 1px solid #526078; vertical-align: top; }
+.benchmark-lab pre, .benchmark-lab code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.benchmark-lab fieldset { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .8rem; padding: 1rem; }
+.benchmark-lab fieldset label { display: flex; flex-direction: column; gap: .3rem; }

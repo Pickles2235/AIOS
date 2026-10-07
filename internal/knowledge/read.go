@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/model"
@@ -454,6 +455,9 @@ func (s *Service) Query(ctx context.Context, in Query) (result QueryResult, retE
 		identities[c.Entity.ID] = true
 	}
 	if len(identities) != 1 {
+		if len(candidates) == 0 && strings.IndexFunc(in.Text, func(r rune) bool { return unicode.IsLetter(r) || unicode.IsNumber(r) }) < 0 {
+			return QueryResult{Status: "unknown", Entities: []Entity{}, Coverage: &basis, Trace: []TraceEvent{{Kind: "unsupported_query", Detail: "punctuation-only text has no lexical search tokens"}}}, nil
+		}
 		if e = s.db.RequireProjection(ctx, "lexical"); e != nil {
 			return QueryResult{Status: "unknown", Entities: []Entity{}, Coverage: &basis, Trace: []TraceEvent{{Kind: "projection_unavailable", Detail: "lexical projection is stale or unavailable"}}}, nil
 		}

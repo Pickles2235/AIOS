@@ -154,3 +154,12 @@ func TestIncompleteLookupCannotCertifyNegativeKnowledge(t *testing.T) {
 		t.Fatal("repaired lookup lost canonical result", result.Status, e)
 	}
 }
+
+func TestPunctuationQueryNeverProvesAbsence(t *testing.T) {
+	db, s := fixture(t)
+	defer db.Close()
+	result, e := s.Query(context.Background(), Query{Text: "->>"})
+	if e != nil || result.Status != "unknown" || len(result.Trace) != 1 || result.Trace[0].Kind != "unsupported_query" {
+		t.Fatalf("punctuation absence: %+v %v", result, e)
+	}
+}
