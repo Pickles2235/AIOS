@@ -333,10 +333,10 @@
       "gates": [
         "web"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/12-contextual-modules.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/12-review.json",
       "product_gates": [
         "web",
         "cloud"

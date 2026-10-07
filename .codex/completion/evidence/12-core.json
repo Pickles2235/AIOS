@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "gate": "core",
+  "milestone": null,
+  "tested_commit": "6338d77b57eb171eab8981a200ede32dd9ae8372",
+  "clean_product_tree": true,
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "timestamp": 1791406860.776382,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "harness-validate"
+      ],
+      "exit_code": 0,
+      "seconds": 103.895339012146,
+      "log_sha256": "489509f6d2eb5512b704eb3645f821f0d795b9ae5857df9a07146d0afe5f0705"
+    }
+  ]
+}

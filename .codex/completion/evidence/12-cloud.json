@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "cloud",
+  "milestone": "12-contextual-modules",
+  "tested_commit": "6338d77b57eb171eab8981a200ede32dd9ae8372",
+  "clean_product_tree": true,
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "timestamp": 1791407071.015127,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=12-contextual-modules",
+        "COMPLETION_GATE=cloud"
+      ],
+      "exit_code": 0,
+      "seconds": 19.348827838897705,
+      "log_sha256": "1eba06a3eb0d87f8cb436ff476722ce03d7ee66c06d6bb115c19888f51b2ef43"
+    }
+  ]
+}

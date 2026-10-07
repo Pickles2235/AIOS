@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "task12-independent-4af841a7-04c2-48b5-9165-0a5744505304",
+  "reviewed_commit": "6338d77b57eb171eab8981a200ede32dd9ae8372",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "checks_performed": [
+    "Read AGENTS, completion PRODUCT/MISSION/ACCEPTANCE/REVIEWER, task 12 plan and current source/tests. Audited live seven-module wiring, authenticated activity API, 512-event retention, stream ID and oldest-sequence reconciliation, query and coverage state, per-endpoint stale handling, and saved floating placement.",
+    "Identified partial-outage error loss and masked concurrent job failures during source review. Delivery repaired these with per-endpoint allSettled updates and separate update/watch/retention alerts. Inspected the correction and independently reproduced concurrent fresh job/setup failures while activity returned 503; each remained visible.",
+    "Verified final core, web and scoped cloud12 receipts pass on clean Darwin arm64 at reviewed_commit. Independently recomputed matching SHA256 hashes of all three raw logs: core 489509f6d2eb5512b704eb3645f821f0d795b9ae5857df9a07146d0afe5f0705; web e755f34d69328eda9bde9665e281e0d36e23ee4355f292963d08519d13709e19; cloud12 1eba06a3eb0d87f8cb436ff476722ce03d7ee66c06d6bb115c19888f51b2ef43. Web reports 34 unit and 38 browser tests passed; scoped cloud12 ran its nonempty contextual browser scenario.",
+    "Confirmed the final installed bin/aios has Go VCS revision reviewed_commit, modified=false and SHA256 0822463b449a2fff0a9bf3f7fc8e2d6e678b22e69fb570f54c9d7324986edcf2. git diff --check against published main passed. No product source or HEAD edits were made by this review.",
+    "Ran a fresh reviewer-owned Git fixture, data directory, exact installed backend and headed native Chrome on Darwin arm64. Verified idle uncluttered state, seven contextual modules, actual indexing/activity, pointer and keyboard floating placement, persistence, 320x300 viewport clamping, redock and reachable Refresh. Visually inspected ten retained full-page captures covering idle, active, all modules, detached, narrow, redocked, query, partial outage, history gap and stream restart.",
+    "Against the same real backend and headed browser, verified Direct and Spotlight queries return found evidence and coverage. Injected endpoint faults and synthetic gap/stream restart responses at the browser route: fresh job/setup errors survived activity 503, independent resource/job 503 warnings retained their stale data, and recovery, missing history and new stream identity were disclosed.",
+    "Reviewed the repaired legacy browser assertions after the earlier 32/38 failed gate; focused six-case rerun and final full 38/38 web gate passed. The correction scopes daemon alerts and tracks all held onboarding reads without weakening pending-read or stop/session behavior.",
+    "Closed reviewer browsers and stopped both reviewer-owned backends. The fixture source remained unchanged and the checkout remained clean at reviewed_commit; unrelated Vite port 4173 was preserved."
+  ],
+  "evidence_paths": [
+    "/tmp/aios-task12-final-core.json",
+    "/tmp/aios-task12-final-core-0.log",
+    "/tmp/aios-task12-final-web.json",
+    "/tmp/aios-task12-final-web-0.log",
+    "/tmp/aios-task12-final-cloud12.json",
+    "/tmp/aios-task12-final-cloud12-0.log",
+    "/private/tmp/aios-task12-finalreview.csEftF/idle-1440.png",
+    "/private/tmp/aios-task12-finalreview.csEftF/all-seven-1440.png",
+    "/private/tmp/aios-task12-finalreview.csEftF/detached-320.png",
+    "/private/tmp/aios-task12-finalreview.csEftF/redocked-320.png",
+    "/private/tmp/aios-task12-finalreview.csEftF/final-query-1440.png",
+    "/private/tmp/aios-task12-finalreview.csEftF/final-partial-outage-1440.png",
+    "/private/tmp/aios-task12-finalreview.csEftF/final-history-gap-1440.png",
+    "/private/tmp/aios-task12-finalreview.csEftF/final-restart-1440.png"
+  ],
+  "nonblocking_findings": [],
+  "limitations": [
+    "The independent endpoint faults, retention gap and stream restart were injected in Chrome routes over a real installed backend. The formal product browser scenario also covers daemon reconnect; this review does not claim a live crash/restart fault was induced.",
+    "This is Task 12 contextual-module acceptance. It is not proof of sustained scale, native power policy or assembled-product Task 15 acceptance, and it does not authorize public release."
+  ]
+}
