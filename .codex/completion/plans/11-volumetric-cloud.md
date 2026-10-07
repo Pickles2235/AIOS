@@ -23,11 +23,11 @@ Run existing core/web gates plus scoped product scenarios with `gate NAME --mile
 
 ## Actual validation
 
-Record commands, receipts, platform and full tested commit. No checks run yet.
+Final tested source: `31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485`, clean Darwin arm64. Core 114.323s, web 178.343s (30 units/38 browser), scoped cloud 35.883s passed; receipts `evidence/11-{core,web,cloud}.json`. Two fresh 14-case acceptance runs accepted with equal semantic fingerprint; sanitized summary `evidence/11-acceptance.json`. Native proof and artifact digests are recorded in `evidence/11-native.json`. Raw source-bearing reports remain outside checkout.
 
 ## Independent review
 
-Separate reviewer report and corrected commit required.
+Independent session `task11-independent-7c55b4cd-724a-4231-870d-03640b829afe` passed exact tested source; report `evidence/11-review.json`. Independently reconciled 1,219 unique entities across 82 pages with SQLite, six files/seven claims; local path/hash/symlink/CSRF checks, actual promotion stale409, headed native full-page visual review and keyboard/reduced-motion/context-loss checks passed. A faulty extra reviewer promotion script is excluded and retained; no claim it passed.
 
 ## Blockers
 
@@ -48,3 +48,7 @@ Candidate 21c1d605f63a1808f658c103982b3c71cb057110 passed clean full core (344.4
 Consolidated candidate 5772b4c5f976009b1e7bb4bdc6b3767ae9eb1253 awaits source audit before expensive gates. Normal-promotion freshness now inventories entity/claim/excerpt/in-flight claim and unselected investigation references; focused browser suite passed 8/8 (39.1 seconds). Source-action listing no longer invokes an app; focused Go checks passed including CSRF, explicit invocation and colon-file exact argument behavior. Editor opening uses a plain exact file argument for colon paths, omitting ambiguous line hints. Latest live volumetric/native preflight passed 2/2 (42.2 seconds) with a real work0→work1 claim, Finder selected-path proof and source-byte parity. These are preflight results; all final receipts and native artifacts still need clean exact-source collection after independent source review.
 
 Frozen-source checkpoint `9b468dd384b4cd43af7caf300832786784ad94fa`: full core passed (245.269s); full web passed (178.983s, 30 units and 38 browser cases); two fresh 14-case KB acceptance runs accepted with equal semantic fingerprint `6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0`. Raw reports/logs remain outside checkout at `/private/tmp/aios-task11-20261007-1957/frozen-*`. Independent reviewer recomputed core/web log digests and checked clean exact-source Darwin arm64 receipts. Scoped cloud failed after 16.998s: the promoted Java class and constructor share label Worker, producing a strict ambiguous browser selector at product.spec.ts:388. Promotion itself succeeded. This is not accepted final evidence; delivery will select the canonical entity type/handle without removing the constructor, then rebuild a clean candidate and repeat required checks. All current gate handles are terminal; native final evidence has not yet been collected.
+
+## Final acceptance and handoff
+
+Task 11 is ready for publication. Real Metal M3 Pro rendering: 256 visible entities, one canonical edge, 180 actual draws; actual Finder selection and selected source-byte parity passed. First timing interval mixes initial clocks and is invalid; raw sample retained, excluded from 179 valid RAF intervals (median 8.3ms, p95 9.6ms). CPU submission timing is not GPU duration. This is brief bounded interaction, not sustained scale proof. Correct the initial RAF baseline in task 14 before final task 15 native performance gates. Synthetic child-local AC scheduling is not actual power-policy evidence. Full installed/all-gates acceptance remains task 15. Reviewer-owned processes stopped; no public release. Next milestone: 12-contextual-modules after verified publication.

@@ -305,10 +305,10 @@
         "core",
         "web"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/11-volumetric-cloud.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/11-review.json",
       "product_gates": [
         "core",
         "web",

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "evidence_root": "/private/tmp/aios-task11-20261007-1957",
+  "tested_commit": "31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485",
+  "clean_tree": true,
+  "binary_sha256": "16b44c66add59fc389bb745af73ec06d4259904932384e9982dd4c3e4acda5ec",
+  "gates": {
+    "core": true,
+    "web": true,
+    "cloud": true
+  },
+  "native": {
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Pro, Unspecified Version)",
+    "nodes": 256,
+    "edges": 1,
+    "actual_draws": 180,
+    "valid_raf_intervals": 179,
+    "median_ms": 8.300000000000182,
+    "p95_ms": 9.600000000000364,
+    "over_16_7_ms": 0,
+    "discarded_initial_interval_ms": -2.79999999850952,
+    "limitation": "Initial performance.now-to-RAF interval has mismatched baseline; retained raw and excluded. Remaining intervals are RAF-to-RAF during actual draws. Renderer timing is CPU submission, not GPU duration. Actual host battery; synthetic AC only in owned daemon child scheduling fixture. Final installed/native power proof deferred."
+  },
+  "files": {
+    "final31-cloud.json": "af01c00edcd44a04548cef0f1495560836fa87b0c8409fbda5d9ac046dbc5cca",
+    "final31-core.json": "9e3817abe79ddd7778b6828806464e75ef94970ea8c7da84d15ea2052c14d420",
+    "final31-web.json": "ad6d84a40c558cac0b4ebc3787c33944a4880cdaa3140c06fa13dfc7864f5b88",
+    "final31-binary-metadata.txt": "46dda81a67f1ea7681a063a7522ef43040648bf3bfe3867c9f1576038e70a39e",
+    "final31-terminal-binary-metadata.txt": "46dda81a67f1ea7681a063a7522ef43040648bf3bfe3867c9f1576038e70a39e",
+    "final31-native.log": "ce68165a1a126f671b64c79ff8a86ac852d2f7d5b9c134e3befd79d8b7daaa11",
+    "final31-native-artifacts/.last-run.json": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
+    "final31-native-artifacts/product-real-installed-pro-5e2c9-ve-GPU-dense-cloud-evidence-installed-product/native-finder-proof.json": "625dbdd2d3b73122a83f4c2025abcdc65bde8bc62ae2cad68ab8efaa5f14cea5",
+    "final31-native-artifacts/product-real-installed-pro-5e2c9-ve-GPU-dense-cloud-evidence-installed-product/dense-native-cloud.png": "d539e1d164ecc0b9a55625fa0688931aa18e459a12d915ac54646e6735fe2876",
+    "final31-native-artifacts/product-real-installed-pro-5e2c9-ve-GPU-dense-cloud-evidence-installed-product/native-frame-measurements.json": "0063d1a7ad3cdc8b83c588225683b1abf2c8278ddc2bf136d4565510526495c4",
+    "final31-cloud-artifacts/.last-run.json": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
+    "final31-cloud-artifacts/product-real-installed-pro-cbb84-ric-truth-and-semantic-zoom-installed-product/cloud-symbols-accessible.png": "b7f66086e4e00981a2893be0c06d63574ddeea7944edd2ef871d553db902e6d7",
+    "final31-acceptance-a/acceptance-report.json": "4117a66ba8ba3bdbc6c1ddccf21d7aa0c147d2847746207585809fb4a1e8568b",
+    "final31-acceptance-b/acceptance-report.json": "2b9bd47289027df34c4baa669816a1a2a2d884d7c719e2264923eec50280c752"
+  }
+}

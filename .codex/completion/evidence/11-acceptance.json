@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "tested_commit": "31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485",
+  "runs": [
+    {
+      "report_path": "/private/tmp/aios-task11-20261007-1957/final31-acceptance-a/acceptance-report.json",
+      "report_sha256": "4117a66ba8ba3bdbc6c1ddccf21d7aa0c147d2847746207585809fb4a1e8568b",
+      "engine_revision": "31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485",
+      "disposition": "accepted",
+      "case_count": 14,
+      "semantic_fingerprint": "6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0"
+    },
+    {
+      "report_path": "/private/tmp/aios-task11-20261007-1957/final31-acceptance-b/acceptance-report.json",
+      "report_sha256": "2b9bd47289027df34c4baa669816a1a2a2d884d7c719e2264923eec50280c752",
+      "engine_revision": "31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485",
+      "disposition": "accepted",
+      "case_count": 14,
+      "semantic_fingerprint": "6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0"
+    }
+  ]
+}

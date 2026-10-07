@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "task11-independent-7c55b4cd-724a-4231-870d-03640b829afe",
+  "reviewed_commit": "31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "checks_performed": [
+    "Inspected AGENTS, completion PRODUCT/MISSION/ACCEPTANCE/REVIEWER, task 11 plan and R18-R20 source/tests. Identified and verified repairs for active-only totals, nested module partitioning, coverage uncertainty, source-action safety, deleted-scope recovery and complete entity/claim/excerpt/in-flight/investigation freshness refs.",
+    "Verified final31 core, web and scoped cloud receipts are passing, clean Darwin arm64 at reviewed_commit. Independently recomputed raw command-log SHA256 values and all 14 delivery-manifest artifact hashes; current binary SHA256 matches 16b44c66add59fc389bb745af73ec06d4259904932384e9982dd4c3e4acda5ec and Go VCS metadata records exact source with modified=false. Web reports 30 unit tests and 38 browser cases.",
+    "Parsed both fresh final31 acceptance reports: exact reviewed_commit, accepted 14/14 each, 25 repositories, bundled-nomic; identical semantic fingerprint 6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0. Report hashes independently match delivery manifest.",
+    "Ran uncached go test -count=1 ./internal/knowledge ./internal/webui -run TestCloud|TestSourceAction|TestTrustedRemote|TestEditorArguments: both packages passed (0.526s and 4.899s). Inspected traversal/hash/symlink/remote parsing, inert listing, CSRF dispatch and exact colon-filename argv regressions.",
+    "Independently built a disposable real local fixture with nested captured modules, 600 Java methods, a call relationship, colon-bearing TypeScript filename and unsupported proto. Authenticated real embedded UI/API yielded 82 bounded pages and 1219 unique entity members. Read-only SQLite reconciliation proved exact active entity ID set, six source files and seven total claims; five visible claim records matched canonical subject/object/predicate/generation; file counts and aggregate member counts reconciled. Unsupported proto correctly made coverage incomplete.",
+    "Independent live API checks rejected missing CSRF with 403 and disabled local actions after source content changes or target symlink replacement. Restored fixture after these checks. Bounded direct authenticated promotion probe observed rebuild 202, distinct successful snapshot tokens and old-snapshot 409; arbitrary mismatched snapshot also returned 409.",
+    "Used headed native Chrome against the real embedded backend, not mocked responses. Exercised hierarchy expansion, canonical class selection, keyboard rotation/pan/zoom, reduced-motion media and real WEBGL_lose_context recovery. No browser page errors. Captured and visually inspected empty state, estate header, dense cloud, selected evidence inspector, hierarchy/counts, semantic legend, accessible navigation and restored graphics at 1440px width.",
+    "Inspected retained native dense screenshot, actual Metal M3 Pro renderer evidence and render counter increase 6 to 186 with 256 entities and one canonical edge. Inspected native Finder invocation test and retained proof: actual selected captured fixture path and unchanged selected-file bytes. Independently checked timing data: exclude first invalid -2.8ms baseline; remaining 179 intervals median 8.3ms, p95 9.6ms, maximum 10.3ms.",
+    "Inspected corrected live deletion-promotion scenario and ref-based claim-only/unselected-investigation promotion regressions. An additional reviewer browser promotion script had incorrect predicate/premature-wait assumptions and was excluded; its failure notes are retained. The independent direct API stale probe, source inspection and passing formal regressions supply freshness evidence.",
+    "Stopped the reviewer-owned backend and closed its browsers. Preserved unrelated services. No product source or HEAD changes were made during independent acceptance."
+  ],
+  "evidence_paths": [
+    "/private/tmp/aios-task11-20261007-1957/final31-delivery-manifest.json",
+    "/private/tmp/aios-task11-20261007-1957/final31-core.json",
+    "/private/tmp/aios-task11-20261007-1957/final31-web.json",
+    "/private/tmp/aios-task11-20261007-1957/final31-cloud.json",
+    "/private/tmp/aios-task11-20261007-1957/final31-acceptance-a/acceptance-report.json",
+    "/private/tmp/aios-task11-20261007-1957/final31-acceptance-b/acceptance-report.json",
+    "/private/tmp/aios-task11-20261007-1957/final31-native-artifacts",
+    "/private/tmp/aios-review31-075ttn48/review-artifact-manifest.json",
+    "/private/tmp/aios-review31-075ttn48/browser-review.json",
+    "/private/tmp/aios-review31-075ttn48/ir-review.json",
+    "/private/tmp/aios-review31-075ttn48/direct-api-probe.json",
+    "/private/tmp/aios-review31-075ttn48/cloud-hierarchy-inspector-fullpage.png",
+    "/private/tmp/aios-review31-075ttn48/reduced-restored-fullpage.png"
+  ],
+  "nonblocking_findings": [
+    "Native measurement initialization mixes performance.now with the first RAF timestamp, producing one invalid negative interval. Preserve and exclude it; fix the baseline before task 14/15 performance certification."
+  ],
+  "limitations": [
+    "Task 11 scope only: 256 visible entities of a dense fixture, about 1.5 seconds of native interaction. These are RAF intervals during actual draws; renderer last_ms/max_ms measure CPU submission, not GPU duration or sustained 1/25/100-repository performance.",
+    "Disposable browser backend scheduling uses a child-local synthetic AC probe; this is not proof of actual battery/resource policy. Native Finder and Metal rendering were exercised on real Darwin arm64.",
+    "Independent source-action security exercised local changed files, symlinks and CSRF; remote destination parsing/commit pinning and editor argv were validated by focused tests/source. No remote network navigation or real editor launch was claimed.",
+    "Complete installed artifact/all-gates acceptance, contextual modules and sustained scale remain later milestones. This report makes no release or task 15 candidate-ready claim."
+  ]
+}

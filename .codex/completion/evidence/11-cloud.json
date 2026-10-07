@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "cloud",
+  "milestone": "11-volumetric-cloud",
+  "tested_commit": "31c0425fc9ac78b0f0b6cc10259fa3dc2bf6f485",
+  "clean_product_tree": true,
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "timestamp": 1791403121.786456,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=11-volumetric-cloud",
+        "COMPLETION_GATE=cloud"
+      ],
+      "exit_code": 0,
+      "seconds": 35.88315796852112,
+      "log_sha256": "05574ef0f0d53e1a2f1f2a96d32705584bff59b222d559581ab9b75619febc8c"
+    }
+  ]
+}
