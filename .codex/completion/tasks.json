@@ -243,9 +243,9 @@
       "gates": [
         "core"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/09-resource-policy.md",
-      "completion_commit": null,
+      "completion_commit": "f28e413a8637d4561d358ff659ade3df90b5116c",
       "review": ".codex/completion/evidence/09-review.json",
       "product_gates": [
         "core",

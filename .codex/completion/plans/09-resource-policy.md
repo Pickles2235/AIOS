@@ -38,4 +38,4 @@ Independent review approved the exact `f28e413` product diff with no remaining b
 
 ## Handoff
 
-Implementation commit: `f28e413a8637d4561d358ff659ade3df90b5116c`. All required local gates and paired acceptance are recorded above. Do not push; the manager owns final task status, integration and publication.
+Implementation commit: `f28e413a8637d4561d358ff659ade3df90b5116c`. All required local gates and paired acceptance are recorded above. The exact implementation and its validation evidence were published by normal fast-forward on 2026-10-07; fetched `origin/main` is `50211f88ec62fc066b121d42212b87a96b7dac90` and contains the implementation commit. The independent review is `.codex/completion/evidence/09-review.json`. Task status is completed in the follow-up bookkeeping commit. The next eligible task is 10-investigation-search.
