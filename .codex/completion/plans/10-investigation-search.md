@@ -23,21 +23,23 @@ Run existing core/web gates plus scoped product scenarios with `gate NAME --mile
 
 ## Actual validation
 
-Candidate `102b8eef5d47f38451086770c6bb5ab65b84b589` passed clean-tree scoped core, web (36/36 browser tests), and retrieval gates on Darwin arm64. Receipts are `.codex/completion/evidence/10-initial-{core,web,retrieval}.json`. The independent reviewer approved the 187-case/25-repository gold corpus after auditing source spans/predicates and independently running Go, benchmark and browser checks.
+Final tested source: `4d176cdd4587381d4491526dc09137b40631a77d`, clean Darwin arm64, Node 22.22.1 and Python 3.12.13. Exact-source receipts `.codex/completion/evidence/10-{core,web,retrieval}.json` all pass with exit 0. Core includes harness/Python contracts, Go tests/vet/race/build. Web includes 27/27 unit tests, production assets and 36/36 browser tests; port 4174 and one worker preserve the preexisting port 4173 preview. Retrieval executes scoped product assertions and the independently reviewed 187-case, 25-repository corpus.
 
-The first broad acceptance run at `/tmp/aios-task10-accept-102b8ee-a/acceptance-report.json` failed architecture_slice only; it is not passing evidence. Delivery traced structural coverage treating lexical-only configuration `orders-service/build.gradle` as unsupported source syntax. A bounded repair will distinguish configuration from unsupported source files (including proto), then rerun affected gates and two fresh acceptance runs on the corrected SHA.
+Two fresh acceptance runs, `/tmp/aios-task10-accept-4d176cd-{a,b}/acceptance-report.json`, accepted all 14 cases, including architecture slice, negative/unknown/stale and corruption recovery. Both record the exact tested source and fingerprint `6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0`. Redacted summary/digests: `.codex/completion/evidence/10-acceptance.json`; source-bearing reports remain outside the checkout.
+
+Historical failures and recovery below are not final passing proof. The rejected retrieval dispatch on 4f81e87 executed zero scenarios and reported ValueError. Its precise rejected binary metadata was not retained; rebuilding clean at 4d176cd resolved the provenance rejection. Do not claim a proven exact cause.
 
 ## Independent review
 
-Reviewer `/root/investigation_search_acceptance` found and verified repairs for typed intent coverage, sentence unknowns, source/predicate scoring, background stale handling, relationship citations and keyboard behavior. Final review is pending the architecture-slice regression repair and exact-commit gate/paired acceptance evidence.
+Reviewer `/root/investigation_search_acceptance` independently audited typed coverage, source/predicate gold scoring, relationship citations, keyboard behavior, stale invalidation, coverage repair and the child-local synthetic AC fixture. The reviewer verified final gate source/platform/cleanliness and raw-log hashes; final report `.codex/completion/evidence/10-review.json` passes exact source with no blocking findings. Independent targeted Go/browser checks and fresh gold scoring passed. Raw hybrid precision@1 is 0.134: evidence/state success does not imply the first raw ranked hit is usually the answer.
 
 ## Blockers
 
-Internal regression under repair: architecture_slice acceptance failed on 102b8ee; configuration coverage must not imply missing structural source extraction. No external blocker established.
+No external blocker. Task 10 is ready after independent pass; verified normal publication remains before completion. Native final installed-product and GPU acceptance remain task 15 obligations; scoped fixture checks do not prove them.
 
 ## Handoff
 
-Persist implementation SHA, publication evidence and next work. Continue mission.
+Branch `codex/completion-investigation-search`; implementation/tested source `4d176cdd4587381d4491526dc09137b40631a77d`. Only scoped task 10 product, fixture, plan and evidence changes are included. Publish after independent pass, verify fetched main, then record completion in follow-up bookkeeping. Continue approved mission with task 11 after dependency publication.
 
 ## Resumption checkpoint
 
@@ -52,3 +54,5 @@ The run at `/tmp/aios-task10-web-4092163.json` terminated with exit 2 after 437.
 ## Corrected final validation
 
 Fixture repair `4f81e8771d555d0e267790153da00d8d2ce1ee71` passed the focused maintenance/management suite (8/8). Final clean web receipt `.codex/completion/evidence/10-web.json` passes on that exact source, Darwin arm64: 36/36 browser tests, exit 0, 184.6 seconds. Independent reviewer verified exact source, cleanliness and raw-log digest `45bdf45a6974b6c20a00cb95bee17536d44b2b7f645e7124cd07804c6708ef6f`. Core, retrieval, paired acceptance and final review remain pending. Synthetic AC fixture evidence is not native power-signal certification.
+
+Ready-state bookkeeping checks: `python3 scripts/completion_harness.py check` and `make harness-test` passed (exit 0), log `/tmp/aios-task10-ready-harness.log`. Synthetic failure probes inside harness regressions are expected test fixtures, not final product failures.

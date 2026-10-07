@@ -273,10 +273,10 @@
         "core",
         "web"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/10-investigation-search.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/10-review.json",
       "product_gates": [
         "core",
         "web",

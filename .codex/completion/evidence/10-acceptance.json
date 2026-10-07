@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "tested_commit": "4d176cdd4587381d4491526dc09137b40631a77d",
+  "purpose": "milestone acceptance summary; full source-bearing reports retained outside checkout",
+  "runs": [
+    {
+      "report_path": "/tmp/aios-task10-accept-4d176cd-a/acceptance-report.json",
+      "report_sha256": "e208da38ef7ec3cfecac1f06a92d9016cdef2f986d206ed60f49918a20164bab",
+      "engine_revision": "4d176cdd4587381d4491526dc09137b40631a77d",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0",
+      "case_count": 14,
+      "platform": {
+        "architecture": "arm64",
+        "system": "Darwin",
+        "vector_runtime": "bundled-nomic"
+      }
+    },
+    {
+      "report_path": "/tmp/aios-task10-accept-4d176cd-b/acceptance-report.json",
+      "report_sha256": "005c5831f72839c1b45ec4ccb52ae1b5d1816dc2d03675828a3fd88e5db0aa68",
+      "engine_revision": "4d176cdd4587381d4491526dc09137b40631a77d",
+      "disposition": "accepted",
+      "semantic_fingerprint": "6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0",
+      "case_count": 14,
+      "platform": {
+        "architecture": "arm64",
+        "system": "Darwin",
+        "vector_runtime": "bundled-nomic"
+      }
+    }
+  ],
+  "equal_semantic_fingerprints": true
+}
