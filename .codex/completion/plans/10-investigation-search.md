@@ -23,15 +23,17 @@ Run existing core/web gates plus scoped product scenarios with `gate NAME --mile
 
 ## Actual validation
 
-Record commands, receipts, platform and full tested commit. No checks run yet.
+Candidate `102b8eef5d47f38451086770c6bb5ab65b84b589` passed clean-tree scoped core, web (36/36 browser tests), and retrieval gates on Darwin arm64. Receipts are `.codex/completion/evidence/10-initial-{core,web,retrieval}.json`. The independent reviewer approved the 187-case/25-repository gold corpus after auditing source spans/predicates and independently running Go, benchmark and browser checks.
+
+The first broad acceptance run at `/tmp/aios-task10-accept-102b8ee-a/acceptance-report.json` failed architecture_slice only; it is not passing evidence. Delivery traced structural coverage treating lexical-only configuration `orders-service/build.gradle` as unsupported source syntax. A bounded repair will distinguish configuration from unsupported source files (including proto), then rerun affected gates and two fresh acceptance runs on the corrected SHA.
 
 ## Independent review
 
-Separate reviewer report and corrected commit required.
+Reviewer `/root/investigation_search_acceptance` found and verified repairs for typed intent coverage, sentence unknowns, source/predicate scoring, background stale handling, relationship citations and keyboard behavior. Final review is pending the architecture-slice regression repair and exact-commit gate/paired acceptance evidence.
 
 ## Blockers
 
-None established; native requirements need actual hardware/CI.
+Internal regression under repair: architecture_slice acceptance failed on 102b8ee; configuration coverage must not imply missing structural source extraction. No external blocker established.
 
 ## Handoff
 
