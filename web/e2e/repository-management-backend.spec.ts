@@ -3,6 +3,7 @@ import {spawn,execFileSync,type ChildProcess} from "node:child_process";
 import {mkdtempSync,realpathSync,writeFileSync,readFileSync,rmSync,chmodSync,readdirSync,statSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join,resolve} from "node:path";
+import {acPowerEnvironment} from "./fixture-power";
 
 function writable(path:string){if(statSync(path).isDirectory()){chmodSync(path,0o700);for(const name of readdirSync(path))writable(join(path,name))}}
 async function stop(child:ChildProcess){if(child.exitCode!==null||child.signalCode!==null)return;await new Promise<void>((done,fail)=>{const kill=setTimeout(()=>child.kill("SIGKILL"),5000),timeout=setTimeout(()=>fail(new Error("backend cleanup timeout")),10000);child.once("exit",()=>{clearTimeout(kill);clearTimeout(timeout);done()});child.kill("SIGTERM")})}
@@ -15,7 +16,7 @@ for(const mode of ["local","mirror"])test(`real ${mode} repository add scope reb
     execFileSync("git",["-C",path,"add","."]);execFileSync("git",["-C",path,"-c","user.name=fixture","-c","user.email=fixture@example.test","commit","-qm","one"]);
   }
   const before=[source,added].map(p=>readFileSync(join(p,".git","index")));
-  const child=spawn(process.env.AIOS_UI_BINARY||resolve("../bin/aios"),["ui","serve","--data-dir",data],{stdio:["ignore","ignore","pipe"]});
+  const child=spawn(process.env.AIOS_UI_BINARY||resolve("../bin/aios"),["ui","serve","--data-dir",data],{stdio:["ignore","ignore","pipe"],env:acPowerEnvironment(root)});
   try{
     const url=await new Promise<string>((done,fail)=>{let output="";const timer=setTimeout(()=>fail(new Error("backend startup timeout")),15000);child.stderr!.on("data",chunk=>{output+=chunk;const m=output.match(/Open local UI: (http:\/\/[^\s]+)/);if(m){clearTimeout(timer);done(m[1])}});child.once("exit",()=>{clearTimeout(timer);fail(new Error("backend exited"))})});
     await page.goto(url);if(mode==="local")await page.getByLabel("Source type").selectOption(mode);
