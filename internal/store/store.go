@@ -762,27 +762,38 @@ func (s *Store) StageInvalidations(ctx context.Context, generation string, chang
 // Retain removes only orphaned, published derived generations. Repository
 // paths are not arguments to this operation and are never removed.
 func (s *Store) Retain(ctx context.Context, historical int) error {
+	_, err := s.RetainPrunedRoots(ctx, historical)
+	return err
+}
+
+// RetainPrunedRoots returns only source roots of published generations removed
+// by this committed retention transaction. Callers may reclaim strictly owned
+// snapshot directories after rechecking references; external roots are data.
+func (s *Store) RetainPrunedRoots(ctx context.Context, historical int) ([]string, error) {
 	if s.readOnly {
-		return fmt.Errorf("store is read-only")
+		return nil, fmt.Errorf("store is read-only")
 	}
 	if historical < 0 {
-		return fmt.Errorf("historical generations must be non-negative")
+		return nil, fmt.Errorf("historical generations must be non-negative")
 	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback()
+	if _, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS snapshot_gc_candidates (root TEXT PRIMARY KEY)`); err != nil {
+		return nil, err
+	}
 	rows, err := tx.QueryContext(ctx, `SELECT catalog_revision_id FROM catalog_revisions WHERE catalog_revision_id NOT IN (SELECT catalog_revision_id FROM active_catalog_revision) ORDER BY activated_at DESC`)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var old []string
 	for rows.Next() {
 		var id string
 		if err = rows.Scan(&id); err != nil {
 			rows.Close()
-			return err
+			return nil, err
 		}
 		old = append(old, id)
 	}
@@ -790,14 +801,73 @@ func (s *Store) Retain(ctx context.Context, historical int) error {
 	if len(old) > historical {
 		for _, id := range old[historical:] {
 			if _, err = tx.ExecContext(ctx, `DELETE FROM catalog_revisions WHERE catalog_revision_id=?`, id); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
-	if _, err = tx.ExecContext(ctx, `DELETE FROM generations WHERE generation_id NOT IN (SELECT generation_id FROM active_generations) AND generation_id NOT IN (SELECT generation_id FROM catalog_revision_members)`); err != nil {
-		return err
+	rootRows, err := tx.QueryContext(ctx, `SELECT DISTINCT root FROM generations WHERE generation_id NOT IN (SELECT generation_id FROM active_generations) AND generation_id NOT IN (SELECT generation_id FROM catalog_revision_members) ORDER BY root`)
+	if err != nil {
+		return nil, err
 	}
-	return tx.Commit()
+	var pruned []string
+	for rootRows.Next() {
+		var root string
+		if err = rootRows.Scan(&root); err != nil {
+			rootRows.Close()
+			return nil, err
+		}
+		pruned = append(pruned, root)
+	}
+	if err = rootRows.Err(); err != nil {
+		rootRows.Close()
+		return nil, err
+	}
+	rootRows.Close()
+	for _, root := range pruned {
+		if _, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO snapshot_gc_candidates(root) VALUES(?)`, root); err != nil {
+			return nil, err
+		}
+	}
+	if _, err = tx.ExecContext(ctx, `DELETE FROM generations WHERE generation_id NOT IN (SELECT generation_id FROM active_generations) AND generation_id NOT IN (SELECT generation_id FROM catalog_revision_members)`); err != nil {
+		return nil, err
+	}
+	rows, err = tx.QueryContext(ctx, `SELECT root FROM snapshot_gc_candidates ORDER BY root`)
+	if err != nil {
+		return nil, err
+	}
+	pruned = nil
+	for rows.Next() {
+		var root string
+		if err = rows.Scan(&root); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		pruned = append(pruned, root)
+	}
+	if err = rows.Err(); err != nil {
+		rows.Close()
+		return nil, err
+	}
+	rows.Close()
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return pruned, nil
+}
+
+// CompleteSnapshotGC acknowledges an owned root only after filesystem removal.
+func (s *Store) CompleteSnapshotGC(ctx context.Context, root string) error {
+	if s.readOnly {
+		return fmt.Errorf("store is read-only")
+	}
+	_, err := s.db.ExecContext(ctx, `DELETE FROM snapshot_gc_candidates WHERE root=?`, root)
+	return err
+}
+
+func (s *Store) SnapshotRootReferenced(ctx context.Context, root string) (bool, error) {
+	var n int
+	err := s.db.QueryRowContext(ctx, `SELECT (SELECT count(*) FROM generations WHERE root=?) + (SELECT count(*) FROM generation_staging WHERE root=?)`, root, root).Scan(&n)
+	return n > 0, err
 }
 
 func (s *Store) CleanupStaging(ctx context.Context) error {

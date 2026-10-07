@@ -94,9 +94,10 @@ The resource panel reports measured owned usage, free volume space and the
 not cap bytes written during an already running build. The maintenance journal
 is separately capped at 512 KiB. By default, activation retains the active
 catalog and two earlier catalog revisions; the configured retention count can
-change that finite history window. Retention never deletes the source workspace
-or active generation. Free owned space or reduce approved scope to resume a
-deferred build.
+change that finite history window. Retention also reclaims owned snapshots of superseded generations after
+captures finish; it never deletes the source workspace or active generation.
+Mirror archives stream through the configured per-repository byte/file limits.
+Free owned space or reduce approved scope to resume a deferred build.
 
 To uninstall, choose explicitly: `"$AIOS_BIN" uninstall --preserve-data --json`
 retains configuration/KB for reinstall; `--delete-data` deletes owned state. Both

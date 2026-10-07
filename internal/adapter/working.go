@@ -17,6 +17,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/discover"
 	"github.com/AdamNi-7080/AIOS/internal/lifecycle"
 	"github.com/AdamNi-7080/AIOS/internal/model"
+	"github.com/AdamNi-7080/AIOS/internal/snapshotlease"
 )
 
 type capturedFile struct {
@@ -295,6 +296,16 @@ func CaptureLocalScoped(ctx context.Context, entry LocalRepository, dataDir stri
 	scopeBytes, _ := json.Marshal(struct{ Include, Exclude []string }{scope.Include, scope.Exclude})
 	revisionHash := sha256.Sum256(append([]byte(revision+"\x00"+hex.EncodeToString(hash.Sum(nil))), scopeBytes...))
 	final := filepath.Join(parent, "local-"+hex.EncodeToString(pathHash[:])+"-"+hex.EncodeToString(revisionHash[:]))
+	lease, err := snapshotlease.Acquire(dataDir, final)
+	if err != nil {
+		return Discovery{}, err
+	}
+	keepLease := false
+	defer func() {
+		if !keepLease {
+			_ = lease.Close()
+		}
+	}()
 	if err = filepath.Walk(temp, func(path string, info os.FileInfo, e error) error {
 		if e != nil {
 			return e
@@ -315,7 +326,7 @@ func CaptureLocalScoped(ctx context.Context, entry LocalRepository, dataDir stri
 	}); err != nil {
 		return Discovery{}, err
 	}
-	discovery := Discovery{Identity: model.SourceIdentity{ID: entry.ID, Kind: model.SourceKindRepository, AdapterVersion: model.RepositoryAdapterVersion}, Revision: revision, Root: final, Git: state, Coverage: coverage}
+	discovery := Discovery{Identity: model.SourceIdentity{ID: entry.ID, Kind: model.SourceKindRepository, AdapterVersion: model.RepositoryAdapterVersion}, Revision: revision, Root: final, Git: state, Coverage: coverage, Lease: lease}
 	if _, e = os.Lstat(final); e == nil {
 		one, e := snapshotDigest(temp)
 		if e != nil {
@@ -325,6 +336,7 @@ func CaptureLocalScoped(ctx context.Context, entry LocalRepository, dataDir stri
 		if e != nil || one != two {
 			return Discovery{}, fmt.Errorf("owned snapshot differs from validated working tree")
 		}
+		keepLease = true
 		return discovery, nil
 	} else if !os.IsNotExist(e) {
 		return Discovery{}, e
@@ -349,5 +361,6 @@ func CaptureLocalScoped(ctx context.Context, entry LocalRepository, dataDir stri
 		return Discovery{}, err
 	}
 	published = true
+	keepLease = true
 	return discovery, nil
 }

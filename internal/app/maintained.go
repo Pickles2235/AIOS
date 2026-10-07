@@ -19,6 +19,7 @@ import (
 // broken unrelated source paths. Bootstrap may promote healthy members while
 // failed members remain absent/unknown and retry independently.
 func IngestMaintained(ctx context.Context, cfg catalog.Config, discovery adapter.Discovery, fingerprint, dataDir string) (out IndexResult, retErr error) {
+	defer discovery.Close()
 	if err := catalog.Validate(cfg); err != nil {
 		return out, err
 	}
@@ -48,6 +49,12 @@ func IngestMaintained(ctx context.Context, cfg catalog.Config, discovery adapter
 		return out, err
 	}
 	defer db.Close()
+	defer func() {
+		_ = discovery.Close()
+		if retErr == nil {
+			finishSnapshotRetention(ctx, db, dataDir, cfg, &out)
+		}
+	}()
 	ctx, finishObservation := observeIngest(ctx, dataDir, selected.ID)
 	defer func() { finishObservation(retErr) }()
 	if err = db.ReplaceApprovedOwnership(ctx, cfg.SourceRepositories()); err != nil {

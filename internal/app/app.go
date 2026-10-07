@@ -234,7 +234,11 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 	if retention == 0 {
 		retention = 3
 	}
-	if err := db.Retain(ctx, retention-1); err != nil {
+	pruned, retainErr := db.RetainPrunedRoots(ctx, retention-1)
+	if retainErr == nil {
+		retainErr = reclaimPrunedSnapshots(ctx, db, dataDir, pruned)
+	}
+	if retainErr != nil {
 		result.RetentionWarning = "Historical generation retention needs repair; active knowledge remains available."
 	}
 	return result, nil
@@ -329,4 +333,18 @@ func Doctor(configPath, dataDir string) (DoctorResult, error) {
 func within(root, candidate string) bool {
 	rel, err := filepath.Rel(root, candidate)
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+func finishSnapshotRetention(ctx context.Context, db *store.Store, dataDir string, cfg catalog.Config, result *IndexResult) {
+	retention := cfg.RetentionGenerations
+	if retention == 0 {
+		retention = 3
+	}
+	roots, err := db.RetainPrunedRoots(ctx, retention-1)
+	if err == nil {
+		err = reclaimPrunedSnapshots(ctx, db, dataDir, roots)
+	}
+	if err != nil {
+		result.RetentionWarning = "Historical generation retention needs repair; active knowledge remains available."
+	}
 }

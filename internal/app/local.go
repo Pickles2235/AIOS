@@ -49,6 +49,11 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 		return out, err
 	}
 	defer db.Close()
+	defer func() {
+		if retErr == nil {
+			finishSnapshotRetention(ctx, db, dataDir, cfg, &out)
+		}
+	}()
 	ctx, finishObservation := observeIngest(ctx, dataDir, repositoryID)
 	defer func() { finishObservation(retErr) }()
 	if err = db.ReplaceApprovedOwnership(ctx, repos); err != nil {
@@ -76,6 +81,7 @@ func IngestLocal(ctx context.Context, cfg catalog.Config, reg adapter.LocalRegis
 		if e != nil {
 			return out, e
 		}
+		defer discovery.Close()
 		coverage[repo.ID] = discovery.Coverage
 		if _, e = db.Discover(ctx, repo.ID, discovery.Revision, fingerprint); e != nil {
 			return out, e

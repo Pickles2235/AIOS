@@ -58,20 +58,24 @@ func TestResourceDeferralResumeAndMaximumWait(t *testing.T) {
 func TestResourceFairnessAndPendingCancel(t *testing.T) {
 	root := ownedTemp(t)
 	order := make(chan string, 2)
+	started := make(chan struct{}, 1)
+	release := make(chan struct{})
 	o := optionsForTest()
-	o.MaximumDeferred = 500 * time.Millisecond
-	o.Probe = func(context.Context) resourcepolicy.Signals { return fakeSignals("battery", 0) }
-	e, err := New(root, []Source{{ID: "a", Mode: "mirror"}, {ID: "b", Mode: "mirror"}}, func(_ context.Context, id string) (Outcome, error) {
+	o.Probe = func(context.Context) resourcepolicy.Signals { return fakeSignals("ac", 0) }
+	e, err := New(root, []Source{{ID: "a", Mode: "mirror"}, {ID: "b", Mode: "mirror"}}, func(ctx context.Context, id string) (Outcome, error) {
 		order <- id
+		if id == "a" { started <- struct{}{}; select { case <-release: case <-ctx.Done(): return Outcome{}, ctx.Err() } }
 		return Outcome{Revision: "rev", Generation: "gen", ChangedFiles: 0}, nil
 	}, o)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer e.Close()
+	if err = e.Request("a", "check_now"); err != nil { t.Fatal(err) }
 	if err = e.Start(context.Background()); err != nil {
 		t.Fatal(err)
 	}
+	select { case <-started: case <-time.After(time.Second): t.Fatal("older work did not start") }
 	waitJob(t, e, "b", func(j Job) bool { return j.State == "pending" })
 	if err = e.Cancel("b"); err != nil {
 		t.Fatal(err)
@@ -80,6 +84,7 @@ func TestResourceFairnessAndPendingCancel(t *testing.T) {
 	if j.ActiveGeneration != "" {
 		t.Fatal("cancelled pending work activated")
 	}
+	close(release)
 	waitJob(t, e, "a", func(j Job) bool { return j.State == "idle" && j.ActiveGeneration == "gen" })
 	select {
 	case id := <-order:

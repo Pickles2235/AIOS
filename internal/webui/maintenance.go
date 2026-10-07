@@ -117,7 +117,7 @@ func (s *Server) startMaintenance() {
 			}
 			registry := mirror.Registry{Version: 1, Repositories: []mirror.Repository{entry}}
 			if _, err = mirror.Sync(ctx, registry, s.dataDir); err == nil {
-				discovery, err = (adapter.RepositoryGit{Registry: registry, DataDir: s.dataDir}).Discover(ctx, id)
+				discovery, err = (adapter.RepositoryGit{Registry: registry, DataDir: s.dataDir, Limits: cfg.Limits}).Discover(ctx, id)
 			}
 		}
 		outcome := maintenance.Outcome{Revision: discovery.Revision}

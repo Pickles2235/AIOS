@@ -12,16 +12,26 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/model"
 )
 
+func SnapshotPath(dataDir, repositoryID, revision, fingerprint string) string {
+	return filepath.Join(dataDir, "snapshots", repositoryID, revision, fingerprint)
+}
+
 // Snapshot materializes a Git archive below the data directory. It is not a
 // worktree: it has no .git directory and becomes read-only once complete.
-func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, fingerprint string) (string, error) {
-	root := filepath.Join(dataDir, "snapshots", repositoryID, revision, fingerprint)
-	if info, err := os.Stat(root); err == nil && info.IsDir() {
-		return root, nil
-	} else if err != nil && !os.IsNotExist(err) {
+func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, fingerprint string, maxBytes int64, maxFiles int) (string, error) {
+	if maxBytes <= 0 || maxBytes > 2<<30 || maxFiles <= 0 || maxFiles > 200_000 {
+		return "", fmt.Errorf("invalid snapshot bounds")
+	}
+	root := SnapshotPath(dataDir, repositoryID, revision, fingerprint)
+	if err := ensureOwnedSnapshotParents(dataDir, repositoryID, revision, fingerprint); err != nil {
 		return "", err
 	}
-	if err := os.MkdirAll(filepath.Join(dataDir, "snapshots"), 0700); err != nil {
+	if info, err := os.Lstat(root); err == nil {
+		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+			return "", fmt.Errorf("snapshot root is unsafe")
+		}
+		return root, nil
+	} else if !os.IsNotExist(err) {
 		return "", err
 	}
 	temp, err := os.MkdirTemp(filepath.Join(dataDir, "snapshots"), ".staging-")
@@ -29,11 +39,26 @@ func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, 
 		return "", err
 	}
 	defer os.RemoveAll(temp)
-	cmdOut, err := gitArchive(ctx, mirrorPath, revision)
+	processCtx, stop := context.WithCancel(ctx)
+	defer stop()
+	cmd, pipe, err := archiveStream(processCtx, mirrorPath, revision)
 	if err != nil {
 		return "", err
 	}
-	tr := tar.NewReader(strings.NewReader(string(cmdOut)))
+	waited := false
+	defer func() {
+		if !waited {
+			pipe.Close()
+			stop()
+			_ = cmd.Wait()
+		}
+	}()
+	// Tar framing and PAX metadata have bounded overhead beyond extracted bytes.
+	maxTransport := maxBytes + int64(maxFiles)*4096 + 1<<20
+	limited := &io.LimitedReader{R: pipe, N: maxTransport + 1}
+	tr := tar.NewReader(limited)
+	var total int64
+	count := 0
 	for {
 		h, e := tr.Next()
 		if e == io.EOF {
@@ -42,10 +67,11 @@ func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, 
 		if e != nil {
 			return "", e
 		}
-		if filepath.IsAbs(h.Name) || strings.Contains(filepath.ToSlash(h.Name), "../") {
+		path := filepath.Join(temp, filepath.FromSlash(h.Name))
+		rel, relErr := filepath.Rel(temp, path)
+		if filepath.IsAbs(h.Name) || relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 			return "", fmt.Errorf("unsafe archive path %q", h.Name)
 		}
-		path := filepath.Join(temp, filepath.FromSlash(h.Name))
 		switch h.Typeflag {
 		case tar.TypeXGlobalHeader:
 			continue
@@ -54,6 +80,11 @@ func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, 
 				return "", e
 			}
 		case tar.TypeReg:
+			count++
+			if count > maxFiles || h.Size < 0 || h.Size > maxBytes-total {
+				return "", fmt.Errorf("snapshot exceeds file or byte limit")
+			}
+			total += h.Size
 			if e = os.MkdirAll(filepath.Dir(path), 0700); e != nil {
 				return "", e
 			}
@@ -61,7 +92,7 @@ func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, 
 			if e != nil {
 				return "", e
 			}
-			_, e = io.Copy(f, tr)
+			_, e = io.CopyN(f, tr, h.Size)
 			closeErr := f.Close()
 			if e != nil {
 				return "", e
@@ -73,8 +104,20 @@ func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, 
 			return "", fmt.Errorf("archive contains unsupported entry %q", h.Name)
 		}
 	}
-	if err = os.MkdirAll(filepath.Dir(root), 0700); err != nil {
+	if _, err = io.Copy(io.Discard, limited); err != nil {
 		return "", err
+	}
+	if limited.N == 0 {
+		return "", fmt.Errorf("archive transport exceeds byte limit")
+	}
+	err = cmd.Wait()
+	waited = true
+	if err != nil {
+		reason := "local mirror archive failed"
+		if captured, ok := cmd.Stderr.(*archiveStderr); ok {
+			reason = captured.reason()
+		}
+		return "", fmt.Errorf("%s: %w", reason, err)
 	}
 	if err = os.Rename(temp, root); err != nil {
 		if os.IsExist(err) {
@@ -88,10 +131,27 @@ func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, 
 	return root, nil
 }
 
-func gitArchive(ctx context.Context, mirrorPath, revision string) ([]byte, error) {
-	// git() returns textual output, while tar can include NUL. Invoke through a
-	// temporary file-free pipe with the same constrained command settings.
-	return archiveBytes(ctx, mirrorPath, revision)
+func ensureOwnedSnapshotParents(dataDir, repositoryID, revision, fingerprint string) error {
+	if !safeSnapshotSegment(repositoryID) || !safeSnapshotSegment(revision) || !safeSnapshotSegment(fingerprint) {
+		return fmt.Errorf("invalid owned snapshot path")
+	}
+	for _, dir := range []string{filepath.Join(dataDir, "snapshots"), filepath.Join(dataDir, "snapshots", repositoryID), filepath.Join(dataDir, "snapshots", repositoryID, revision)} {
+		if err := os.Mkdir(dir, 0700); err != nil && !os.IsExist(err) {
+			return err
+		}
+		info, err := os.Lstat(dir)
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("unsafe snapshot parent")
+		}
+	}
+	return nil
+}
+
+func safeSnapshotSegment(s string) bool {
+	return s != "" && s != "." && s != ".." && !strings.ContainsAny(s, "/\\")
 }
 
 func TreeChanges(ctx context.Context, mirrorPath, source, target string) ([]model.FileChange, error) {

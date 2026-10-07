@@ -2,10 +2,14 @@ package mirror
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"syscall"
 	"testing"
 )
 
@@ -67,7 +71,7 @@ func TestSnapshotIsReadOnlyAndUsesMirrorRevision(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path, err := Snapshot(context.Background(), synced[0].Mirror, data, "repoa", synced[0].Revision, "fingerprint")
+	path, err := Snapshot(context.Background(), synced[0].Mirror, data, "repoa", synced[0].Revision, "fingerprint", 1<<20, 1000)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,5 +147,84 @@ func TestVariableEstateBounds(t *testing.T) {
 		if err := Validate(r); (err == nil) != (n >= 1 && n <= 100) {
 			t.Fatalf("size %d: %v", n, err)
 		}
+	}
+}
+
+func TestSnapshotRejectsOversizedArchiveAndKeepsLastGood(t *testing.T) {
+	source := t.TempDir()
+	data := t.TempDir()
+	t.Cleanup(func() {
+		_ = filepath.Walk(data, func(path string, info os.FileInfo, err error) error {
+			if err == nil && info.IsDir() {
+				return os.Chmod(path, 0700)
+			}
+			return err
+		})
+	})
+	run(t, source, "init", "-q", "--initial-branch=main")
+	original := filepath.Join(source, "a.txt")
+	if err := os.WriteFile(original, []byte("last good"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	run(t, source, "add", ".")
+	run(t, source, "-c", "user.name=t", "-c", "user.email=t@e", "commit", "-qm", "one")
+	reg := Registry{Version: 1, Repositories: []Repository{{ID: "repoa", URL: source, Ref: "refs/heads/main"}}}
+	synced, err := Sync(context.Background(), reg, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prior, err := Snapshot(context.Background(), synced[0].Mirror, data, "repoa", synced[0].Revision, "fingerprint", 1<<20, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	large := make([]byte, 2<<20)
+	for i := range large {
+		large[i] = byte(i)
+	}
+	if err = os.WriteFile(filepath.Join(source, "large.bin"), large, 0600); err != nil {
+		t.Fatal(err)
+	}
+	run(t, source, "add", ".")
+	run(t, source, "-c", "user.name=t", "-c", "user.email=t@e", "commit", "-qm", "two")
+	synced, err = Sync(context.Background(), reg, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gitPath, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	wrapper := t.TempDir()
+	pidFile := filepath.Join(wrapper, "pid")
+	script := fmt.Sprintf("#!/bin/sh\nprintf '%%s' $$ > %q\nexec %q \"$@\"\n", pidFile, gitPath)
+	if err := os.WriteFile(filepath.Join(wrapper, "git"), []byte(script), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", wrapper+string(os.PathListSeparator)+os.Getenv("PATH"))
+	if _, err = Snapshot(context.Background(), synced[0].Mirror, data, "repoa", synced[0].Revision, "fingerprint", 1<<20, 100); err == nil {
+		t.Fatal("oversized archive accepted")
+	}
+	if _, err := os.Stat(SnapshotPath(data, "repoa", synced[0].Revision, "fingerprint")); !os.IsNotExist(err) {
+		t.Fatalf("partial oversized root survived: %v", err)
+	}
+	pidBytes, err := os.ReadFile(pidFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(pidBytes)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Kill(pid, 0); !errors.Is(err, syscall.ESRCH) {
+		t.Fatalf("archive subprocess still alive: pid=%d err=%v", pid, err)
+	}
+	if got, err := os.ReadFile(filepath.Join(prior, "a.txt")); err != nil || string(got) != "last good" {
+		t.Fatal("prior snapshot lost")
+	}
+	if got, err := os.ReadFile(original); err != nil || string(got) != "last good" {
+		t.Fatal("source changed")
+	}
+	if matches, _ := filepath.Glob(filepath.Join(data, "snapshots", ".staging-*")); len(matches) != 0 {
+		t.Fatalf("staging leak: %v", matches)
 	}
 }

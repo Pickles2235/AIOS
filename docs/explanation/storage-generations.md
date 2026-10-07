@@ -61,3 +61,12 @@ configuration are explicit full-repository fallbacks.
 Readers open the database with SQLite read-only mode. A writer lock prevents concurrent ingestion writers. If ingestion fails, the queue retains its pending revision and failure diagnostic, while the active catalog remains unchanged; maintained ingestion retries or supersedes the failed selection safely. `status` and `kb.status` expose queue state, revisions, delta counts, and the bounded event audit trail.
 
 The writer upgrades `knowledge-ir-v9` with a verified owner-only SQLite backup and an atomic transaction. The new format preserves distinct capture epochs when content reverts to earlier bytes; prior canonical observations remain intact. A failed migration retains the old format and last-good active generation. Backups remain in the owned data directory as `index.ir-9-backup-*.db`. Other historical derived formats require a clean IR reindex; repository inputs are never removed. This database migration alone does not certify a complete installed-package upgrade.
+
+Successful activation keeps the active catalog and two prior catalog revisions by
+default. Retention records obsolete owned snapshot roots durably, then reclaims
+them after their capture/ingest lease ends. Cleanup validates owned paths and
+canonical/staged references before deletion; a crash leaves the cleanup record
+for the next successful ingest. Empty owned revision directories are removed.
+External source workspaces and active or retained snapshots are never deleted.
+Mirror archives are streamed into owned staging under configured file, extracted
+byte and transport bounds; an overflow cannot publish a partial snapshot.

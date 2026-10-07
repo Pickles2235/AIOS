@@ -5,8 +5,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
 	"github.com/AdamNi-7080/AIOS/internal/model"
+	"github.com/AdamNi-7080/AIOS/internal/snapshotlease"
 )
 
 // Discovery is an immutable, local source revision ready for deterministic
@@ -18,7 +20,10 @@ type Discovery struct {
 	Changes  []model.FileChange
 	Git      model.GitState
 	Coverage model.CoverageReport
+	Lease    *snapshotlease.Lease
 }
+
+func (d Discovery) Close() error { return d.Lease.Close() }
 
 // SourceAdapter discovers a fixed approved revision. Extraction remains in
 // the compiler pipeline so every adapter produces the same canonical IR.
@@ -33,6 +38,7 @@ type SourceAdapter interface {
 type RepositoryGit struct {
 	Registry mirror.Registry
 	DataDir  string
+	Limits   model.Limits
 }
 
 func (RepositoryGit) Kind() string    { return model.SourceKindRepository }
@@ -54,9 +60,19 @@ func (a RepositoryGit) Discover(ctx context.Context, id string) (Discovery, erro
 		return Discovery{}, err
 	}
 	fingerprint := mirror.Fingerprint(a.Registry)
-	root, err := mirror.Snapshot(ctx, mirror.MirrorPath(a.DataDir, id), a.DataDir, id, revision, fingerprint)
+	limits := a.Limits
+	if limits == (model.Limits{}) {
+		limits = catalog.Defaults()
+	}
+	expected := mirror.SnapshotPath(a.DataDir, id, revision, fingerprint)
+	lease, err := snapshotlease.Acquire(a.DataDir, expected)
 	if err != nil {
 		return Discovery{}, err
 	}
-	return Discovery{Identity: model.SourceIdentity{ID: id, Kind: a.Kind(), AdapterVersion: a.Version()}, Revision: revision, Root: root}, nil
+	root, err := mirror.Snapshot(ctx, mirror.MirrorPath(a.DataDir, id), a.DataDir, id, revision, fingerprint, limits.MaxTotalBytesPerRepo, limits.MaxFilesPerRepo)
+	if err != nil {
+		lease.Close()
+		return Discovery{}, err
+	}
+	return Discovery{Identity: model.SourceIdentity{ID: id, Kind: a.Kind(), AdapterVersion: a.Version()}, Revision: revision, Root: root, Lease: lease}, nil
 }
