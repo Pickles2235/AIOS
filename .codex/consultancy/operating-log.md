@@ -16,8 +16,8 @@ Finish the approved installable V1 completion mission. Acceptance is the full 15
 | Owner | Level and role | Scope | Status |
 |---|---|---|---|
 | `/root` | Manager / integration | Scope, plans/evidence, publication and mission sign-off | Active |
-| Pending fresh delivery lead | Principal; `gpt-6-astra` / `medium` / `fork_turns=none` | Task 11 API, renderer, safe source actions and motion integration; may delegate one bounded contributor | Launch now |
-| Pending fresh acceptance owner | Principal; `gpt-6-astra` / `medium` / `fork_turns=none` | Independent R18-R20 evidence, security and native rendering acceptance | Launch after delivery brief |
+| `/root/volumetric_cloud_delivery` | Principal; `gpt-6-astra` / `medium` / `fork_turns=none` | Task 11 API, renderer, safe source actions and motion integration; may delegate one bounded contributor | Active |
+| `/root/volumetric_cloud_acceptance` | Principal; `gpt-6-astra` / `medium` / `fork_turns=none` | Independent R18-R20 evidence, security and native rendering acceptance | Active |
 | Completed task 10 delivery/review | Senior delivery and independent review | Task 10 passed and published; reviewed source4d176cd, publication6e16126, completion0c3fba2 | Completed |
 | Completed cloud gap auditor | Principal read-only audit | Task 11 current gap map, retained below | Completed |
 
@@ -36,3 +36,7 @@ Task 11 audit: live `web/src/knowledge-cloud.tsx` is a 2D SVG ring wired by `mai
 ## Task 10 recovery checkpoint
 
 Current source `4092163670030770823585e372c7370e7c01f4fe` includes typed coverage, faithful relationship citations, independently reviewed gold cases, stale evidence handling, configuration coverage repair and bounded Playwright runner. The final serial web run failed seven maintenance/management cases: actual battery power deferred initial jobs beyond the fixture poll deadline. Delivery owns a private AC-power command fixture for only those disposable test backends. Reviewer independently audited its isolation and retained behavioral assertions; this synthetic fixture is not native power evidence. Production resource policy remains unchanged. Milestone stays in progress until clean exact-SHA core/web/retrieval gates, paired acceptance and final independent review pass. Prior passing reports and rejected/stalled runs remain historical evidence.
+
+Task 11 initial architecture: canonical cloud API pinned to an active generation set; bounded exact hierarchy membership/pages and claim-backed edges; actual WebGL perspective/depth with deterministic positions; DOM evidence alternative and backend validated source actions. Path-derived directories must be labelled as directories rather than inferred modules. Delivery lead owns UI/integration and will staff one fresh backend contributor with a disjoint contract. Reviewer owns independent criteria/evidence checks.
+
+Task 10 bookkeeping validation: default macOS Python 3.9 `make harness-test` returned exit 2 solely from TemporaryDirectory cleanup (`Directory not empty: info`) in a synthetic harness regression after its behavior assertions. Rerun with Python 3.12 passed exit 0 (11 legacy and 14 completion harness tests), log `/tmp/aios-task10-completed-harness-python312.log`. The rejected cleanup run is retained at `/tmp/aios-task10-completed-harness.log`; no claim that it passed. Use explicit Python 3.12 for subsequent manager checks.
