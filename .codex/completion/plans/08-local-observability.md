@@ -28,8 +28,11 @@ keeps this task08 integration repair covered.
 In progress on real Darwin arm64 in the restored local checkout. OTEL/local
 sink, operational ledger scrub, query/setup/job/ingest/upgrade correlation,
 safe API/UI and embedded assets are implemented. Fault and planted probes are
-in place. The full core and browser validation commands pass; committed-source
-scoped gates and independent review remain pending.
+in place. Independent review found a raw diagnostic-ID prefix bypass in the
+first implementation commit `8a734bf38f50f0895dbcf0984618f33cadd7914d`;
+the corrected source commit is `353de6a43dde4e1998636d47a80730c90343d307`.
+Task remains in progress pending reviewer recheck and disposition of a variable
+full-browser failure. No publication or candidate-ready claim has been made.
 
 ## Scenario scope
 
@@ -37,38 +40,67 @@ Run existing core/web gates plus scoped product scenarios with `gate NAME --mile
 
 ## Actual validation
 
-Focused `go test ./internal/observability ./internal/store ./internal/app
-./internal/webui ./internal/lifecycle` passed after the ledger change; direct
-task08 product scenarios and the live Chrome diagnostics browser flow passed.
-On Darwin arm64, `PATH=/opt/homebrew/bin:$PATH GIT_CONFIG_COUNT=2
+On Darwin arm64, corrected commit `353de6a43dde4e1998636d47a80730c90343d307`
+was built with `make build`; `go version -m bin/aios` showed that exact revision
+and `vcs.modified=false`. Focused adversarial store command
+`go test ./internal/store -run 'TestFreshOperationalIDThatLooksOpaqueIsHashed|TestLegacyOperationalLedgerScrubPreservesCanonicalEvidence|TestBusyOperationalCheckpointKeepsPendingRetry' -count=1 -v`
+passed. The fresh-write and legacy-migration tests plant `diag-h_` followed by
+a secret; migration still preserves the canonical source/compiler/coverage
+fingerprint and rows.
+
+`PATH=/opt/homebrew/bin:$PATH GIT_CONFIG_COUNT=2
 GIT_CONFIG_KEY_0=maintenance.auto GIT_CONFIG_VALUE_0=false
-GIT_CONFIG_KEY_1=gc.auto GIT_CONFIG_VALUE_1=0 make harness-validate` passed
-Python, vet, Go, race and build. A first full run had an isolated timing failure
-in mirror's pipe helper; that test passed alone and the exact full rerun passed.
-`PATH=/opt/homebrew/bin:$PATH make harness-validate-web` passed 27 unit and
-36 live Chrome E2E cases with rebuilt embedded assets. Earlier full browser
-runs caught the Direct-source choice race and a variable native namespace
-collision; the final unchanged default gate passed after the targeted fix.
-`make acceptance-v1 ACCEPTANCE_OUTPUT=/tmp/aios-task08-acceptance-1-20261007T1212`
-and the same command with `...-2-20261007T1215` each accepted 14 cases from
-fresh external directories with equal semantic fingerprint
+GIT_CONFIG_KEY_1=gc.auto GIT_CONFIG_VALUE_1=0 python3
+scripts/completion_harness.py gate core --milestone 08-local-observability
+--output /tmp/aios-task08-final-evidence/core.json` passed Python, vet, Go,
+race and build at the corrected commit. `PATH=/opt/homebrew/bin:$PATH python3
+scripts/completion_harness.py gate privacy --milestone 08-local-observability
+--output /tmp/aios-task08-final-evidence/privacy.json` passed both task08
+scenarios (52 and 45 assertions) with exact clean-binary provenance. Copies of
+the two receipts and scenario report are in `.codex/completion/evidence/08-final-*.json`.
+
+Sequential fresh `PATH=/opt/homebrew/bin:$PATH make acceptance-v1` runs with
+`ACCEPTANCE_OUTPUT=/tmp/aios-task08-final-acceptance-1-20261007T1242` and
+`ACCEPTANCE_OUTPUT=/tmp/aios-task08-final-acceptance-2-20261007T1244` each
+accepted all 14 cases. Both report `engine_revision` equal to the corrected
+commit and semantic fingerprint
 `6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0`.
-Formal committed-source core/privacy receipts and independent attestation
-remain pending; add their exact results after the implementation commit.
+
+`npm --prefix web run test:e2e -- --grep 'diagnostic|delayed onboarding read'
+--workers=1` passed all four corrected-commit Chrome cases. The exact
+`PATH=/opt/homebrew/bin:$PATH make harness-validate-web` passed once at the
+first implementation commit (27 unit, 36 browser cases), but the corrected
+commit's final run exited 2 with 27 unit and 35/36 browser cases passing.
+Its sole failure was the existing desktop-2560 mirror repository-management
+query after rebuild: Evidence inspector stayed at “Select an entity” rather
+than showing `OriginalWorker` within five seconds. Full log:
+`/tmp/aios-task08-final-evidence/web.log`. Earlier browser attempts varied
+among native namespace collision, repository-management timing and one hung
+run terminated after 34/36 passes; the last hung-run log is
+`/tmp/aios-task08-web-final-20261007T1235.log`. Preserve these failures for
+review rather than treating the prior web pass as corrected-commit proof.
 
 ## Independent review
 
-Separate reviewer report and corrected commit required.
+Independent reviewer identified the ID-prefix privacy bypass and required a
+corrected commit. Re-review of `353de6a43dde4e1998636d47a80730c90343d307`
+and its receipts is pending. Reviewer must also decide whether the broader
+browser timing failure blocks task08; the task is not ready yet.
 
 ## Blockers
 
-No current environment blocker. The earlier cloud outage and unpublished source
-loss remain historical evidence below. Native assembled-product acceptance
-remains a milestone 15 gate.
+The current blocker is review disposition of the corrected privacy fix and
+the committed-source full browser failure. The earlier cloud outage and
+unpublished source loss remain historical evidence below. Native
+assembled-product acceptance remains a milestone 15 gate.
 
 ## Handoff
 
-Persist implementation SHA, publication evidence and next work. Continue mission.
+Implementation SHA: `353de6a43dde4e1998636d47a80730c90343d307` on
+`codex/completion-observability-resume`. Inspect the corrected commit, copied
+receipts, scenario report, full web log and fresh acceptance reports. Obtain
+independent re-review before changing status. No push, publication, or
+completion bookkeeping was performed.
 
 ## Historical implementation and executor outage
 
