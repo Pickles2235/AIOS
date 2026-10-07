@@ -215,9 +215,9 @@
       "gates": [
         "core"
       ],
-      "status": "ready",
+      "status": "completed",
       "plan": ".codex/completion/plans/08-local-observability.md",
-      "completion_commit": null,
+      "completion_commit": "e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e",
       "review": ".codex/completion/evidence/08-review.json",
       "product_gates": [
         "core",

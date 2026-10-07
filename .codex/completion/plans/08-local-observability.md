@@ -131,18 +131,18 @@ Independent re-review of exact candidate
 ## Blockers
 
 No implementation or environment blocker remains on the current candidate.
-Publication to main is pending. The earlier cloud outage and unpublished source
-loss remain historical evidence below. Native assembled-product acceptance
-remains a milestone 15 gate.
+The task was published by normal fast-forward and verified on fetched
+`origin/main` at `8d27a3af1f65fee5a3d656864eae7cbf9a1ba9bd`; implementation SHA
+`e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e` is an ancestor. The earlier cloud
+outage and unpublished source loss remain historical evidence below. Native
+assembled-product acceptance remains a milestone 15 gate.
 
 ## Handoff
 
-Candidate source SHA: `e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e` on
-`codex/completion-observability-resume`. Independent review passed; copied
-candidate receipts, scenario report, final web log and matching fresh
-acceptance reports are recorded above. Status is ready. Publish by normal
-fast-forward to main, verify the implementation SHA on fetched origin/main, then
-make a follow-up bookkeeping commit setting completed and completion_commit.
+Task08 implementation SHA: `e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e`.
+Published by normal fast-forward to `main`; fetched `origin/main` was
+`8d27a3af1f65fee5a3d656864eae7cbf9a1ba9bd` and contains the implementation SHA.
+The task is completed with that implementation SHA recorded in tasks.json.
 Do not claim assembled candidate readiness; milestone 15 acceptance remains.
 
 ## Historical implementation and executor outage
