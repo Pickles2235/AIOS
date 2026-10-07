@@ -82,18 +82,33 @@ function App() {
   const views = useRef<{
       repo: string;
       selected?: Entity;
+      selectedClaim?: Claim;
+      evidence?: Excerpt;
       result?: QueryResult;
+      investigation?: Investigation;
     }>({ repo: "" }),
-    inspecting = useRef<Entity>();
-  views.current = { repo, selected, result };
+    inspecting = useRef<Entity>(),
+    inspectingClaim = useRef<Claim>();
+  views.current = {
+    repo,
+    selected,
+    selectedClaim,
+    evidence,
+    result,
+    investigation,
+  };
   function clearSelection() {
     setSelectedClaim(undefined);
     setInvestigation(undefined);
     viewRevision.current++;
     inspection.current++;
     inspecting.current = undefined;
+    inspectingClaim.current = undefined;
+    views.current.selectedClaim = undefined;
+    views.current.evidence = undefined;
     views.current.selected = undefined;
     views.current.result = undefined;
+    views.current.investigation = undefined;
     setSelected(undefined);
     setEvidence(undefined);
     searching.current++;
@@ -148,8 +163,16 @@ function App() {
       const activeGenerations = new Set(active.map((r) => r.generation));
       if (
         next !== current.repo ||
+        [
+          current.selectedClaim?.generation,
+          inspectingClaim.current?.generation,
+          current.evidence?.generation,
+        ].some((g) => !!g && !activeGenerations.has(g)) ||
         referenced.some(
           (e) => generations.get(e.repository) !== e.generation,
+        ) ||
+        (current.investigation?.generations || []).some(
+          (g) => !activeGenerations.has(g),
         ) ||
         (current.result?.coverage?.generations || []).some(
           (g) => !activeGenerations.has(g),
@@ -243,6 +266,9 @@ function App() {
   }, [status]);
   async function inspect(entity: Entity) {
     setSelectedClaim(undefined);
+    views.current.selectedClaim = undefined;
+    views.current.evidence = undefined;
+    inspectingClaim.current = undefined;
     const id = ++inspection.current;
     viewRevision.current++;
     inspecting.current = entity;
@@ -262,6 +288,7 @@ function App() {
       if (id === inspection.current) {
         viewRevision.current++;
         views.current.selected = fresh;
+        views.current.evidence = excerpt;
         setSelected(fresh);
         setEvidence(excerpt);
       }
@@ -278,6 +305,12 @@ function App() {
   }
   async function inspectClaim(claim: Claim) {
     const id = ++inspection.current;
+    viewRevision.current++;
+    inspecting.current = undefined;
+    inspectingClaim.current = claim;
+    views.current.selected = undefined;
+    views.current.selectedClaim = undefined;
+    views.current.evidence = undefined;
     setSelected(undefined);
     setEvidence(undefined);
     setSelectedClaim(undefined);
@@ -289,12 +322,17 @@ function App() {
         max_lines: 40,
       });
       if (id === inspection.current) {
+        viewRevision.current++;
+        views.current.selectedClaim = claim;
+        views.current.evidence = excerpt;
         setSelectedClaim(claim);
         setEvidence(excerpt);
       }
     } catch (e) {
       if (id === inspection.current)
         setNotice(`Relationship evidence unavailable: ${message(e)}`);
+    } finally {
+      if (id === inspection.current) inspectingClaim.current = undefined;
     }
   }
   const queryRequest = (text: string) =>
@@ -594,7 +632,11 @@ function App() {
             { text },
             signal,
           );
-          if (!signal.aborted) setInvestigation(value);
+          if (!signal.aborted) {
+            viewRevision.current++;
+            views.current.investigation = value;
+            setInvestigation(value);
+          }
           return value;
         }}
         history={async () =>

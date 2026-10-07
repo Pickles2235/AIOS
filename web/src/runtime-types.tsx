@@ -1,6 +1,6 @@
 export type Span = {start_line: number; end_line: number};
 export type Entity = {handle: string; kind: string; label: string; identity: string; repository: string; path: string; generation: string; evidence: string; confidence: number; evidence_count: number; span: Span};
-export type Claim = {handle: string; subject: string; object: string; predicate: string; evidence: string; confidence: number; derivation: string};
+export type Claim = {generation: string; handle: string; subject: string; object: string; predicate: string; evidence: string; confidence: number; derivation: string};
 export type Projection = {repository: string; generation: string; nodes: Entity[]; edges: Claim[]; truncated: boolean; next_cursor?: string; applied_limits?: Record<string, number>};
 export type Status = {projection_state: string; repositories: {id: string; generation: string; revision: string; active: boolean}[]};
 export type Excerpt = {path: string; repository: string; generation: string; git_commit: string; working_tree?:boolean; sha256: string; start_line: number; end_line: number; lines: string[]; truncated: boolean};

@@ -646,3 +646,133 @@ test("completion refresh preserves current evidence and retires old views", asyn
     page.getByRole("heading", { name: "No active generation" }),
   ).toBeVisible();
 });
+
+test("promotion invalidates relationship evidence and unselected investigation highlights", async ({
+  page,
+}) => {
+  let generation = "g1";
+  const entity = () => ({
+    handle: `entity-${generation}`,
+    kind: "function",
+    label: "Publish",
+    identity: "Publish",
+    repository: "repo",
+    path: "src/a.go",
+    generation,
+    evidence: `evidence-${generation}`,
+    confidence: 1,
+    evidence_count: 1,
+    span: { start_line: 1, end_line: 1 },
+  });
+  const claim = () => ({
+    handle: `claim-${generation}`,
+    generation,
+    subject: entity().handle,
+    object: entity().handle,
+    predicate: "EMITS_EVENT",
+    evidence: entity().evidence,
+    confidence: 1,
+    derivation: "syntax",
+  });
+  await page.route("**/api/v1/session", (r) =>
+    r.fulfill({ json: { csrf_token: "csrf" } }),
+  );
+  await page.route("**/api/v1/status", (r) =>
+    r.fulfill({
+      json: {
+        projection_state: "ready",
+        repositories: [{ id: "repo", generation, revision: "r", active: true }],
+      },
+    }),
+  );
+  await page.route("**/api/v1/projection?repo=repo", (r) =>
+    r.fulfill({
+      json: {
+        repository: "repo",
+        generation,
+        nodes: [entity()],
+        edges: [claim()],
+        truncated: false,
+      },
+    }),
+  );
+  await page.route("**/api/v1/cloud?*", (r) =>
+    r.fulfill({
+      json: {
+        ...cloud(entity()),
+        edges: [claim()],
+        edge_count: 1,
+        total_claims: 1,
+      },
+    }),
+  );
+  await page.route("**/api/v1/evidence", (r) =>
+    r.fulfill({
+      json: {
+        repository: "repo",
+        path: "src/a.go",
+        generation,
+        git_commit: "r",
+        sha256: "hash",
+        start_line: 1,
+        end_line: 1,
+        lines: [`claim source ${generation}`],
+      },
+    }),
+  );
+  await page.route("**/api/v1/history", (r) =>
+    r.fulfill({ json: { entries: [] } }),
+  );
+  await page.route("**/api/v1/investigation", (r) =>
+    r.fulfill({
+      json: {
+        schema_version: 1,
+        query: "Publish",
+        search_term: "Publish",
+        intent: "symbol",
+        status: "found",
+        generations: [generation],
+        freshness: [{ id: "repo", generation, revision: "r", active: true }],
+        findings: [{ entity: entity(), evidence: entity().evidence }],
+        canonical_evidence: [],
+        relationships: [claim()],
+        unknowns: [],
+        budget: { results: 12 },
+        truncated: false,
+      },
+    }),
+  );
+  await page.goto("/#token=test");
+  await page
+    .getByLabel("Knowledge cloud", { exact: true })
+    .getByText("Relationships (1 shown)", { exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Inspect relationship evidence", exact: true })
+    .click();
+  await expect(page.getByLabel("Evidence inspector")).toContainText(
+    "claim source g1",
+  );
+  // No entity is selected. The claim/excerpt refs must still invalidate.
+  generation = "g2";
+  await expect(page.getByLabel("Evidence inspector")).toContainText(
+    "Select an entity",
+    { timeout: 10000 },
+  );
+  await expect(page.getByLabel("Evidence inspector")).not.toContainText(
+    "claim source g1",
+  );
+  await page.getByRole("button", { name: "Open Spotlight" }).click();
+  const query = page.getByRole("combobox", { name: "Spotlight query" });
+  await query.fill("Publish");
+  await query.press("Enter");
+  await expect(page.getByRole("dialog").getByRole("option")).toContainText(
+    "Publish",
+  );
+  await page.getByRole("button", { name: "Close Spotlight" }).click();
+  await expect(page.getByLabel("Cloud query disclosure")).toBeVisible();
+  generation = "g3";
+  await expect(page.getByLabel("Cloud query disclosure")).toHaveCount(0, {
+    timeout: 10000,
+  });
+});

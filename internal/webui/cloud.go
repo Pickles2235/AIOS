@@ -23,6 +23,8 @@ import (
 )
 
 type sourceAction struct {
+	LocalPath string `json:"-"`
+	Line      int    `json:"-"`
 	Kind      string `json:"kind"`
 	Label     string `json:"label"`
 	URL       string `json:"url,omitempty"`
@@ -130,7 +132,7 @@ func (s *Server) cloudAPI(w http.ResponseWriter, r *http.Request) {
 				fail(w, 409, "editor destination is unavailable")
 				return
 			}
-			err = exec.CommandContext(ctx, "code", "--goto", u.Path).Run()
+			err = exec.CommandContext(ctx, "code", editorArguments(action.LocalPath, action.Line)...).Run()
 		}
 		if err != nil {
 			fail(w, 409, "source action could not be opened")
@@ -174,14 +176,12 @@ func (s *Server) sourceActions(r *http.Request, handle string) (sourceActions, e
 		}
 		if target, ok := matchingLocalFile(local.Path, entity.Path, sha); ok && runtime.GOOS == "darwin" {
 			fileURL := (&url.URL{Scheme: "file", Path: target}).String()
+			// Availability checks must not invoke an application. The explicit open
+			// route uses this executable and reports invocation failures honestly.
 			if _, e := exec.LookPath("code"); e == nil {
-				probe, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-				appFound := exec.CommandContext(probe, "open", "-Ra", "Visual Studio Code").Run() == nil
-				cancel()
-				if appFound {
-					result.Actions[0] = sourceAction{Kind: "editor", Label: "Open in editor", URL: "vscode://file" + (&url.URL{Path: target}).EscapedPath() + fmt.Sprintf(":%d", entity.Span.StartLine), Available: true}
-				}
+				result.Actions[0] = sourceAction{Kind: "editor", Label: "Open in editor", LocalPath: target, Line: entity.Span.StartLine, URL: "vscode://file" + (&url.URL{Path: target}).EscapedPath() + fmt.Sprintf(":%d", entity.Span.StartLine), Available: true}
 			}
+
 			result.Actions[1] = sourceAction{Kind: "finder", Label: "Show in Finder", URL: fileURL, Available: true}
 		}
 		break
@@ -201,6 +201,16 @@ func (s *Server) sourceActions(r *http.Request, handle string) (sourceActions, e
 		return sourceActions{}, fmt.Errorf("entity generation changed")
 	}
 	return result, nil
+}
+
+// VS Code's --goto parser treats colons inside legal macOS filenames as
+// line/column separators. Preserve the exact file for those names, without a
+// line hint, and use an argv terminator rather than a shell or URI dispatch.
+func editorArguments(target string, line int) []string {
+	if strings.Contains(target, ":") {
+		return []string{"--", target}
+	}
+	return []string{"--goto", target + ":" + strconv.Itoa(line)}
 }
 
 func safeRelativeSourcePath(rel string) bool {

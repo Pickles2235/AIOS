@@ -152,9 +152,10 @@ test.describe("real installed-product UI", () => {
     writeFileSync(
       join(source, "src", "Worker.java"),
       "package example; class Worker {\n" +
-        Array.from({ length: 1000 }, (_, i) => `void work${i}() {}\n`).join(
-          "",
-        ) +
+        Array.from(
+          { length: 1000 },
+          (_, i) => `void work${i}() {${i === 0 ? "work1();" : ""}}\n`,
+        ).join("") +
         "}\n",
     );
     writeFileSync(
@@ -231,6 +232,25 @@ test.describe("real installed-product UI", () => {
         }),
     );
     expect(symbols.nodes.length).toBe(256);
+    expect(symbols.edges.length).toBeGreaterThan(0);
+    for (const edge of symbols.edges) {
+      expect(symbols.nodes.some((n) => n.handle === edge.subject)).toBe(true);
+      expect(symbols.nodes.some((n) => n.handle === edge.object)).toBe(true);
+      const excerpt = await api<{
+        path: string;
+        generation: string;
+        lines: string[];
+      }>(page, "/api/v1/evidence", {
+        evidence: edge.evidence,
+        before: 0,
+        after: 0,
+        max_lines: 20,
+      });
+      expect(excerpt.path).toBe("src/Worker.java");
+      expect(excerpt.generation).toBe(symbols.generations[0].generation);
+      expect(excerpt.lines.length).toBeGreaterThan(0);
+    }
+
     expect(symbols.total_entities).toBeGreaterThan(1000);
     const handles = new Set<string>();
     let part = symbols;
@@ -645,7 +665,7 @@ test.describe("real installed-product UI", () => {
         action: "finder_reveal",
         validatedCanonicalHandle: true,
         selectedCapturedFixtureFile: true,
-        sourceUnmodified: true,
+        selectedSourceBytesUnchanged: true,
       }),
     );
   });
