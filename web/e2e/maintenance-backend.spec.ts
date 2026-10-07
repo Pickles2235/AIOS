@@ -24,6 +24,7 @@ for(const mode of ["local","mirror"])test(`real ${mode} maintenance health contr
     const jobs=()=>page.evaluate(async()=>{const r=await fetch("/api/v1/jobs");return r.json()});
     await expect.poll(async()=>{const s=await jobs();return s.jobs[0]?.state},{timeout:30000}).toBe("idle");
     const first=(await jobs()).jobs[0];expect(first.active_generation).toBeTruthy();
+    await page.getByRole("navigation",{name:"Operational modules"}).getByRole("button",{name:"Health",exact:true}).click();
     const health=page.getByLabel("Repository maintenance");await expect(health).toBeVisible();await health.locator("summary").click();
     const policy=await page.evaluate(async()=>{const r=await fetch("/api/v1/resources");return r.json()});
     expect(["normal","constrained","idle_opportunity"]).toContain(policy.state);

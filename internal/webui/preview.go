@@ -62,8 +62,13 @@ func (s *Server) activityAPI(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	events := append([]ActivityEvent{}, s.activity...)
 	seq := s.activitySequence
+	stream := s.activityStream
 	s.mu.Unlock()
-	jsonBody(w, map[string]any{"events": events, "sequence": seq, "retention_events": 512, "staged_evidence_queryable": false})
+	oldest := seq + 1
+	if len(events) > 0 {
+		oldest = events[0].Sequence
+	}
+	jsonBody(w, map[string]any{"events": events, "sequence": seq, "stream_id": stream, "oldest_sequence": oldest, "retention_events": 512, "staged_evidence_queryable": false})
 }
 
 type PreviewRepository struct {

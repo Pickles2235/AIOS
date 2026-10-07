@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./style.css";
 import { MirrorSetup, IndexingCard, type Setup } from "./mirror-setup";
 import { NamespaceSettings } from "./namespace-settings";
-import { Maintenance } from "./maintenance";
+import { ContextualModules, type ActivityView } from "./contextual-modules";
 import { RepositoryManagement } from "./repository-management";
 import { InstanceBrand, type Instance } from "./instance-brand";
 import { SourceActions } from "./source-actions";
@@ -66,6 +66,7 @@ function App() {
     [evidence, setEvidence] = useState<Excerpt>();
   const [query, setQuery] = useState(""),
     [result, setResult] = useState<QueryResult>(),
+    [queryError, setQueryError] = useState(""),
     [notice, setNotice] = useState(""),
     [mapNotice, setMapNotice] = useState(""),
     [busy, setBusy] = useState(false);
@@ -74,6 +75,8 @@ function App() {
   >("connected");
   const [indexing, setIndexing] = useState(false),
     [investigation, setInvestigation] = useState<Investigation>();
+  const [spotlightState, setSpotlightState] = useState<{ open: boolean; busy: boolean; result?: Investigation; stale: boolean; error: string }>();
+  const [activityView, setActivityView] = useState<ActivityView>({ events: [] });
   const inspection = useRef(0),
     loading = useRef(0),
     searching = useRef(0),
@@ -113,6 +116,7 @@ function App() {
     setEvidence(undefined);
     searching.current++;
     setResult(undefined);
+    setQueryError("");
     setBusy(false);
   }
   async function load(wanted?: string) {
@@ -246,6 +250,10 @@ function App() {
     }, 2000);
     return () => window.clearInterval(timer);
   }, [status, daemonState]);
+  useEffect(() => {
+    if (daemonState !== "connected")
+      setActivityView(current => ({ ...current, warning: "Daemon connection is unavailable. Earlier activity is retained for reference and may be stale." }));
+  }, [daemonState]);
   async function stopDaemon() {
     try {
       await request("/api/v1/daemon/stop", {});
@@ -346,6 +354,7 @@ function App() {
     clearSelection();
     const id = ++searching.current;
     setNotice("");
+    setQueryError("");
     setBusy(true);
     try {
       const r = await queryRequest(query);
@@ -355,8 +364,10 @@ function App() {
       setResult(r);
       if (r.entities[0]) await inspect(r.entities[0]);
     } catch (e) {
-      if (id === searching.current)
+      if (id === searching.current) {
+        setQueryError("Search unavailable. Retry after checking the main error.");
         setNotice(`Search unavailable: ${message(e)}`);
+      }
     } finally {
       if (id === searching.current) setBusy(false);
     }
@@ -476,8 +487,8 @@ function App() {
       )}
       {notice && <p role="alert">{notice}</p>}
       {mapNotice && <p role="status">{mapNotice}</p>}
-      {daemonState === "connected" && !indexing && (
-        <Maintenance request={request} onChanged={() => void load()} />
+      {daemonState === "connected" && (
+        <ContextualModules request={request} status={status} setupRunning={indexing} result={result} queryBusy={busy} queryError={queryError} spotlight={spotlightState} onChanged={() => void load()} onActivity={setActivityView} />
       )}
       {daemonState === "connected" && (
         <RepositoryManagement
@@ -529,6 +540,7 @@ function App() {
       <div className="knowledge-workspace">
         <div>
           <KnowledgeCloud
+            activity={activityView}
             onPromotion={(invalidate) => {
               if (invalidate) clearSelection();
               void load();
@@ -625,6 +637,7 @@ function App() {
       </div>
       <Spotlight
         open={spotlight}
+        onState={setSpotlightState}
         close={() => setSpotlight(false)}
         search={async (text, signal) => {
           const value = await request<Investigation>(

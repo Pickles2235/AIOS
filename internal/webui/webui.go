@@ -50,6 +50,7 @@ type Server struct {
 	stopState                         string
 	activity                          []ActivityEvent
 	activitySequence                  uint64
+	activityStream                    string
 	namespaceMu                       sync.Mutex
 	namespace                         string
 	namespaceError                    string
@@ -92,7 +93,7 @@ func New(cfg catalog.Config, db *store.Store, listener net.Listener) (*Server, e
 		_ = listener.Close()
 		return nil, e
 	}
-	s := &Server{db: db, dataDir: filepath.Dir(db.Path()), listener: listener, origin: "http://" + listener.Addr().String(), capability: token(), read: knowledge.New(cfg, db)}
+	s := &Server{db: db, dataDir: filepath.Dir(db.Path()), listener: listener, origin: "http://" + listener.Addr().String(), capability: token(), activityStream: token(), read: knowledge.New(cfg, db)}
 	if e = s.restoreSetup(cfg); e != nil {
 		_ = listener.Close()
 		return nil, e

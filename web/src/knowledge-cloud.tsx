@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { Claim, Entity, Investigation } from "./runtime-types";
+import type { ActivityView } from "./contextual-modules";
 import { CloudRenderer } from "./cloud-renderer";
 import {
   nodeIdentity,
@@ -7,13 +8,6 @@ import {
   type CloudNode,
   type CloudPage,
 } from "./cloud-types";
-type Activity = {
-  sequence: number;
-  stage: string;
-  repository: string;
-  files: number;
-  queryable: boolean;
-};
 type Request = <T>(
   path: string,
   body?: unknown,
@@ -33,6 +27,7 @@ export function KnowledgeCloud({
   onPromotion,
   investigation,
   resultHandles = [],
+  activity,
 }: {
   request: Request;
   selected?: string;
@@ -41,6 +36,7 @@ export function KnowledgeCloud({
   onPromotion: (invalidate: boolean) => void;
   investigation?: Investigation;
   resultHandles?: string[];
+  activity: ActivityView;
 }) {
   const [page, setPage] = useState<CloudPage>(),
     [error, setError] = useState(""),
@@ -51,7 +47,6 @@ export function KnowledgeCloud({
     [hovered, setHovered] = useState<CloudNode>(),
     [reduced, setReduced] = useState(false),
     [motion, setMotion] = useState(""),
-    [activities, setActivities] = useState<Activity[]>([]),
     [trail, setTrail] = useState<{ scope: string; label: string }[]>([]);
   const canvas = useRef<HTMLCanvasElement>(null),
     renderer = useRef<CloudRenderer>(),
@@ -167,22 +162,6 @@ export function KnowledgeCloud({
     return () => media.removeEventListener("change", update);
   }, []);
   useEffect(() => {
-    let live = true;
-    const poll = () =>
-      requestRef
-        .current<{ events: Activity[] }>("/api/v1/activity")
-        .then((value) => {
-          if (live) setActivities(value.events.slice(-8));
-        })
-        .catch(() => {});
-    void poll();
-    const timer = setInterval(poll, 1500);
-    return () => {
-      live = false;
-      clearInterval(timer);
-    };
-  }, []);
-  useEffect(() => {
     if (
       selected &&
       !current.current?.nodes.some((node) => node.handle === selected)
@@ -239,7 +218,8 @@ export function KnowledgeCloud({
   const camera = (operation: (r: CloudRenderer) => void) => {
     if (renderer.current) operation(renderer.current);
   };
-  const lastActivity = activities[activities.length - 1],
+  const activities = activity.events.slice(-8),
+    lastActivity = activities[activities.length - 1],
     staged = activities.filter((e) => !e.queryable && e.stage !== "failed");
   return (
     <section
@@ -642,8 +622,9 @@ export function KnowledgeCloud({
           )}
         </>
       )}
-      {staged.length > 0 && (
+      {(staged.length > 0 || activity.warning) && (
         <section aria-label="Staged cloud activity" className="cloud-staging">
+          {activity.warning && <p role="alert">{activity.warning}</p>}
           <h3>
             {lastActivity?.queryable
               ? "Build activity history"

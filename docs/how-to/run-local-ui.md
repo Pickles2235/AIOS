@@ -50,6 +50,17 @@ Escape closes the dialog and returns focus to its opener. The ordinary query
 form and entity list remain available. Refreshing the page resumes the existing
 HttpOnly session; restarting the server requires its new secure launch link.
 
+The Operations row shows contextual Indexing, Health, Storage and size,
+Performance, Coverage, Scheduled jobs, and Active query cards when useful.
+Open any card manually from that row. Cards start in the page dock; drag the
+title or focus Move and use arrow keys to float one. Shift-arrows move faster;
+Home, Reset position, or Reset all module positions returns cards to the dock.
+Saved floating coordinates are clamped to the viewport on reload and resize.
+The activity API includes a process stream ID, latest sequence, and oldest
+retained sequence. A lost history interval or restarted stream is shown as a
+warning alongside current job/setup state. Failed operational reads leave the
+last observation marked stale until a successful reconciliation.
+
 The knowledge cloud uses only the current bounded projection page. It labels
 its repository, generation, node/claim counts and limits. Edges are drawn when
 both endpoints are on that page; unseen endpoints are not invented. **Next

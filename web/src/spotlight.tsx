@@ -9,13 +9,16 @@ type Props = {
   clearHistory: () => Promise<void>;
   validate: (result: Investigation) => Promise<boolean>;
   select: (entity: Entity) => Promise<void>;
+  onState?: (state: { open: boolean; busy: boolean; result?: Investigation; stale: boolean; error: string }) => void;
 };
 
-export function Spotlight({open, close, search, history, clearHistory, validate, select}: Props) {
+export function Spotlight({open, close, search, history, clearHistory, validate, select, onState}: Props) {
   const dialog = useRef<HTMLDialogElement>(null), input = useRef<HTMLInputElement>(null), controller = useRef<AbortController>();
   const requestID = useRef(0), historyIndex = useRef(-1);
   const [text, setText] = useState(""), [result, setResult] = useState<Investigation>(), [entries, setEntries] = useState<string[]>([]);
   const [error, setError] = useState(""), [busy, setBusy] = useState(false), [index, setIndex] = useState(0), [copied, setCopied] = useState(false), [stale, setStale] = useState(false);
+  const report = useRef(onState); report.current = onState;
+  useEffect(() => { report.current?.({open, busy, result, stale, error}); }, [open, busy, result, stale, error]);
   useEffect(() => {
     if (!open) return;
     const opener = document.activeElement as HTMLElement | null;

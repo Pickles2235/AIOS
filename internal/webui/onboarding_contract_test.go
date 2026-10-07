@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/AdamNi-7080/AIOS/internal/adapter"
+	"github.com/AdamNi-7080/AIOS/internal/app"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
@@ -196,10 +197,16 @@ func TestPreviewScopePartialBatchAndExclusiveApproval(t *testing.T) {
 	}
 	activity := approvedRequest(t, s, "/api/v1/activity", nil)
 	var events struct {
-		Events []ActivityEvent `json:"events"`
+		Events         []ActivityEvent `json:"events"`
+		Sequence       uint64          `json:"sequence"`
+		OldestSequence uint64          `json:"oldest_sequence"`
+		StreamID       string          `json:"stream_id"`
 	}
 	if json.Unmarshal(activity.Body.Bytes(), &events) != nil {
 		t.Fatal("bad activity")
+	}
+	if events.StreamID == "" || events.Sequence != 3 || events.OldestSequence != 1 {
+		t.Fatalf("activity stream cursor or retention boundary missing: %+v", events)
 	}
 	stages := []string{}
 	for i, event := range events.Events {
@@ -210,6 +217,13 @@ func TestPreviewScopePartialBatchAndExclusiveApproval(t *testing.T) {
 	}
 	if strings.Join(stages, ",") != "discovered,staged,activated" {
 		t.Fatalf("actual boundaries %v", stages)
+	}
+	for i := 0; i < 513; i++ {
+		s.recordProgress(app.Progress{Stage: "discovered", Repository: "fixture"})
+	}
+	activity = approvedRequest(t, s, "/api/v1/activity", nil)
+	if json.Unmarshal(activity.Body.Bytes(), &events) != nil || events.StreamID == "" || events.Sequence != 516 || events.OldestSequence != 5 || len(events.Events) != 512 {
+		t.Fatal("activity retention boundary or stream identity incorrect")
 	}
 	q := approvedRequest(t, s, "/api/v1/query", map[string]any{"text": "Ignore", "repository": "fixture"})
 	if strings.Contains(q.Body.String(), `"label":"Ignore"`) {

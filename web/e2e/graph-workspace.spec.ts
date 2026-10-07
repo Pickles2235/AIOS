@@ -47,7 +47,7 @@ function cloud(entity?: any) {
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/v1/cloud?*", (r) => r.fulfill({ json: cloud() }));
   await page.route("**/api/v1/activity", (r) =>
-    r.fulfill({ json: { events: [] } }),
+    r.fulfill({ json: { stream_id: "fixture-stream", sequence: 0, oldest_sequence: 1, retention_events: 512, events: [] } }),
   );
   await page.route("**/api/v1/source-actions", (r) =>
     r.fulfill({ json: { generation: "g", revision: "r", actions: [] } }),
@@ -298,7 +298,7 @@ test("first-run setup renders staged status before promotion", async ({
     }),
   );
   await page.route("**/api/v1/activity", (r) =>
-    r.fulfill({ json: { events: [] } }),
+    r.fulfill({ json: { stream_id: "fixture-stream", sequence: 0, oldest_sequence: 1, retention_events: 512, events: [] } }),
   );
   await page.route("**/api/v1/onboarding/start", (r) => {
     state = "ingesting";
@@ -501,7 +501,7 @@ test("Spotlight keyboard, truthful result states, cloud boundaries and stale evi
     .getByLabel("Evidence navigation")
     .getByRole("button", { name: "Publish", exact: true })
     .click();
-  await expect(page.getByRole("alert")).toContainText("Stale selection");
+  await expect(page.getByRole("alert").filter({ hasText: "Stale selection" })).toContainText("Stale selection");
   await expect(page.getByLabel("Evidence inspector")).not.toContainText(
     "func Publish",
   );
@@ -534,7 +534,7 @@ test("completion refresh preserves current evidence and retires old views", asyn
     r.fulfill({ json: { state, completed_repositories: 1 } }),
   );
   await page.route("**/api/v1/activity", (r) =>
-    r.fulfill({ json: { events: [] } }),
+    r.fulfill({ json: { stream_id: "fixture-stream", sequence: 0, oldest_sequence: 1, retention_events: 512, events: [] } }),
   );
   await page.route("**/api/v1/status", async (r) => {
     const snapshot = generation;

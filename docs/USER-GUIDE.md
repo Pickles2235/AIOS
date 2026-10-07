@@ -51,12 +51,30 @@ A failed or cancelled build keeps the last good active knowledge.
 
 After Build, Direct watches approximately one second of quiet edits with a
 five-second maximum delay. Periodic reconciliation repairs missed events. Mirror
-checks every 15 minutes by default. Expand Repository health to change the Mirror
+checks every 15 minutes by default. Open Operations → Health, then expand Repository health to change the Mirror
 interval or Check now for one repository. The panel reports actual last success,
 active revision, next check and stale warnings. Failed checks retry with bounded
 exponential backoff; healthy repositories continue independently. Restart restores
 the owned durable queue and checks for missed changes. Native sleep/wake evidence
 remains part of final candidate validation.
+
+The **Operations** row opens seven contextual modules: Indexing, Health, Storage
+and size, Performance, Coverage, Scheduled jobs, and Active query. Relevant
+work or warnings open modules automatically; a healthy idle view stays clear.
+The cards start in a responsive dock below Operations. Drag a card by its title
+to float it, or focus **Move** and use arrow keys (Shift moves farther). **Home**
+or **Reset position** returns it to the dock; **Reset all module positions**
+recovers every card. Floating positions persist in this browser and clamp to
+the current viewport after resize or reload.
+
+Indexing events are observed stages, not estimates of queryable evidence. The
+activity view checks its sequence and retained history against current jobs and
+setup state. A history gap or daemon restart is disclosed; current job state is
+rechecked and older event history may be unavailable. If an operational read
+fails, the last observed values may be stale and the error remains visible
+until a successful read. You can acknowledge a history notice after reviewing
+it. Coverage describes active generations and the last query's applicable
+coverage; repository counts alone do not establish complete coverage.
 
 Git uses your machine's external configuration and credential helpers without
 terminal/password prompts. AgentOS does not store helper responses or tokens.

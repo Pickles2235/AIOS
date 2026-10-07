@@ -537,12 +537,48 @@ test.describe("real installed-product UI", () => {
   });
 
   test("contextual modules and reconnect", async ({ page }) => {
+    await expect(page.getByLabel("Visible operational modules").locator("[data-context-module]")).toHaveCount(0);
     await build(page, source);
-    await page.getByRole("button", { name: "Show indexing health" }).click();
-    const panel = page.getByLabel("Indexing health module", { exact: true });
+    await expect.poll(async () => (await api<{ jobs: { repository: string; state: string; active_generation: string }[] }>(page, "/api/v1/jobs")).jobs.find(job => job.repository === "fixture")?.active_generation, { timeout: 30000 }).toBeTruthy();
+    const controls = page.getByRole("navigation", { name: "Operational modules" });
+    const labels = ["Indexing", "Health", "Storage and size", "Performance", "Coverage", "Scheduled jobs", "Active query"];
+    for (const label of labels) {
+      await controls.getByRole("button", { name: label, exact: true }).click();
+      await expect(page.getByLabel(`${label} module`, { exact: true })).toBeVisible();
+    }
+    await expect(page.getByLabel("Health module", { exact: true })).toContainText("fixture", { timeout: 30000 });
+    await expect(page.getByLabel("Storage and size module", { exact: true })).toContainText("Owned data");
+    await expect(page.getByLabel("Performance module", { exact: true })).toContainText("Observed load");
+    await expect(page.getByLabel("Coverage module", { exact: true })).toContainText("active of");
+    await expect(page.getByLabel("Scheduled jobs module", { exact: true })).toContainText("fixture");
+    await expect(page.getByLabel("Active query module", { exact: true })).toContainText("No active query");
+    await page.route("**/api/v1/query", async route => { await new Promise(done => setTimeout(done, 350)); await route.continue(); });
+    await page.getByLabel("Query", { exact: true }).fill("Worker");
+    await page.getByRole("button", { name: "Search", exact: true }).click();
+    await expect(page.getByLabel("Active query module", { exact: true })).toContainText("Query in progress");
+    await expect(page.getByLabel("Active query module", { exact: true })).toContainText("Last direct query: found");
+    await page.unroute("**/api/v1/query");
+    await page.getByRole("button", { name: "Open Spotlight" }).click();
+    await page.route("**/api/v1/investigation", async route => { await new Promise(done => setTimeout(done, 350)); await route.continue(); });
+    await page.getByLabel("Spotlight query").fill("Worker");
+    await page.getByRole("button", { name: "Search captured evidence" }).click();
+    await expect(page.getByLabel("Active query module", { exact: true })).toContainText("Spotlight query in progress");
+    await expect(page.getByLabel("Active query module", { exact: true })).toContainText("Spotlight result: found");
+    await page.unroute("**/api/v1/investigation");
+    await page.getByRole("button", { name: "Close Spotlight" }).click();
+    const panel = page.getByLabel("Indexing module", { exact: true });
     await expect(panel).toBeVisible();
     const original = (await panel.boundingBox())!;
-    const grip = page.getByRole("button", { name: "Move indexing health" });
+    const title = (await panel.locator("header strong").boundingBox())!;
+    await page.mouse.move(title.x + title.width / 2, title.y + title.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(title.x + title.width / 2 + 32, title.y + title.height / 2 + 24, { steps: 4 });
+    await page.mouse.up();
+    await expect(panel).toHaveAttribute("data-detached", "true");
+    expect((await panel.boundingBox())!.x).toBeGreaterThan(original.x);
+    await panel.getByRole("button", { name: "Reset position" }).click();
+    await expect(panel).not.toHaveAttribute("data-detached", "true");
+    const grip = page.getByRole("button", { name: "Move Indexing module" });
     await grip.focus();
     await grip.press("ArrowRight");
     await expect
@@ -550,15 +586,43 @@ test.describe("real installed-product UI", () => {
       .toBeGreaterThan(original.x);
     const moved = (await panel.boundingBox())!;
     await page.reload();
+    await controls.getByRole("button", { name: "Indexing", exact: true }).click();
     await expect(panel).toBeVisible();
     expect((await panel.boundingBox())!.x).toBeCloseTo(moved.x, 0);
-    await page.setViewportSize({ width: 800, height: 600 });
+    await page.setViewportSize({ width: 320, height: 300 });
     const bounded = (await panel.boundingBox())!;
     expect(bounded.x).toBeGreaterThanOrEqual(0);
-    expect(bounded.x + bounded.width).toBeLessThanOrEqual(800);
-    await page.getByRole("button", { name: "Reset module positions" }).click();
+    expect(bounded.x + bounded.width).toBeLessThanOrEqual(320);
+    expect(bounded.y).toBeGreaterThanOrEqual(0);
+    expect(bounded.y + bounded.height).toBeLessThanOrEqual(300);
+    await panel.getByRole("button", { name: "Reset position" }).click();
+    await expect(panel).not.toHaveAttribute("data-detached", "true");
+    await page.getByRole("button", { name: "Refresh", exact: true }).click();
+    await page.evaluate(() => localStorage.setItem("aios.contextual-placement.v1", JSON.stringify({ indexing: { x: 999999, y: -999999 } })));
+    await page.reload();
+    await controls.getByRole("button", { name: "Indexing", exact: true }).click();
+    const repaired = (await panel.boundingBox())!;
+    expect(repaired.x).toBeGreaterThanOrEqual(0);
+    expect(repaired.x + repaired.width).toBeLessThanOrEqual(320);
+    expect(repaired.y).toBeGreaterThanOrEqual(0);
+    expect(repaired.y + repaired.height).toBeLessThanOrEqual(300);
+    await page.route("**/api/v1/activity", route => route.fulfill({ status: 503, json: { error: "activity temporarily unavailable" } }));
+    await expect(panel.getByRole("alert")).toContainText("activity temporarily unavailable");
+    await page.unroute("**/api/v1/activity");
+    await expect(panel.getByRole("alert")).toHaveCount(0, { timeout: 10000 });
+    const observed = await api<{ stream_id: string; sequence: number }>(page, "/api/v1/activity");
+    const missed = observed.sequence + 5;
+    await page.route("**/api/v1/activity", route => route.fulfill({ json: { stream_id: observed.stream_id, sequence: missed, oldest_sequence: missed, retention_events: 512, events: [{ sequence: missed, at: new Date().toISOString(), stage: "discovered", repository: "fixture", files: 3, queryable: false }] } }));
+    await expect(panel.getByRole("alert")).toContainText("gap", { timeout: 10000 });
+    await page.route("**/api/v1/onboarding", route => route.fulfill({ json: { state: "failed", error: "fixture setup failed", completed_repositories: 0 } }));
+    await expect(panel.getByRole("alert").filter({ hasText: "fixture setup failed" })).toBeVisible();
+    await expect(panel.getByRole("alert").filter({ hasText: "gap" })).toBeVisible();
+    await page.unroute("**/api/v1/onboarding");
+    await page.route("**/api/v1/activity", route => route.fulfill({ json: { stream_id: "replacement-stream", sequence: missed + 1, oldest_sequence: missed + 1, retention_events: 512, events: [{ sequence: missed + 1, at: new Date().toISOString(), stage: "staged", repository: "fixture", files: 3, queryable: false }] } }));
+    await expect(panel.getByRole("alert").filter({ hasText: "restarted" })).toBeVisible();
+    await page.unroute("**/api/v1/activity");
     await stop(backend.child);
-    await expect(page.getByRole("alert")).toContainText(
+    await expect(page.getByRole("alert").filter({ hasText: /disconnected|stopped/i })).toContainText(
       /disconnected|stopped/i,
     );
     backend = await start(root);
