@@ -43,8 +43,9 @@ test("real headless daemon survives browser closure, restarts identity and stops
     expect(JSON.parse(readFileSync(join(root, "data", "instance.json"), "utf8")).id).toBe(identity);
     await reopened.goto(await fresh(root));
     await reopened.getByRole("button", {name: "Stop daemon", exact: true}).click();
-    await expect(reopened.getByRole("alert")).toContainText("Daemon disconnected", {timeout: 10000});
-    await expect(reopened.getByRole("alert")).toContainText("aios daemon start");
+    const disconnected = reopened.getByRole("alert").filter({hasText: "Daemon disconnected"});
+    await expect(disconnected).toContainText("Daemon disconnected", {timeout: 10000});
+    await expect(disconnected).toContainText("aios daemon start");
     await expect.poll(() => child!.exitCode !== null || child!.signalCode !== null).toBe(true);
   } finally {if (child) await stop(child); rmSync(root, {recursive: true, force: true});}
 });
@@ -58,11 +59,11 @@ test("stop failure and session expiry are distinguished from disconnected daemon
     await page.route("**/api/v1/daemon/stop", route => route.fulfill({json: {stopping: true}}));
     await page.route("**/api/v1/daemon/status", route => route.fulfill({json: {state: "failed"}}));
     await page.getByRole("button", {name: "Stop daemon", exact: true}).click();
-    await expect(page.getByRole("alert")).toContainText("Stop failed", {timeout: 7000});
+    await expect(page.getByRole("alert").filter({hasText: "Stop failed"})).toContainText("Stop failed", {timeout: 7000});
     await expect(page.getByRole("button", {name: "Stop daemon", exact: true})).toBeEnabled();
     await page.route("**/api/v1/session", route => route.fulfill({status: 403, json: {error: "session expired"}}));
-    await expect(page.getByRole("alert")).toContainText("session has expired", {timeout: 7000});
-    await expect(page.getByRole("alert")).not.toContainText("Daemon disconnected");
+    await expect(page.getByRole("alert").filter({hasText: "session has expired"})).toContainText("session has expired", {timeout: 7000});
+    await expect(page.getByRole("alert").filter({hasText: "Daemon disconnected"})).toHaveCount(0);
   } finally {if (child) await stop(child); rmSync(root, {recursive: true, force: true});}
 });
 

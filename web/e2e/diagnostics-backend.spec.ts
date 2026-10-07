@@ -41,17 +41,17 @@ test("a delayed onboarding read preserves the user's direct-source choice",async
   const child=spawn(process.env.AIOS_UI_BINARY||resolve("../bin/aios"),["ui","serve","--data-dir",join(root,"data")],{stdio:["ignore","ignore","pipe"]});
   try {
     const url=await new Promise<string>((done,fail)=>{let output="";const timer=setTimeout(()=>fail(new Error("backend startup timeout")),15000);child.stderr!.on("data",chunk=>{output+=chunk;const match=output.match(/Open local UI: (http:\/\/[^\s]+)/);if(match){clearTimeout(timer);done(match[1])}});child.once("exit",()=>{clearTimeout(timer);fail(new Error("backend exited"))})});
-    let reads=0;let release!:()=>void;const held=new Promise<void>(done=>{release=done});
-    await page.route("**/api/v1/onboarding",async route=>{reads++;if(reads===2)await held;await route.continue()});
+    let reads=0;const completed=new Set<number>();let release!:()=>void;const held=new Promise<void>(done=>{release=done});
+    await page.route("**/api/v1/onboarding",async route=>{const sequence=++reads;if(sequence>=2)await held;const response=await route.fetch();await route.fulfill({response});completed.add(sequence)});
     await page.goto(url);
     await expect(page.getByRole("heading",{name:"No active generation"})).toBeVisible();
-    await expect.poll(()=>reads).toBe(2);
+    await expect.poll(()=>reads).toBeGreaterThanOrEqual(3);
+    const heldReads=reads;
     const mode=page.getByLabel("Source type");
     await mode.selectOption("local");
     await expect(mode).toHaveValue("local");
-    const restored=page.waitForResponse(response=>response.url().endsWith("/api/v1/onboarding")&&response.status()===200);
     release();
-    await restored;
+    await expect.poll(()=>Array.from({length:heldReads},(_,index)=>completed.has(index+1)).every(Boolean)).toBe(true);
     await expect(mode).toHaveValue("local");
     await expect(page.getByLabel("Repository setup")).toContainText("Absolute workspace path");
   } finally {await stop(child);rmSync(root,{recursive:true,force:true})}
