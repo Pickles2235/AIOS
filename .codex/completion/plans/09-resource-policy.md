@@ -10,11 +10,23 @@ Requirements: R14, R25
 
 ## Decisions
 
-Inspect current implementation before selecting changes.
+Inspect the maintenance engine, app workers and resource endpoints before
+choosing changes. Keep source snapshots and canonical activation semantics
+unchanged. Do not tune performance thresholds without a declared baseline.
 
 ## Progress
 
-Pending.
+Started on `codex/completion-observability-resume` after task08 was verified on
+fetched `origin/main`. The completion harness exposes a deliberately failing
+task09 resources scenario that currently asserts only policy flags before an
+explicit pending assertion; replace it with observed transitions, queue bounds,
+starvation, cancellation and disk-full outcomes.
+
+Initial reference envelope captured 2026-10-07 on Apple Silicon: MacBook Pro
+Mac15,6, Apple M3 Pro (11 cores), 36 GB memory, macOS 26.7.1, on AC power; load
+averages 1.55 / 2.05 / 3.04 at capture. This is machine metadata, not a
+performance benchmark. Record actual benchmark workload and measurements before
+any tuning claim.
 
 ## Scenario scope
 

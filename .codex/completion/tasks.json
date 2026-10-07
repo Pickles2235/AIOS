@@ -243,7 +243,7 @@
       "gates": [
         "core"
       ],
-      "status": "pending",
+      "status": "in_progress",
       "plan": ".codex/completion/plans/09-resource-policy.md",
       "completion_commit": null,
       "review": null,
