@@ -215,10 +215,10 @@
       "gates": [
         "core"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/08-local-observability.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/08-review.json",
       "product_gates": [
         "core",
         "privacy"

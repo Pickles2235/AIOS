@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "/root/observability_acceptance",
+  "reviewed_commit": "e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e",
+  "reviewed_tree": "61d56a1fa65db0d11f47443fa755381f3dfa545c",
+  "timestamp": "2026-10-07T12:10:56Z",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "nonblocking_findings": [],
+  "checks_performed": [
+    "Inspected the task08 implementation and the exact candidate diff; the final E2E change waits for both rebuild jobs to reach idle before retaining the positive generation, query, evidence, removal, and source-preservation assertions.",
+    "Independently ran focused Go tests for planted telemetry and archive content, secure symlink/hardlink/FIFO file boundaries, bounded retention, operational ledger cleanup and busy-checkpoint retry, and portable upgrade telemetry and rollback paths.",
+    "Verified that supplied diagnostic IDs, including crafted diag-h_ prefixes, are hashed before fresh persistence and during legacy migration; independently reran the fresh-write and legacy-migration regression tests.",
+    "Inspected local-only OTEL collector configuration, outbound endpoint trap, redaction and archive allowlists, default versus acknowledged expanded export, and authenticated browser diagnostic controls.",
+    "Verified exact candidate Darwin arm64 core and privacy receipts, clean product tree and binary Go VCS metadata; recomputed both raw gate log SHA256 values and matched the receipts.",
+    "Inspected the full web log showing 27 unit and 36 live browser passes, including diagnostic download and rebuild evidence; inspected the two fresh accepted 14-case reports with the exact source SHA and equal semantic fingerprints."
+  ],
+  "evidence": [
+    ".codex/completion/evidence/08-candidate-core.json",
+    ".codex/completion/evidence/08-candidate-privacy.json",
+    ".codex/completion/evidence/08-candidate-privacy-scenarios.json",
+    "/tmp/aios-task08-candidate-e47c369-evidence/core-0.log",
+    "/tmp/aios-task08-candidate-e47c369-evidence/privacy-0.log",
+    "/tmp/aios-task08-candidate-e47c369-evidence/web.log",
+    "/private/tmp/aios-task08-candidate-e47c369-a-20261007/acceptance-report.json",
+    "/private/tmp/aios-task08-candidate-e47c369-b-20261007/acceptance-report.json"
+  ],
+  "approval_scope": "task08 engineering milestone only",
+  "candidate_ready": false,
+  "native_final_acceptance": "deferred",
+  "stakeholder_release": false
+}

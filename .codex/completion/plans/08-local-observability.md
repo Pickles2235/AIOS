@@ -124,24 +124,26 @@ The exact `PATH=/opt/homebrew/bin:$PATH make harness-validate-web` exited 0:
 Independent reviewer identified the ID-prefix privacy bypass and required a
 corrected commit. Trace inspection then identified a separate test timing
 race, repaired without changing product behavior or weakening assertions.
-Re-review of exact candidate `e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e`
-and its receipts is pending; the task is not ready yet.
+Independent re-review of exact candidate
+`e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e` passed with no findings; see
+`.codex/completion/evidence/08-review.json`. The task is ready for publication.
 
 ## Blockers
 
 No implementation or environment blocker remains on the current candidate.
-Independent re-review is pending before a ready transition. The earlier cloud
-outage and unpublished source loss remain historical evidence below. Native
-assembled-product acceptance remains a milestone 15 gate.
+Publication to main is pending. The earlier cloud outage and unpublished source
+loss remain historical evidence below. Native assembled-product acceptance
+remains a milestone 15 gate.
 
 ## Handoff
 
 Candidate source SHA: `e47c369b3ea32c08ac110e5d7b6a6aacd65f5c4e` on
-`codex/completion-observability-resume`. Inspect the corrected product commit
-`353de6a43dde4e1998636d47a80730c90343d307`, the test-only follow-up,
-copied candidate receipts, scenario report, final web log and matching fresh
-acceptance reports. Obtain independent re-review before changing status. No
-push, publication, or completion bookkeeping was performed.
+`codex/completion-observability-resume`. Independent review passed; copied
+candidate receipts, scenario report, final web log and matching fresh
+acceptance reports are recorded above. Status is ready. Publish by normal
+fast-forward to main, verify the implementation SHA on fetched origin/main, then
+make a follow-up bookkeeping commit setting completed and completion_commit.
+Do not claim assembled candidate readiness; milestone 15 acceptance remains.
 
 ## Historical implementation and executor outage
 
