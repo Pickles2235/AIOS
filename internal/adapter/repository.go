@@ -70,7 +70,7 @@ func (a RepositoryGit) Discover(ctx context.Context, id string) (Discovery, erro
 			return Discovery{}, err
 		}
 	}
-	root, err := mirror.Snapshot(ctx, mirror.MirrorPath(a.DataDir, id), a.DataDir, id, revision, fingerprint, mirror.MaxSnapshotBytes, mirror.MaxSnapshotFiles)
+	root, err := mirror.SnapshotWithPrepare(ctx, mirror.MirrorPath(a.DataDir, id), a.DataDir, id, revision, fingerprint, mirror.MaxSnapshotBytes, mirror.MaxSnapshotFiles, a.BeforeSnapshot)
 	if err != nil {
 		lease.Close()
 		return Discovery{}, err

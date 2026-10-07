@@ -99,6 +99,14 @@ func TestLocalSnapshotsArePinnedBoundedAndNonMutating(t *testing.T) {
 func TestConcurrentWorkspaceEditNeverPublishesMixedSnapshot(t *testing.T) {
 	source := canonicalTempDir(t)
 	data := canonicalTempDir(t)
+	t.Cleanup(func() {
+		_ = filepath.WalkDir(data, func(path string, d fs.DirEntry, e error) error {
+			if e == nil && d.IsDir() {
+				return os.Chmod(path, 0700)
+			}
+			return e
+		})
+	})
 	run(t, source, "init", "-q", "--initial-branch=main")
 	for i := 0; i < 200; i++ {
 		if err := os.WriteFile(filepath.Join(source, fmt.Sprintf("f-%03d.txt", i)), []byte(strings.Repeat("original", 1024)), 0600); err != nil {
@@ -117,7 +125,7 @@ func TestConcurrentWorkspaceEditNeverPublishesMixedSnapshot(t *testing.T) {
 				return
 			default:
 			}
-			matches, _ := filepath.Glob(filepath.Join(data, "snapshots", "repo", "*", "local-*"))
+			matches, _ := filepath.Glob(filepath.Join(data, "snapshots", "repo", ".staging", ".staging-local-*"))
 			if len(matches) > 0 {
 				_ = os.WriteFile(filepath.Join(source, "f-000.txt"), []byte("concurrent edit"), 0600)
 				mutated <- true

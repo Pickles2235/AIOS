@@ -224,7 +224,7 @@ func TestSnapshotRejectsOversizedArchiveAndKeepsLastGood(t *testing.T) {
 	if got, err := os.ReadFile(original); err != nil || string(got) != "last good" {
 		t.Fatal("source changed")
 	}
-	if matches, _ := filepath.Glob(filepath.Join(data, "snapshots", ".staging-*")); len(matches) != 0 {
+	if matches, _ := filepath.Glob(filepath.Join(data, "snapshots", "repoa", ".staging", ".staging-mirror-*")); len(matches) != 0 {
 		t.Fatalf("staging leak: %v", matches)
 	}
 }

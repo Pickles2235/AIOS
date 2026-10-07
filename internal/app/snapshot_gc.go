@@ -188,8 +188,8 @@ func ReclaimPendingSnapshots(ctx context.Context, dataDir string) error {
 	return reclaimPrunedSnapshots(ctx, db, dataDir, roots)
 }
 
-// QueueOwnedSnapshot records a production capture before the immutable root
-// is published, allowing restart cleanup even across a publish-time crash.
+// QueueOwnedSnapshot records a production staging or final capture root before
+// it is created or published, allowing restart cleanup across either crash gap.
 func QueueOwnedSnapshot(ctx context.Context, dataDir, root string) error {
 	base, err := filepath.Abs(filepath.Join(dataDir, "snapshots"))
 	if err != nil {

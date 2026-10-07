@@ -3,6 +3,8 @@ package mirror
 import (
 	"archive/tar"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -25,6 +27,11 @@ const MaxSnapshotFiles = 300_000
 // Snapshot materializes a Git archive below the data directory. It is not a
 // worktree: it has no .git directory and becomes read-only once complete.
 func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, fingerprint string, maxBytes int64, maxFiles int) (string, error) {
+	return SnapshotWithPrepare(ctx, mirrorPath, dataDir, repositoryID, revision, fingerprint, maxBytes, maxFiles, nil)
+}
+
+// SnapshotWithPrepare durably registers its exact staging root before creation.
+func SnapshotWithPrepare(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, fingerprint string, maxBytes int64, maxFiles int, prepare func(context.Context, string) error) (string, error) {
 	if maxBytes <= 0 || maxBytes > MaxSnapshotBytes || maxFiles <= 0 || maxFiles > MaxSnapshotFiles {
 		return "", fmt.Errorf("invalid snapshot bounds")
 	}
@@ -40,7 +47,18 @@ func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, 
 	} else if !os.IsNotExist(err) {
 		return "", err
 	}
-	temp, err := os.MkdirTemp(filepath.Join(dataDir, "snapshots"), ".staging-")
+	stagingParent := filepath.Join(dataDir, "snapshots", repositoryID, ".staging")
+	if err := os.Mkdir(stagingParent, 0700); err != nil && !os.IsExist(err) {
+		return "", err
+	}
+	stagingInfo, err := os.Lstat(stagingParent)
+	if err != nil {
+		return "", err
+	}
+	if !stagingInfo.IsDir() || stagingInfo.Mode()&os.ModeSymlink != 0 {
+		return "", fmt.Errorf("unsafe snapshot staging parent")
+	}
+	temp, err := createPreparedMirrorStaging(ctx, stagingParent, prepare)
 	if err != nil {
 		return "", err
 	}
@@ -142,6 +160,32 @@ func Snapshot(ctx context.Context, mirrorPath, dataDir, repositoryID, revision, 
 		return "", err
 	}
 	return root, nil
+}
+
+func createPreparedMirrorStaging(ctx context.Context, parent string, prepare func(context.Context, string) error) (string, error) {
+	for attempt := 0; attempt < 8; attempt++ {
+		suffix := make([]byte, 16)
+		if _, err := rand.Read(suffix); err != nil {
+			return "", err
+		}
+		path := filepath.Join(parent, ".staging-mirror-"+hex.EncodeToString(suffix))
+		if _, err := os.Lstat(path); err == nil {
+			continue
+		} else if !os.IsNotExist(err) {
+			return "", err
+		}
+		if prepare != nil {
+			if err := prepare(ctx, path); err != nil {
+				return "", err
+			}
+		}
+		if err := os.Mkdir(path, 0700); err == nil {
+			return path, nil
+		} else if !os.IsExist(err) {
+			return "", err
+		}
+	}
+	return "", fmt.Errorf("could not allocate unique mirror staging root")
 }
 
 func ensureOwnedSnapshotParents(dataDir, repositoryID, revision, fingerprint string) error {

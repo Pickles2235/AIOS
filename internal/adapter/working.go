@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -177,11 +178,27 @@ func CaptureLocalScopedWithPrepare(ctx context.Context, entry LocalRepository, d
 	if err = lifecycle.PrepareDir(dataDir); err != nil {
 		return Discovery{}, err
 	}
+	// Repository lease protects the entire staging lifetime, before temp creation.
+	leaseRoot := filepath.Join(dataDir, "snapshots", entry.ID, "capture", "lease")
+	lease, err := snapshotlease.Acquire(dataDir, leaseRoot)
+	if err != nil {
+		return Discovery{}, err
+	}
+	keepLease := false
+	defer func() {
+		if !keepLease {
+			_ = lease.Close()
+		}
+	}()
 	parent := filepath.Join(dataDir, "snapshots", entry.ID, state.Commit)
 	if err = lifecycle.PrepareDir(parent); err != nil {
 		return Discovery{}, err
 	}
-	temp, err := os.MkdirTemp(parent, "local-")
+	stagingParent := filepath.Join(dataDir, "snapshots", entry.ID, ".staging")
+	if err = lifecycle.PrepareDir(stagingParent); err != nil {
+		return Discovery{}, err
+	}
+	temp, err := createPreparedLocalStaging(ctx, stagingParent, beforePublish)
 	if err != nil {
 		return Discovery{}, err
 	}
@@ -301,22 +318,11 @@ func CaptureLocalScopedWithPrepare(ctx context.Context, entry LocalRepository, d
 	scopeBytes, _ := json.Marshal(struct{ Include, Exclude []string }{scope.Include, scope.Exclude})
 	revisionHash := sha256.Sum256(append([]byte(revision+"\x00"+hex.EncodeToString(hash.Sum(nil))), scopeBytes...))
 	final := filepath.Join(parent, "local-"+hex.EncodeToString(pathHash[:])+"-"+hex.EncodeToString(revisionHash[:]))
-	lease, err := snapshotlease.Acquire(dataDir, final)
-	if err != nil {
-		return Discovery{}, err
-	}
-	keepLease := false
 	if beforePublish != nil {
 		if err = beforePublish(ctx, final); err != nil {
-			_ = lease.Close()
 			return Discovery{}, err
 		}
 	}
-	defer func() {
-		if !keepLease {
-			_ = lease.Close()
-		}
-	}()
 	if err = filepath.Walk(temp, func(path string, info os.FileInfo, e error) error {
 		if e != nil {
 			return e
@@ -374,4 +380,30 @@ func CaptureLocalScopedWithPrepare(ctx context.Context, entry LocalRepository, d
 	published = true
 	keepLease = true
 	return discovery, nil
+}
+
+func createPreparedLocalStaging(ctx context.Context, parent string, prepare func(context.Context, string) error) (string, error) {
+	for attempt := 0; attempt < 8; attempt++ {
+		suffix := make([]byte, 16)
+		if _, err := rand.Read(suffix); err != nil {
+			return "", err
+		}
+		path := filepath.Join(parent, ".staging-local-"+hex.EncodeToString(suffix))
+		if _, err := os.Lstat(path); err == nil {
+			continue
+		} else if !os.IsNotExist(err) {
+			return "", err
+		}
+		if prepare != nil {
+			if err := prepare(ctx, path); err != nil {
+				return "", err
+			}
+		}
+		if err := os.Mkdir(path, 0700); err == nil {
+			return path, nil
+		} else if !os.IsExist(err) {
+			return "", err
+		}
+	}
+	return "", fmt.Errorf("could not allocate unique local staging root")
 }

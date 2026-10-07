@@ -392,3 +392,79 @@ func TestRestartOverBudgetPreflightReclaimsDurableOrphan(t *testing.T) {
 		t.Fatalf("orphan root survived preflight: %v", err)
 	}
 }
+
+func TestStagingCandidatesProgressAcrossMoreThanOneHundredTwentyEightRepositories(t *testing.T) {
+	ctx := context.Background()
+	data := t.TempDir()
+	base := filepath.Join(data, "snapshots")
+	for i := 0; i < 140; i++ {
+		if err := os.MkdirAll(filepath.Join(base, fmt.Sprintf("clean-%03d", i)), 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	late := filepath.Join(base, "clean-139", ".staging", ".staging-local-late")
+	if err := os.MkdirAll(late, 0700); err != nil {
+		t.Fatal(err)
+	}
+	db, err := store.OpenWriter(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueueSnapshotGC(ctx, late); err != nil {
+		db.Close()
+		t.Fatal(err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := ReclaimPendingSnapshots(ctx, data); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(late); !os.IsNotExist(err) {
+		t.Fatalf("clean repository roots hid a durable staging candidate: %v", err)
+	}
+
+	db, err = store.OpenWriter(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 132; i++ {
+		root := filepath.Join(base, fmt.Sprintf("queued-%03d", i), ".staging", fmt.Sprintf(".staging-mirror-%03d", i))
+		if err := os.MkdirAll(root, 0700); err != nil {
+			db.Close()
+			t.Fatal(err)
+		}
+		if err := db.QueueSnapshotGC(ctx, root); err != nil {
+			db.Close()
+			t.Fatal(err)
+		}
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	remaining := 132
+	for pass := 0; remaining > 0 && pass < 40; pass++ {
+		if err := ReclaimPendingSnapshots(ctx, data); err != nil {
+			t.Fatal(err)
+		}
+		db, err = store.OpenWriter(data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		candidates, candidateErr := db.SnapshotGCCandidates(ctx)
+		closeErr := db.Close()
+		if candidateErr != nil {
+			t.Fatal(candidateErr)
+		}
+		if closeErr != nil {
+			t.Fatal(closeErr)
+		}
+		if removed := remaining - len(candidates); removed < 1 || removed > 4 {
+			t.Fatalf("pass removed %d candidates from %d", removed, remaining)
+		}
+		remaining = len(candidates)
+	}
+	if remaining != 0 {
+		t.Fatalf("durable staging candidates stopped making progress: %d remain", remaining)
+	}
+}

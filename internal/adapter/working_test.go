@@ -116,7 +116,11 @@ func TestWorkingCaptureRejectsABAEditWithRestoredBytesAndMtime(t *testing.T) {
 	}
 	paths, err := filepath.Glob(filepath.Join(data, "snapshots", "repo", "*", "local-*"))
 	if err != nil || len(paths) != 0 {
-		t.Fatal("failed capture retained published or staging bytes")
+		t.Fatal("failed capture retained published bytes")
+	}
+	staging, err := filepath.Glob(filepath.Join(data, "snapshots", "repo", ".staging", ".staging-local-*"))
+	if err != nil || len(staging) != 0 {
+		t.Fatal("failed capture retained staging bytes")
 	}
 }
 
@@ -163,26 +167,29 @@ func TestWorkingCaptureExcludesBeforeOpeningOrApplyingEligibleBounds(t *testing.
 func TestWorkingCapturePreparesRootBeforePublish(t *testing.T) {
 	entry, data := workingFixture(t)
 	stopped := errors.New("stop after durable registration")
-	var prepared string
+	var preparedStaging string
 	_, err := CaptureLocalScopedWithPrepare(context.Background(), entry, data, catalog.Defaults(), model.Repository{ID: entry.ID}, func(_ context.Context, root string) error {
-		prepared = root
+		preparedStaging = root
 		if _, e := os.Stat(root); !os.IsNotExist(e) {
 			t.Fatalf("root existed before registration: %v", e)
 		}
 		return stopped
 	})
-	if !errors.Is(err, stopped) || prepared == "" {
+	if !errors.Is(err, stopped) || preparedStaging == "" || filepath.Base(filepath.Dir(preparedStaging)) != ".staging" {
 		t.Fatalf("capture crossed preparation boundary: %v", err)
 	}
-	if _, err := os.Stat(prepared); !os.IsNotExist(err) {
+	if _, err := os.Stat(preparedStaging); !os.IsNotExist(err) {
 		t.Fatalf("unregistered root published: %v", err)
 	}
+	var preparedFinal string
+	var preparedCount int
 	discovered, err := CaptureLocalScopedWithPrepare(context.Background(), entry, data, catalog.Defaults(), model.Repository{ID: entry.ID}, func(_ context.Context, root string) error {
-		if root != prepared {
-			t.Fatalf("unstable final root: %s != %s", root, prepared)
-		}
+		preparedCount++
 		if _, e := os.Stat(root); !os.IsNotExist(e) {
 			t.Fatalf("root existed before registration: %v", e)
+		}
+		if filepath.Base(filepath.Dir(root)) != ".staging" {
+			preparedFinal = root
 		}
 		return nil
 	})
@@ -190,7 +197,7 @@ func TestWorkingCapturePreparesRootBeforePublish(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer discovered.Close()
-	if discovered.Root != prepared {
+	if preparedCount != 2 || discovered.Root != preparedFinal {
 		t.Fatal("published root differs from registered path")
 	}
 }

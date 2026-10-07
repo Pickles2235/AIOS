@@ -69,7 +69,16 @@ canonical/staged references before deletion; a crash leaves the cleanup record
 for the next successful ingest. Empty owned revision directories are removed.
 External source workspaces and active or retained snapshots are never deleted.
 The known final owned root is recorded durably before local rename or mirror
-archive publication, while its capture lease is held. Failed
+archive publication. Local capture takes its repository lease before assigning
+an exact `snapshots/<repo>/.staging/.staging-local-*` path; mirror capture uses
+`.staging-mirror-*`. Each unpredictable path is recorded in the durable cleanup
+queue before its directory is created. A crash before creation leaves a missing
+candidate that is safely acknowledged, while a crash during capture leaves the
+exact incomplete root for cleanup. The ordered queue returns at most four safe
+candidates per maintenance pass, so ordinary revision or repository directory
+counts cannot hide later staging roots or require an unbounded filesystem scan.
+Cleanup holds the repository lease exclusively; a live capture is skipped and
+retried by a later maintenance poll. Failed
 ingests discard unreferenced snapshots after the capture lease ends; staged
 references retain their snapshot until staged work is discarded. Cleanup
 candidates survive a restart. Background work reclaims up to four safe
