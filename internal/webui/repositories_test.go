@@ -19,6 +19,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/knowledge"
 	"github.com/AdamNi-7080/AIOS/internal/maintenance"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
+	"github.com/AdamNi-7080/AIOS/internal/resourcepolicy"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 )
 
@@ -298,6 +299,13 @@ func TestRepositoryControlsRejectMissingCSRFUnknownIDsAndInvalidShapes(t *testin
 
 func TestRepositoryAddAndScopeUseActualMaintainedBackend(t *testing.T) {
 	s, _, _ := managementServer(t, "local")
+	s.maintenanceOptions = func() maintenance.Options {
+		o := maintenance.Defaults()
+		o.Probe = func(context.Context) resourcepolicy.Signals {
+			return resourcepolicy.Signals{Provider: "test", Power: "ac", Load: 0.1, ObservedAt: time.Now().UTC(), Available: true}
+		}
+		return o
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	s.maintenanceMu.Lock()

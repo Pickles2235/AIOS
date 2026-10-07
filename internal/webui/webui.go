@@ -57,6 +57,7 @@ type Server struct {
 	maintainer                        *maintenance.Engine
 	maintenanceContext                context.Context
 	maintenanceError                  string
+	maintenanceOptions                func() maintenance.Options
 	setupTransitionMu                 sync.Mutex
 	obs                               *observability.Collector
 }

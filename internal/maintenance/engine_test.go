@@ -10,6 +10,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/AdamNi-7080/AIOS/internal/resourcepolicy"
 )
 
 func ownedTemp(t *testing.T) string {
@@ -25,6 +27,7 @@ func ownedTemp(t *testing.T) string {
 }
 func optionsForTest() Options {
 	o := Defaults()
+	o.Probe = func(context.Context) resourcepolicy.Signals { return fakeSignals("ac", 0) }
 	o.TickInterval = 5 * time.Millisecond
 	o.RetryBase = 40 * time.Millisecond
 	o.RetryCap = 80 * time.Millisecond

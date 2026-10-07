@@ -149,6 +149,9 @@ func (s *Server) startMaintenance() {
 		return outcome, nil
 	}
 	options := maintenance.Defaults()
+	if s.maintenanceOptions != nil {
+		options = s.maintenanceOptions()
+	}
 	options.Preflight = app.ReclaimPendingSnapshots
 	engine, err := maintenance.New(s.dataDir, sources, run, options)
 	if err != nil {
