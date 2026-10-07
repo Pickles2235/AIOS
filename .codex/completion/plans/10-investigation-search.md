@@ -38,3 +38,7 @@ Internal regression under repair: architecture_slice acceptance failed on 102b8e
 ## Handoff
 
 Persist implementation SHA, publication evidence and next work. Continue mission.
+
+## Resumption checkpoint
+
+Coverage repair is `8857ec0c16838301c2290c51a6bde7729f72f996`; current tested HEAD is `4f4194f481acfca8cfcad23f5b03ec689fda6aa4` (only evidence/plan added after product repair). Independent review verified configuration-vs-unsupported-source coverage boundary. Both fresh acceptance reports `/tmp/aios-task10-accept-8857ec0-a/acceptance-report.json` and `/tmp/aios-task10-accept-4f4194f-b/acceptance-report.json` record exact HEAD4f4194f, accepted14/14, semantic fingerprint `6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0`. Final web gate has stalled under both Homebrew Node26 and configured Node22; Node26 alone is ruled out. No passing final receipt is claimed. Delivery owns live-run diagnosis and bounded serial runner recovery; reviewer awaits final receipts before verdict. Keep milestone in_progress; final candidate milestones11–15 remain pending.
