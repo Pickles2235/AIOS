@@ -17,7 +17,7 @@ Finish the approved installable V1 completion mission. Acceptance is the full 15
 |---|---|---|---|
 | `/root` | Manager / integration, senior | Mission scope, plan/state, integration, publication, final sign-off | Active |
 | `/root/investigation_search_delivery` | Senior delivery lead; `gpt-6-sol` / `medium` / `fork_turns=none` | Task 10 implementation and focused checks; code/tests only | Active |
-| `/root/cloud_gap_audit` | Principal read-only audit; `gpt-6-sol` / `high` / `fork_turns=none` | Prep task 11 baseline/gap analysis; no writes, dependency-blocked implementation | Active |
+| `/root/cloud_gap_audit` | Principal read-only audit; `gpt-6-sol` / `high` / `fork_turns=none` | Task 11 baseline/gap analysis, no writes; completed audit, delivery dependency-blocked |
 | Reserved fresh agent | Mid or senior independent reviewer | Inspect task 10 corrected commit, evidence, and acceptance behavior | Required after candidate |
 
 ## Efficiency and workflow
@@ -27,3 +27,5 @@ Keep one owner per write scope. Share existing durable evidence paths, not trans
 ## Workflow candidates and lessons
 
 The completion mission and consultancy workflow have been applied to task 09 with an independent exact-commit review and recorded scoped gates. Do not create a skill from this single mission. Continue recording only stable lessons demonstrated by repeated work.
+
+Task 11 audit: live `web/src/knowledge-cloud.tsx` is a 2D SVG ring wired by `main.tsx`; canonical evidence handles are generation-bound, but `internal/knowledge/read.go` projects only one repository/20 nodes and 21 globally selected claims. It has no estate/package/file hierarchy, exact aggregate membership/counts, volumetric controls, semantic legend, or source actions. Discovery/staging events exist, but not cloud transitions, promotion/delta motion, or query highlighting; ranked results are not proof of relationship paths. Before task11 implementation, define an active-catalog read API with exact member IDs/count scope/generation and bounded expansion; derive aggregates from canonical IR and source files; validate source-action path/revision on the backend; animate only real activation diffs and describe search hits as results unless a path is proven. Tests need exact membership, promotion/removal/stale cases, safe links, keyboard/reduced motion/context loss, dense data; native GPU evidence must measure rendering under load and include visual review. No task11 code/tests were changed or run by the auditor.
