@@ -72,3 +72,9 @@ where needed. Use a smaller separately indexed comparison instance if necessary.
 Temporary copies are private and removed after success, failure or cancellation.
 A later run cleans interrupted directories only when they have the Lab's explicit
 ownership marker and its owning process has stopped. Saved files use atomic replacement and file/directory syncing.
+
+If an interrupted directory's marker is malformed or its process ID has been
+reused, automatic cleanup leaves it untouched. Stop the browser service, inspect
+only `.benchmark-work-*` directories under your owned data folder, and remove a
+verified abandoned comparison directory to reclaim its space. Never delete the
+canonical `index.db` or source repositories for this recovery.
