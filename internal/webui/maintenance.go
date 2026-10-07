@@ -148,7 +148,9 @@ func (s *Server) startMaintenance() {
 		}
 		return outcome, nil
 	}
-	engine, err := maintenance.New(s.dataDir, sources, run, maintenance.Defaults())
+	options := maintenance.Defaults()
+	options.Preflight = app.ReclaimPendingSnapshots
+	engine, err := maintenance.New(s.dataDir, sources, run, options)
 	if err != nil {
 		s.maintenanceError = "Unable to restore durable maintenance; last-good knowledge remains available."
 		return

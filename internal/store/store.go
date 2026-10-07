@@ -891,6 +891,35 @@ func (s *Store) SnapshotGCCandidates(ctx context.Context) ([]string, error) {
 	return out, rows.Err()
 }
 
+// ReclaimableSnapshotGCCandidates returns a bounded set with no current
+// published or staged references. Filesystem cleanup rechecks under a lease.
+func (s *Store) ReclaimableSnapshotGCCandidates(ctx context.Context, limit int) ([]string, error) {
+	if s.readOnly || limit < 1 || limit > 128 {
+		return nil, fmt.Errorf("invalid snapshot GC request")
+	}
+	var exists int
+	if err := s.db.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type='table' AND name='snapshot_gc_candidates'`).Scan(&exists); err != nil {
+		return nil, err
+	}
+	if exists == 0 {
+		return nil, nil
+	}
+	rows, err := s.db.QueryContext(ctx, `SELECT c.root FROM snapshot_gc_candidates c WHERE NOT EXISTS (SELECT 1 FROM generations g WHERE g.root=c.root) AND NOT EXISTS (SELECT 1 FROM generation_staging s WHERE s.root=c.root) ORDER BY c.root LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []string{}
+	for rows.Next() {
+		var root string
+		if err = rows.Scan(&root); err != nil {
+			return nil, err
+		}
+		out = append(out, root)
+	}
+	return out, rows.Err()
+}
+
 // CompleteSnapshotGC acknowledges an owned root only after filesystem removal.
 func (s *Store) CompleteSnapshotGC(ctx context.Context, root string) error {
 	if s.readOnly {

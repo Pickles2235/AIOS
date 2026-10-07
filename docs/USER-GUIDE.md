@@ -99,7 +99,9 @@ captures finish; it never deletes the source workspace or active generation.
 Mirror archives stream through a separate full-capture bound of 6 GiB and
 300,000 entries (plus bounded tar framing); the configured per-repository
 limits apply to eligible files after exclusions. Failed captures are queued for
-owned cleanup, including after a restart.
+owned cleanup, including after a restart. Before a background job checks disk
+admission, it reclaims up to four safe unreferenced candidates; resource status
+and health reads do not perform cleanup writes.
 Free owned space or reduce approved scope to resume a deferred build.
 
 To uninstall, choose explicitly: `"$AIOS_BIN" uninstall --preserve-data --json`

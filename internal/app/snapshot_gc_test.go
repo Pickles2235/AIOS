@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/AdamNi-7080/AIOS/internal/adapter"
 	"github.com/AdamNi-7080/AIOS/internal/catalog"
@@ -347,5 +348,44 @@ func TestFailedCaptureCandidateSurvivesRestart(t *testing.T) {
 	pending, err = db.SnapshotGCCandidates(ctx)
 	if err != nil || len(pending) != 0 {
 		t.Fatalf("candidate not acknowledged: %v %v", pending, err)
+	}
+}
+
+func TestRestartOverBudgetPreflightReclaimsDurableOrphan(t *testing.T) {
+	ctx := context.Background()
+	data := t.TempDir()
+	root := filepath.Join(data, "snapshots", "repo", "rev", "manifest")
+	if err := os.MkdirAll(root, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "orphan.bin"), make([]byte, 2<<20), 0400); err != nil {
+		t.Fatal(err)
+	}
+	db, err := store.OpenWriter(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueueSnapshotGC(ctx, root); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	observed, err := resourcepolicy.CheckBudget(data, 1<<30, 0, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cap := observed.OwnedBytes + (1 << 20) - 1
+	if status, err := resourcepolicy.CheckBudget(data, cap, 0, 1<<20); !errors.Is(err, resourcepolicy.ErrStorageBudget) || status.StorageState != "budget" {
+		t.Fatalf("expected admission block: %+v %v", status, err)
+	}
+	if err := ReclaimPendingSnapshots(ctx, data); err != nil {
+		t.Fatal(err)
+	}
+	if status, err := resourcepolicy.CheckBudget(data, cap, 0, 1<<20); err != nil || status.StorageState != "available" {
+		t.Fatalf("admission did not recover: %+v %v", status, err)
+	}
+	if _, err := os.Stat(root); !os.IsNotExist(err) {
+		t.Fatalf("orphan root survived preflight: %v", err)
 	}
 }

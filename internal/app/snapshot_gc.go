@@ -172,3 +172,18 @@ func verifyDirectoryAncestors(dataDir, path string) error {
 func isNotEmpty(err error) bool {
 	return errors.Is(err, syscall.ENOTEMPTY) || errors.Is(err, syscall.EEXIST)
 }
+
+// ReclaimPendingSnapshots is a bounded write preflight for maintenance work.
+// Read-only resource/status/health paths never invoke it.
+func ReclaimPendingSnapshots(ctx context.Context, dataDir string) error {
+	db, err := store.OpenWriter(dataDir)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	roots, err := db.ReclaimableSnapshotGCCandidates(ctx, 4)
+	if err != nil {
+		return err
+	}
+	return reclaimPrunedSnapshots(ctx, db, dataDir, roots)
+}

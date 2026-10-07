@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -291,5 +292,43 @@ func TestConstrainedRetryKeepsFiniteWait(t *testing.T) {
 	j := waitJob(t, e, "repo", func(j Job) bool { return j.State == "idle" && j.ActiveGeneration == "gen" })
 	if calls.Load() != 2 || j.Runs != 2 {
 		t.Fatalf("constrained retry starved: %+v", j)
+	}
+}
+
+func TestResourcePreflightRunsBeforeAdmissionButNotStatus(t *testing.T) {
+	root := ownedTemp(t)
+	marker := filepath.Join(root, "orphan")
+	if err := os.WriteFile(marker, []byte("orphan"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var preflight atomic.Int32
+	o := optionsForTest()
+	o.Probe = func(context.Context) resourcepolicy.Signals { return fakeSignals("ac", 0) }
+	o.StorageCheck = func(string) (resourcepolicy.Storage, error) {
+		if _, err := os.Stat(marker); err == nil {
+			return resourcepolicy.Storage{StorageState: "budget"}, resourcepolicy.ErrStorageBudget
+		}
+		return resourcepolicy.Storage{StorageState: "available"}, nil
+	}
+	o.Preflight = func(context.Context, string) error { preflight.Add(1); return os.Remove(marker) }
+	e, err := New(root, []Source{{ID: "repo", Mode: "mirror"}}, func(context.Context, string) (Outcome, error) {
+		return Outcome{Revision: "rev", Generation: "gen"}, nil
+	}, o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.Close()
+	if state := e.RefreshPolicy(context.Background()); state.Storage.StorageState != "budget" {
+		t.Fatalf("status did not observe pressure: %+v", state)
+	}
+	if preflight.Load() != 0 {
+		t.Fatal("read-only resource refresh mutated storage")
+	}
+	if err := e.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	waitJob(t, e, "repo", func(j Job) bool { return j.State == "idle" && j.ActiveGeneration == "gen" })
+	if preflight.Load() == 0 {
+		t.Fatal("admission skipped cleanup preflight")
 	}
 }

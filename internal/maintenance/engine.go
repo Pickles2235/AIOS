@@ -83,6 +83,7 @@ type Options struct {
 	Now                                                                                                            func() time.Time
 	Probe                                                                                                          resourcepolicy.Probe
 	StorageCheck                                                                                                   func(string) (resourcepolicy.Storage, error)
+	Preflight                                                                                                      func(context.Context, string) error
 }
 
 func Defaults() Options {
@@ -579,6 +580,11 @@ func (e *Engine) loop() {
 			}
 			job := e.state.Jobs[id]
 			e.mu.Unlock()
+			if e.options.Preflight != nil {
+				preflightCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				_ = e.options.Preflight(preflightCtx, filepath.Dir(e.path))
+				cancel()
+			}
 			storage, storageErr := e.options.StorageCheck(filepath.Dir(e.path))
 			e.mu.Lock()
 			e.resource.Storage = storage
