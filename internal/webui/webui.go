@@ -203,7 +203,7 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 	case "/api/v1/repositories/add", "/api/v1/repositories/remove", "/api/v1/repositories/rules", "/api/v1/repositories/retry", "/api/v1/repositories/rebuild", "/api/v1/repositories/purge-status":
 		s.managementAPI(w, r)
 		return
-	case "/api/v1/jobs", "/api/v1/jobs/configure", "/api/v1/repositories", "/api/v1/repositories/check-now":
+	case "/api/v1/jobs", "/api/v1/jobs/configure", "/api/v1/jobs/cancel", "/api/v1/repositories", "/api/v1/repositories/check-now", "/api/v1/resources":
 		s.maintenanceAPI(w, r)
 		return
 	case "/api/v1/namespace", "/api/v1/namespace/open":

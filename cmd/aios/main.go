@@ -13,6 +13,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/lifecycle"
 	mcpserver "github.com/AdamNi-7080/AIOS/internal/mcp"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
+	"github.com/AdamNi-7080/AIOS/internal/resourcepolicy"
 	"github.com/AdamNi-7080/AIOS/internal/store"
 	"github.com/AdamNi-7080/AIOS/internal/webui"
 	"os"
@@ -34,6 +35,11 @@ func run(ctx context.Context, args []string) error {
 		return usageError()
 	}
 	switch args[0] {
+	case "resources":
+		if len(args) != 3 || args[1] != "status" || args[2] != "--json" {
+			return fmt.Errorf("usage: aios resources status --json")
+		}
+		return writeJSON(resourcepolicy.Evaluate(resourcepolicy.Native(ctx), resourcepolicy.MaxWait))
 	case "install", "uninstall":
 		return runInstallation(ctx, args)
 	case "daemon":
@@ -370,5 +376,5 @@ func run(ctx context.Context, args []string) error {
 }
 func writeJSON(value any) error { return json.NewEncoder(os.Stdout).Encode(value) }
 func usageError() error {
-	return fmt.Errorf("usage: aios <catalog validate|mirrors sync|local ingest (--all|--repo ID)|ingest (--all|--repo ID)|status|projections rebuild|doctor|benchmark|serve|ui serve --config CATALOG --data-dir DATA>")
+	return fmt.Errorf("usage: aios <catalog validate|mirrors sync|local ingest (--all|--repo ID)|ingest (--all|--repo ID)|status|resources status --json|projections rebuild|doctor|benchmark|serve|ui serve --config CATALOG --data-dir DATA>")
 }

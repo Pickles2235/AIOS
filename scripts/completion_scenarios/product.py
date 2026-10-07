@@ -845,14 +845,48 @@ class ProductScenarios(unittest.TestCase):
                                        'default archive omits source/query artifacts')
 
     def test_resource_policy_fairness(self):
+        source = fixture(self.root)
+        before = source_fingerprint(source)
         with self.server() as (api, data, origin):
             policy = api('/api/v1/resources')
             self.check(policy['state'] in ('normal', 'constrained', 'idle_opportunity'), 'observable resource policy')
             self.check(policy['max_workers'] > 0 and policy['max_queue'] > 0 and policy['retention_bytes'] > 0,
-                       'finite worker/queue/disk budgets')
+                       'finite worker/queue/journal budgets')
             self.check(policy['oldest_job_max_wait_seconds'] > 0 and policy['cancel_supported'],
                        'fair eventual progress and cancellation')
-        self.check(False, 'PENDING task09: injected normal/constrained/idle transitions, queue bounds, starvation, cancel and disk-full outcomes')
+            self.check(policy['retention_scope'] == 'maintenance_journal', 'retention byte scope is explicit')
+            self.check(0 <= policy['owned_bytes'] < policy['max_owned_bytes'] and
+                       policy['available_bytes'] > 0 and policy['storage_state'] == 'available',
+                       'measured owned usage and volume space admit work')
+            self.configure(api, source)
+            for _ in range(12):
+                api('/api/v1/repositories/check-now', {'repository': 'fixture'}, expected=202)
+            deadline = time.monotonic() + 15
+            while time.monotonic() < deadline:
+                jobs = api('/api/v1/jobs')['jobs']
+                if jobs and jobs[0]['state'] == 'idle' and jobs[0]['runs'] >= 1:
+                    break
+                time.sleep(.1)
+            self.check(jobs and jobs[0]['state'] == 'idle' and jobs[0]['runs'] >= 1,
+                       'bounded queued work makes progress')
+            status = api('/api/v1/resources')
+            self.check(status['queue_depth'] <= status['max_queue'] and status['running'] <= status['max_workers'],
+                       'actual queue and worker budget')
+        self.check(source_fingerprint(source) == before, 'resource work does not mutate source')
+        probe = subprocess.run(['go', 'test', './internal/resourcepolicy', './internal/maintenance', './internal/store', './internal/app',
+                                '-run', 'TestPolicyTransitionsAndBounds|TestOwnedAdmission|TestResource|TestRunningCancel|TestJournalDiskFull|TestCancelledRunner|TestStorageBudget|TestConstrainedRetry|TestFullDiskAtStage|TestMaintainedMetadataAndCoverageRefreshReuseUnchangedAnalysis', '-count=1', '-v'],
+                               cwd=SOURCE_ROOT, capture_output=True, text=True, timeout=90)
+        self.check(probe.returncode == 0 and all(name in probe.stdout for name in
+                   ('TestPolicyTransitionsAndBounds', 'TestResourceDeferralResumeAndMaximumWait',
+                    'TestResourceFairnessAndPendingCancel', 'TestRunningCancelAndDiskFullKeepLastGood')),
+                   'injected transitions, maximum wait, cancellation and disk-full tests execute')
+        self.check('TestConstrainedRetryKeepsFiniteWait' in probe.stdout,
+                   'injected transitions, maximum wait, cancellation and disk-full tests execute')
+        self.check(all(name in probe.stdout for name in ('TestOwnedAdmissionMeasuresFilesAndRefusesBeforeBuild',
+                   'TestJournalDiskFullRollsBackRequestAndKeepsActive',
+                   'TestFullDiskAtStageAndActivationPreservesCanonicalAndSource',
+                   'TestMaintainedMetadataAndCoverageRefreshReuseUnchangedAnalysis')),
+                   'storage refusal, rollback, and configured retention execute')
 
     def test_native_power_load(self):
         self.native()

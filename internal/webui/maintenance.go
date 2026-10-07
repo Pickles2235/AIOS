@@ -20,6 +20,7 @@ import (
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
 	"github.com/AdamNi-7080/AIOS/internal/model"
 	"github.com/AdamNi-7080/AIOS/internal/observability"
+	"github.com/AdamNi-7080/AIOS/internal/resourcepolicy"
 )
 
 func (s *Server) stopMaintenance() {
@@ -128,6 +129,7 @@ func (s *Server) startMaintenance() {
 			return outcome, err
 		}
 		outcome.Generation = indexed.ActiveGenerations[id]
+		outcome.RetentionWarning = indexed.RetentionWarning
 		for _, count := range indexed.Changes {
 			outcome.ChangedFiles += count
 		}
@@ -216,7 +218,7 @@ func (s *Server) maintenanceAPI(w http.ResponseWriter, r *http.Request) {
 		fail(w, 403, "valid origin/session/CSRF required")
 		return
 	}
-	if (r.Method == http.MethodGet && r.URL.Path != "/api/v1/jobs" && r.URL.Path != "/api/v1/repositories") || (r.Method == http.MethodPost && r.URL.Path != "/api/v1/jobs/configure" && r.URL.Path != "/api/v1/repositories/check-now") {
+	if (r.Method == http.MethodGet && r.URL.Path != "/api/v1/jobs" && r.URL.Path != "/api/v1/repositories" && r.URL.Path != "/api/v1/resources") || (r.Method == http.MethodPost && r.URL.Path != "/api/v1/jobs/configure" && r.URL.Path != "/api/v1/repositories/check-now" && r.URL.Path != "/api/v1/jobs/cancel") {
 		fail(w, 405, "unsupported maintenance method")
 		return
 	}
@@ -224,6 +226,16 @@ func (s *Server) maintenanceAPI(w http.ResponseWriter, r *http.Request) {
 	defer s.maintenanceMu.Unlock()
 	engine := s.maintainer
 	if r.Method == http.MethodGet {
+		if r.URL.Path == "/api/v1/resources" {
+			if engine != nil {
+				jsonBody(w, engine.ResourceStatus())
+			} else {
+				policy := resourcepolicy.Evaluate(resourcepolicy.Native(r.Context()), resourcepolicy.MaxWait)
+				policy.Storage, _ = resourcepolicy.CheckBudget(s.dataDir, resourcepolicy.MaxOwnedBytes, resourcepolicy.MinimumFreeBytes, resourcepolicy.CaptureReserveBytes)
+				jsonBody(w, policy)
+			}
+			return
+		}
 		status := maintenance.Status{Jobs: []maintenance.Job{}, MirrorIntervalSeconds: 900, RetryMaximumAttempts: 5, QueueCapacity: 100, WorkerCapacity: 1, QuietSeconds: 1, MaximumDebounceSeconds: 5, PersistenceError: s.maintenanceError}
 		if engine != nil {
 			status = engine.Status()
@@ -254,6 +266,19 @@ func (s *Server) maintenanceAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch r.URL.Path {
+	case "/api/v1/jobs/cancel":
+		var in struct {
+			Repository string `json:"repository"`
+		}
+		if decode(r, &in) != nil {
+			fail(w, 400, "invalid cancellation request")
+			return
+		}
+		if err := engine.Cancel(in.Repository); err != nil {
+			fail(w, 409, "No cancellable repository job or cancellation could not persist")
+			return
+		}
+		jsonBody(w, map[string]string{"state": "cancelling"})
 	case "/api/v1/repositories/check-now":
 		var in struct {
 			Repository string `json:"repository"`

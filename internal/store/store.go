@@ -41,10 +41,12 @@ func sqliteDSN(path string, readOnly bool) string {
 var schema string
 
 type Store struct {
-	db       *sql.DB
-	readOnly bool
-	path     string
-	lock     *writerLock
+	db              *sql.DB
+	readOnly        bool
+	path            string
+	lock            *writerLock
+	stageFault      func() error // package-local write-boundary fault seam
+	activationFault func() error
 }
 type Generation struct {
 	ID, RepoID, ContentHash string
@@ -592,6 +594,9 @@ func (s *Store) StageGenerationWithCoverage(ctx context.Context, snap model.Snap
 			return Generation{}, err
 		}
 	}
+	if s.stageFault != nil {
+		return Generation{}, s.stageFault()
+	}
 	if err = tx.Commit(); err != nil {
 		return Generation{}, err
 	}
@@ -724,6 +729,14 @@ func (s *Store) ActivateCatalogWithSelections(ctx context.Context, ids []string,
 		return err
 	}
 	if err = completeSelectionsTx(ctx, tx, selections); err != nil {
+		return err
+	}
+	if s.activationFault != nil {
+		if err := s.activationFault(); err != nil {
+			return err
+		}
+	}
+	if err := ctx.Err(); err != nil {
 		return err
 	}
 	return tx.Commit()

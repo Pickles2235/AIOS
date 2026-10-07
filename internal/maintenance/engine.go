@@ -14,11 +14,13 @@ import (
 	"regexp"
 	"sort"
 	"sync"
+	"syscall"
 	"time"
 
 	"errors"
 	"github.com/AdamNi-7080/AIOS/internal/lifecycle"
 	"github.com/AdamNi-7080/AIOS/internal/mirror"
+	"github.com/AdamNi-7080/AIOS/internal/resourcepolicy"
 )
 
 const MaxRepositories = 100
@@ -30,6 +32,7 @@ type Source struct{ ID, Mode, Path string }
 type Outcome struct {
 	Revision, Generation string
 	ChangedFiles         int
+	RetentionWarning     string
 }
 
 type CanonicalState struct {
@@ -75,12 +78,17 @@ func (e *Engine) RestoreCanonical(active map[string]CanonicalState) error {
 type Runner func(context.Context, string) (Outcome, error)
 type Options struct {
 	MirrorInterval, ReconcileInterval, RetryBase, RetryCap, QuietPeriod, MaximumDebounce, TickInterval, JobTimeout time.Duration
+	MaximumDeferred                                                                                                time.Duration
 	MaximumAttempts                                                                                                int
 	Now                                                                                                            func() time.Time
+	Probe                                                                                                          resourcepolicy.Probe
+	StorageCheck                                                                                                   func(string) (resourcepolicy.Storage, error)
 }
 
 func Defaults() Options {
-	return Options{15 * time.Minute, 30 * time.Second, 30 * time.Second, 15 * time.Minute, time.Second, 5 * time.Second, 100 * time.Millisecond, 15 * time.Minute, 5, time.Now}
+	return Options{MirrorInterval: 15 * time.Minute, ReconcileInterval: 30 * time.Second, RetryBase: 30 * time.Second, RetryCap: 15 * time.Minute, QuietPeriod: time.Second, MaximumDebounce: 5 * time.Second, TickInterval: 100 * time.Millisecond, JobTimeout: 15 * time.Minute, MaximumDeferred: resourcepolicy.MaxWait, MaximumAttempts: 5, Now: time.Now, Probe: resourcepolicy.Native, StorageCheck: func(root string) (resourcepolicy.Storage, error) {
+		return resourcepolicy.CheckBudget(root, resourcepolicy.MaxOwnedBytes, resourcepolicy.MinimumFreeBytes, resourcepolicy.CaptureReserveBytes)
+	}}
 }
 
 type Job struct {
@@ -97,6 +105,8 @@ type Job struct {
 	LastAttempt       time.Time `json:"last_attempt"`
 	LastSuccess       time.Time `json:"last_success"`
 	NextAttempt       time.Time `json:"next_attempt"`
+	PendingSince      time.Time `json:"pending_since,omitempty"`
+	DeferredReason    string    `json:"deferred_reason,omitempty"`
 	NextPoll          time.Time `json:"next_poll"`
 	FirstEdit         time.Time `json:"first_edit"`
 	LastEdit          time.Time `json:"last_edit"`
@@ -106,6 +116,7 @@ type Job struct {
 	ChangedFiles      int       `json:"changed_files"`
 	Error             string    `json:"error,omitempty"`
 	WatchError        string    `json:"watch_error,omitempty"`
+	RetentionWarning  string    `json:"retention_warning,omitempty"`
 	Stale             bool      `json:"stale"`
 }
 
@@ -116,17 +127,18 @@ type journal struct {
 	Jobs                  map[string]Job `json:"jobs"`
 }
 type Status struct {
-	Jobs                   []Job   `json:"jobs"`
-	MirrorIntervalSeconds  int     `json:"mirror_interval_seconds"`
-	RetryMaximumAttempts   int     `json:"retry_max_attempts"`
-	Durable                bool    `json:"durable"`
-	Restored               bool    `json:"restored"`
-	Coalescing             bool    `json:"coalescing"`
-	QueueCapacity          int     `json:"queue_capacity"`
-	WorkerCapacity         int     `json:"worker_capacity"`
-	QuietSeconds           float64 `json:"quiet_seconds"`
-	MaximumDebounceSeconds float64 `json:"maximum_debounce_seconds"`
-	PersistenceError       string  `json:"persistence_error,omitempty"`
+	Jobs                   []Job                 `json:"jobs"`
+	MirrorIntervalSeconds  int                   `json:"mirror_interval_seconds"`
+	RetryMaximumAttempts   int                   `json:"retry_max_attempts"`
+	Durable                bool                  `json:"durable"`
+	Restored               bool                  `json:"restored"`
+	Coalescing             bool                  `json:"coalescing"`
+	QueueCapacity          int                   `json:"queue_capacity"`
+	WorkerCapacity         int                   `json:"worker_capacity"`
+	QuietSeconds           float64               `json:"quiet_seconds"`
+	MaximumDebounceSeconds float64               `json:"maximum_debounce_seconds"`
+	PersistenceError       string                `json:"persistence_error,omitempty"`
+	Resource               resourcepolicy.Status `json:"resource"`
 }
 
 type Engine struct {
@@ -143,6 +155,11 @@ type Engine struct {
 	started, restored, closed bool
 	persistenceError          string
 	watch                     *watchSet
+	resource                  resourcepolicy.Status
+	currentID                 string
+	currentCancel             context.CancelFunc
+	cancelledID               string
+	persistFault              func() error // package-local fault seam; production is nil
 }
 
 func New(dataDir string, sources []Source, run Runner, options Options) (*Engine, error) {
@@ -152,6 +169,15 @@ func New(dataDir string, sources []Source, run Runner, options Options) (*Engine
 	if options.Now == nil {
 		options = Defaults()
 	}
+	if options.Probe == nil {
+		options.Probe = resourcepolicy.Native
+	}
+	if options.StorageCheck == nil {
+		options.StorageCheck = Defaults().StorageCheck
+	}
+	if options.MaximumDeferred <= 0 {
+		options.MaximumDeferred = resourcepolicy.MaxWait
+	}
 	if options.MirrorInterval <= 0 || options.ReconcileInterval <= 0 || options.RetryBase <= 0 || options.RetryCap < options.RetryBase || options.QuietPeriod <= 0 || options.MaximumDebounce < options.QuietPeriod || options.TickInterval <= 0 || options.JobTimeout <= 0 || options.MaximumAttempts < 1 || options.MaximumAttempts > 10 {
 		return nil, fmt.Errorf("invalid bounded maintenance policy")
 	}
@@ -159,6 +185,7 @@ func New(dataDir string, sources []Source, run Runner, options Options) (*Engine
 		return nil, err
 	}
 	e := &Engine{path: filepath.Join(dataDir, "maintenance.json"), options: options, sources: map[string]Source{}, run: run, wake: make(chan struct{}, 1), done: make(chan struct{}), state: journal{Schema: 1, MirrorIntervalSeconds: int(options.MirrorInterval.Seconds()), Jobs: map[string]Job{}}}
+	e.resource = resourcepolicy.Evaluate(resourcepolicy.Signals{Provider: "unobserved", Power: "unknown", ObservedAt: e.now()}, options.MaximumDeferred)
 	if _, err := os.Lstat(e.path); err == nil {
 		f, err := lifecycle.OpenBoundedMetadata(e.path, maxJournalBytes)
 		if err != nil {
@@ -215,7 +242,11 @@ func New(dataDir string, sources []Source, run Runner, options Options) (*Engine
 			job.State = "pending"
 			job.Reason = "restart_repair"
 			job.NextAttempt = e.now()
+			job.PendingSince = e.now()
 			job.Followup = false
+		}
+		if (job.State == "pending" || job.State == "retry_wait") && job.PendingSince.IsZero() {
+			job.PendingSince = e.now()
 		}
 		e.state.Jobs[source.ID] = job
 	}
@@ -245,6 +276,9 @@ func (e *Engine) persistLocked() error {
 	b, err := json.Marshal(e.state)
 	if err != nil || len(b) > maxJournalBytes {
 		return fmt.Errorf("maintenance journal exceeds bound")
+	}
+	if e.persistFault != nil {
+		return e.persistFault()
 	}
 	f, err := os.CreateTemp(filepath.Dir(e.path), ".maintenance-*")
 	if err != nil {
@@ -310,11 +344,15 @@ func (e *Engine) request(id, reason string, edit bool) error {
 		e.state.Sequence++
 		job.Sequence = e.state.Sequence
 		job.State = "pending"
+		job.PendingSince = now
 		if !continuation {
 			job.Attempts = 0
 		}
 	}
 	job.Reason = reason
+	if job.State == "pending" && job.PendingSince.IsZero() {
+		job.PendingSince = now
+	}
 	if keepExhausted {
 		job.NextAttempt = time.Time{}
 	} else if edit {
@@ -386,7 +424,85 @@ func (e *Engine) Status() Status {
 		jobs = append(jobs, job)
 	}
 	sort.Slice(jobs, func(i, j int) bool { return jobs[i].Repository < jobs[j].Repository })
-	return Status{jobs, int(e.options.MirrorInterval.Seconds()), e.options.MaximumAttempts, e.persistenceError == "", e.restored, true, MaxRepositories, 1, e.options.QuietPeriod.Seconds(), e.options.MaximumDebounce.Seconds(), e.persistenceError}
+	return Status{jobs, int(e.options.MirrorInterval.Seconds()), e.options.MaximumAttempts, e.persistenceError == "", e.restored, true, MaxRepositories, 1, e.options.QuietPeriod.Seconds(), e.options.MaximumDebounce.Seconds(), e.persistenceError, e.resource}
+}
+
+func (e *Engine) ResourceStatus() resourcepolicy.Status {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	p := e.resource
+	now := e.now()
+	for _, job := range e.state.Jobs {
+		if job.State == "running" {
+			p.Running++
+		}
+		if job.State == "pending" || job.State == "retry_wait" {
+			p.QueueDepth++
+			if !job.PendingSince.IsZero() && now.After(job.PendingSince) {
+				age := now.Sub(job.PendingSince).Seconds()
+				if age > p.OldestJobAgeSeconds {
+					p.OldestJobAgeSeconds = age
+				}
+			}
+		}
+	}
+	return p
+}
+
+// RefreshPolicy samples outside the journal lock. Tests can inject a probe;
+// production always uses the native local provider.
+func (e *Engine) RefreshPolicy(ctx context.Context) resourcepolicy.Status {
+	signals := e.options.Probe(ctx)
+	policy := resourcepolicy.Evaluate(signals, e.options.MaximumDeferred)
+	e.mu.Lock()
+	previous := e.resource.Storage
+	e.mu.Unlock()
+	if previous.StorageObservedAt.IsZero() || time.Since(previous.StorageObservedAt) >= 30*time.Second {
+		policy.Storage, _ = e.options.StorageCheck(filepath.Dir(e.path))
+	} else {
+		policy.Storage = previous
+	}
+	e.mu.Lock()
+	e.resource = policy
+	e.mu.Unlock()
+	e.signal()
+	return policy
+}
+
+// Cancel abandons pending work or cancels the active attempt. A cancelled
+// runner is never allowed to promote its returned outcome in this journal.
+func (e *Engine) Cancel(id string) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	job, ok := e.state.Jobs[id]
+	if !ok {
+		return fmt.Errorf("repository is not maintained")
+	}
+	if job.State != "pending" && job.State != "retry_wait" && job.State != "running" {
+		return fmt.Errorf("repository has no cancellable work")
+	}
+	if job.State == "running" {
+		e.cancelledID = id
+		if e.currentID == id && e.currentCancel != nil {
+			e.currentCancel()
+		}
+		return nil
+	}
+	old := job
+	job.State = "idle"
+	job.Followup = false
+	job.NextAttempt = time.Time{}
+	job.PendingSince = time.Time{}
+	job.DeferredReason = ""
+	job.Error = "Repository update cancelled; last-good knowledge remains available."
+	e.state.Jobs[id] = job
+	if err := e.persistLocked(); err != nil {
+		e.state.Jobs[id] = old
+		e.persistenceError = "Unable to persist cancellation; work remains queued."
+		return err
+	}
+	e.signal()
+	return nil
 }
 
 func (e *Engine) Start(ctx context.Context) error {
@@ -398,6 +514,7 @@ func (e *Engine) Start(ctx context.Context) error {
 	e.started = true
 	e.ctx, e.cancel = context.WithCancel(ctx)
 	e.mu.Unlock()
+	e.RefreshPolicy(e.ctx)
 	go e.loop()
 	watch, err := newWatchSet(e, e.sources)
 	if err != nil {
@@ -461,8 +578,45 @@ func (e *Engine) loop() {
 				break
 			}
 			job := e.state.Jobs[id]
+			e.mu.Unlock()
+			storage, storageErr := e.options.StorageCheck(filepath.Dir(e.path))
+			e.mu.Lock()
+			e.resource.Storage = storage
+			job = e.state.Jobs[id]
+			if (job.State != "pending" && job.State != "retry_wait") || job.NextAttempt.After(e.now()) {
+				e.mu.Unlock()
+				continue
+			}
+			if storageErr != nil {
+				old := job
+				job.DeferredReason = storage.StorageState
+				e.state.Jobs[id] = job
+				if job.DeferredReason != old.DeferredReason {
+					if err := e.persistLocked(); err != nil {
+						e.state.Jobs[id] = old
+						e.persistenceError = "Unable to persist storage deferral; work paused."
+					}
+				}
+				e.mu.Unlock()
+				break
+			}
+			if e.resource.State == "constrained" && (job.PendingSince.IsZero() || now.Sub(job.PendingSince) < e.options.MaximumDeferred) {
+				if job.DeferredReason != e.resource.DeferredReason {
+					old := job
+					job.DeferredReason = e.resource.DeferredReason
+					e.state.Jobs[id] = job
+					if err := e.persistLocked(); err != nil {
+						e.state.Jobs[id] = old
+						e.persistenceError = "Unable to persist resource deferral; work paused."
+					}
+				}
+				e.mu.Unlock()
+				break
+			}
 			old := job
 			job.State = "running"
+			job.PendingSince = time.Time{}
+			job.DeferredReason = ""
 			job.Attempts++
 			job.Runs++
 			job.LastAttempt = now
@@ -478,18 +632,37 @@ func (e *Engine) loop() {
 			}
 			e.mu.Unlock()
 			ctx, cancel := context.WithTimeout(e.ctx, e.options.JobTimeout)
+			e.mu.Lock()
+			e.currentID = id
+			e.currentCancel = cancel
+			if e.cancelledID == id {
+				cancel()
+			}
+			e.mu.Unlock()
 			outcome, err := e.run(ctx, id)
 			cancel()
 			if err == nil && (outcome.Revision == "" || outcome.Generation == "") {
 				err = fmt.Errorf("maintained outcome lacks canonical identity")
 			}
 			e.mu.Lock()
+			e.currentID = ""
+			e.currentCancel = nil
+			cancelled := e.cancelledID == id
+			if cancelled {
+				e.cancelledID = ""
+			}
 			job = e.state.Jobs[id]
 			followupDue := job.NextAttempt
 			now = e.now()
 			job.AttemptedRevision = outcome.Revision
 			job.ChangedFiles = outcome.ChangedFiles
-			if e.ctx.Err() != nil && err != nil {
+			job.RetentionWarning = outcome.RetentionWarning
+			if cancelled {
+				job.State = "idle"
+				job.Attempts = 0
+				job.NextAttempt = time.Time{}
+				job.Error = "Repository update cancelled; last-good knowledge remains available."
+			} else if e.ctx.Err() != nil && err != nil {
 				job.Attempts = max(0, job.Attempts-1)
 				job.State = "pending"
 				job.Reason = "restart_repair"
@@ -505,6 +678,9 @@ func (e *Engine) loop() {
 				job.NextAttempt = time.Time{}
 			} else {
 				job.Error = "Repository update failed; last-good knowledge remains available. Check source access and retry."
+				if errors.Is(err, syscall.ENOSPC) {
+					job.Error = "Owned storage is full; last-good knowledge remains available. Free space, then Check now."
+				}
 				var gitError *mirror.GitError
 				if errors.As(err, &gitError) {
 					job.Error = gitError.Remediation()
@@ -512,8 +688,10 @@ func (e *Engine) loop() {
 				if job.Attempts >= e.options.MaximumAttempts {
 					job.State = "exhausted"
 					job.NextAttempt = time.Time{}
+					job.PendingSince = time.Time{}
 				} else {
 					job.State = "retry_wait"
+					job.PendingSince = now
 					delay := e.options.RetryBase * time.Duration(1<<uint(job.Attempts-1))
 					if delay > e.options.RetryCap {
 						delay = e.options.RetryCap
@@ -526,12 +704,13 @@ func (e *Engine) loop() {
 				interval = e.options.ReconcileInterval
 			}
 			job.NextPoll = now.Add(interval)
-			if job.Followup && e.ctx.Err() == nil {
+			if job.Followup && !cancelled && e.ctx.Err() == nil {
 				job.State = "pending"
 				job.Attempts = 0
 				e.state.Sequence++
 				job.Sequence = e.state.Sequence
 				job.NextAttempt = followupDue
+				job.PendingSince = now
 				if job.NextAttempt.IsZero() || job.NextAttempt.Before(now) {
 					job.NextAttempt = now
 				}
@@ -556,6 +735,7 @@ func (e *Engine) poll() {
 	defer ticker.Stop()
 	previous := e.now()
 	nextWatchRepair := previous.Add(30 * time.Second)
+	nextPolicy := previous.Add(5 * time.Second)
 	for {
 		select {
 		case <-e.ctx.Done():
@@ -563,6 +743,10 @@ func (e *Engine) poll() {
 		case <-ticker.C:
 		}
 		now := e.now()
+		if !now.Before(nextPolicy) {
+			e.RefreshPolicy(e.ctx)
+			nextPolicy = now.Add(5 * time.Second)
+		}
 		wake := now.Sub(previous) > max(2*time.Second, 5*e.options.TickInterval)
 		previous = now
 		e.mu.Lock()

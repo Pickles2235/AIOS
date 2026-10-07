@@ -301,4 +301,19 @@ func TestMaintainedMetadataAndCoverageRefreshReuseUnchangedAnalysis(t *testing.T
 	if e != nil || len(files) != 1 || files[0].Content != "stable fixture knowledge" {
 		t.Fatal("metadata/coverage refresh changed immutable included evidence")
 	}
+	git("-c", "user.name=t", "-c", "user.email=t@e", "commit", "--allow-empty", "-qm", "retention")
+	if result := run("retention"); result.RetentionWarning != "" {
+		t.Fatal(result.RetentionWarning)
+	}
+	var retained int
+	if e = db.DB().QueryRow(`SELECT count(*) FROM generations WHERE repo_id='repo'`).Scan(&retained); e != nil || retained != 3 {
+		t.Fatalf("configured active-plus-two-history retention failed: %d %v", retained, e)
+	}
+	latest, e := db.ActiveGeneration(context.Background(), "repo")
+	if e != nil || latest.ID == third.ID {
+		t.Fatal("retention displaced active generation")
+	}
+	if raw, e := os.ReadFile(filepath.Join(source, "facts.txt")); e != nil || string(raw) != "stable fixture knowledge" {
+		t.Fatal("retention modified source")
+	}
 }

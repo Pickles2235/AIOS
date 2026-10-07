@@ -62,7 +62,7 @@ func actualRunner(source, data string, started chan<- time.Time) Runner {
 		for _, n := range indexed.Changes {
 			changed += n
 		}
-		return Outcome{d.Revision, indexed.ActiveGenerations[id], changed}, nil
+		return Outcome{Revision: d.Revision, Generation: indexed.ActiveGenerations[id], ChangedFiles: changed}, nil
 	}
 }
 

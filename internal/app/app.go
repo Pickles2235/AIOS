@@ -28,6 +28,7 @@ type IndexResult struct {
 	Changes           map[string]int            `json:"changes,omitempty"`
 	Exclusions        map[string]map[string]int `json:"exclusions,omitempty"`
 	ActiveGenerations map[string]string         `json:"active_generations,omitempty"`
+	RetentionWarning  string                    `json:"retention_warning,omitempty"`
 }
 
 type indexInputs struct {
@@ -226,6 +227,15 @@ func index(ctx context.Context, cfg catalog.Config, repos []model.Repository, fi
 	if c, err := cachepkg.Open(dataDir); err == nil {
 		_ = c.Invalidate(ctx, "active_generation_changed", changedRepositories)
 		_ = c.Close()
+	}
+	// Retention is separate from activation: a failed cleanup must never turn
+	// a committed generation into a reported failed build or purge last-good.
+	retention := cfg.RetentionGenerations
+	if retention == 0 {
+		retention = 3
+	}
+	if err := db.Retain(ctx, retention-1); err != nil {
+		result.RetentionWarning = "Historical generation retention needs repair; active knowledge remains available."
 	}
 	return result, nil
 }

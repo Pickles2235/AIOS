@@ -80,7 +80,23 @@ locally generated PNG logo preserve the same durable identity.
 Knowledge and UI links carry generation, provenance and coverage; an unknown result
 is not proof of absence. Source checkouts must never be reset, stashed, built or written
 by AgentOS. Native login Git/namespace certification remains pending the retained
-macOS checks; later milestones add maintenance, resource and investigation features.
+macOS checks; later milestones add investigation features.
+
+Repository health shows background resource state, queue age, why a build is
+deferred, and a Cancel update control. On battery or high load, background
+updates wait up to five minutes; an old queued update then gets a turn. AC idle
+time is an opportunity for immediate work. If the owned data admission budget
+or free volume reserve is exhausted, new heavy builds wait until space is
+available. Existing active knowledge and source workspaces remain untouched.
+`aios resources status --json` shows native power, load and idle observations.
+The resource panel reports measured owned usage, free volume space and the
+100 GiB start-work admission cap (with 8 GiB reserved for a build). This does
+not cap bytes written during an already running build. The maintenance journal
+is separately capped at 512 KiB. By default, activation retains the active
+catalog and two earlier catalog revisions; the configured retention count can
+change that finite history window. Retention never deletes the source workspace
+or active generation. Free owned space or reduce approved scope to resume a
+deferred build.
 
 To uninstall, choose explicitly: `"$AIOS_BIN" uninstall --preserve-data --json`
 retains configuration/KB for reinstall; `--delete-data` deletes owned state. Both

@@ -9,6 +9,7 @@ The V1 command surface is deliberately small:
 | `ingest --all` | `--config`, `--registry`, `--data-dir` | Stage all approved mirrors (1–100) and atomically activate the initial catalog. |
 | `ingest --repo ID` | `--config`, `--registry`, `--data-dir` | Compile and activate one approved repository revision delta. |
 | `status` | `--data-dir` | Read source, generation, projection, and cache diagnostics. |
+| `resources status --json` | None | Read local power, load, idle and background policy signals. |
 | `projections rebuild` | `--data-dir`; optional `--kind` | Rebuild agent-owned projections from persisted IR only. |
 | `doctor` | `--config`; optional `--data-dir` | Validate local prerequisites and paths. |
 | `benchmark` | `--fixture`, `--data-dir`; optional `--output` | Run deterministic retrieval quality measurements. |

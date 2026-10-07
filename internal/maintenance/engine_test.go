@@ -60,7 +60,7 @@ func TestCoalescedBurstRetainsOneFollowupAndRestartIdentity(t *testing.T) {
 				return Outcome{}, ctx.Err()
 			}
 		}
-		return Outcome{"revision", "generation", 1}, nil
+		return Outcome{Revision: "revision", Generation: "generation", ChangedFiles: 1}, nil
 	}
 	e, err := New(root, []Source{{ID: "repo", Mode: "mirror"}}, run, optionsForTest())
 	if err != nil {
@@ -111,7 +111,7 @@ func TestBoundedOfflineRetriesDoNotDisableHealthyRepository(t *testing.T) {
 			failed.Add(1)
 			return Outcome{}, errors.New("private raw path and credentials must not persist")
 		}
-		return Outcome{"healthy-revision", "healthy-generation", 0}, nil
+		return Outcome{Revision: "healthy-revision", Generation: "healthy-generation", ChangedFiles: 0}, nil
 	}
 	e, err := New(root, []Source{{ID: "bad", Mode: "mirror"}, {ID: "good", Mode: "mirror"}}, run, optionsForTest())
 	if err != nil {
@@ -157,7 +157,9 @@ func TestDurableQueueSupportsOneHundredAndRejectsOverflowBeforeMutation(t *testi
 	for i := range sources {
 		sources[i] = Source{ID: fmt.Sprintf("repo-%03d", i), Mode: "mirror"}
 	}
-	run := func(context.Context, string) (Outcome, error) { return Outcome{"revision", "generation", 0}, nil }
+	run := func(context.Context, string) (Outcome, error) {
+		return Outcome{Revision: "revision", Generation: "generation", ChangedFiles: 0}, nil
+	}
 	e, err := New(root, sources, run, Defaults())
 	if err != nil {
 		t.Fatal(err)

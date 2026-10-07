@@ -24,6 +24,11 @@ for(const mode of ["local","mirror"])test(`real ${mode} maintenance health contr
     await expect.poll(async()=>{const s=await jobs();return s.jobs[0]?.state},{timeout:30000}).toBe("idle");
     const first=(await jobs()).jobs[0];expect(first.active_generation).toBeTruthy();
     const health=page.getByLabel("Repository maintenance");await expect(health).toBeVisible();await health.locator("summary").click();
+    const policy=await page.evaluate(async()=>{const r=await fetch("/api/v1/resources");return r.json()});
+    expect(["normal","constrained","idle_opportunity"]).toContain(policy.state);
+    expect(policy.max_workers).toBe(1);expect(policy.max_queue).toBe(100);
+    expect(policy.max_owned_bytes).toBeGreaterThan(policy.owned_bytes);
+    await expect(health.getByLabel("Resource policy")).toContainText("maintenance journal");
     await expect(health.getByRole("article")).toContainText(mode==="local"?"Working tree":"Mirror");
     if(mode==="mirror"){
       await expect(health.getByLabel("Mirror check interval (seconds)")).toHaveValue("900");
