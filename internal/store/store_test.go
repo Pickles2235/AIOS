@@ -48,9 +48,9 @@ func TestStructuralCoverageIgnoresNonStructuralMetadataFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	files := []model.File{{RepoID: "repo", Path: "src/A.java", SHA256: "a", Size: 10, Language: "java", Classification: "source", Content: "class A{}"}, {RepoID: "repo", Path: "CODEOWNERS", SHA256: "b", Size: 4, Language: "text", Classification: "source", Content: "team"}}
-	report := model.CoverageReport{Entries: []model.CoverageEntry{{Path: files[0].Path, Language: "java", Classification: "source", Outcome: "included", Capability: "lexical,structural"}, {Path: files[1].Path, Language: "text", Classification: "source", Outcome: "included", Capability: "lexical"}}}
-	g, err := db.StageGenerationWithCoverage(ctx, model.Snapshot{RepoID: "repo", Root: "/repo", Git: model.GitState{Commit: "one"}, ContentHash: "one", FileCount: 2, TotalBytes: 14, IndexedAt: time.Now(), ExtractorVersions: "fixture"}, files, nil, nil, report)
+	files := []model.File{{RepoID: "repo", Path: "src/A.java", SHA256: "a", Size: 10, Language: "java", Classification: "source", Content: "class A{}"}, {RepoID: "repo", Path: "CODEOWNERS", SHA256: "b", Size: 4, Language: "text", Classification: "source", Content: "team"}, {RepoID: "repo", Path: "build.gradle", SHA256: "c", Size: 5, Language: "configuration", Classification: "source", Content: "build"}}
+	report := model.CoverageReport{Entries: []model.CoverageEntry{{Path: files[0].Path, Language: "java", Classification: "source", Outcome: "included", Capability: "lexical,structural"}, {Path: files[1].Path, Language: "text", Classification: "source", Outcome: "included", Capability: "lexical"}, {Path: files[2].Path, Language: "configuration", Classification: "source", Outcome: "included", Capability: "lexical"}}}
+	g, err := db.StageGenerationWithCoverage(ctx, model.Snapshot{RepoID: "repo", Root: "/repo", Git: model.GitState{Commit: "one"}, ContentHash: "one", FileCount: 3, TotalBytes: 19, IndexedAt: time.Now(), ExtractorVersions: "fixture"}, files, nil, nil, report)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,6 +59,28 @@ func TestStructuralCoverageIgnoresNonStructuralMetadataFiles(t *testing.T) {
 	}
 	basis, err := db.Coverage(ctx, "repo", "structural", nil)
 	if err != nil || !basis.Complete {
+		t.Fatalf("basis=%#v err=%v", basis, err)
+	}
+}
+
+func TestStructuralCoverageReportsUnsupportedSourceSyntax(t *testing.T) {
+	ctx := context.Background()
+	db, err := OpenWriter(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	file := model.File{RepoID: "repo", Path: "contracts/events.proto", SHA256: "one", Size: 21, Language: "text", Classification: "source", Content: "message EventRecord {}"}
+	report := model.CoverageReport{Entries: []model.CoverageEntry{{Path: file.Path, Language: file.Language, Classification: file.Classification, Outcome: "included", Capability: "lexical"}}}
+	g, err := db.StageGenerationWithCoverage(ctx, model.Snapshot{RepoID: "repo", Root: "/repo", Git: model.GitState{Commit: "one"}, ContentHash: "one", FileCount: 1, TotalBytes: file.Size, IndexedAt: time.Now(), ExtractorVersions: "fixture"}, []model.File{file}, nil, nil, report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = db.ActivateGeneration(ctx, g.ID); err != nil {
+		t.Fatal(err)
+	}
+	basis, err := db.Coverage(ctx, "repo", "structural", nil)
+	if err != nil || basis.Complete || !strings.Contains(strings.Join(basis.Uncertainty, "\n"), "unsupported_structural_extractor:repo:contracts/events.proto") {
 		t.Fatalf("basis=%#v err=%v", basis, err)
 	}
 }

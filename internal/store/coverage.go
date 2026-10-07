@@ -136,7 +136,7 @@ func (s *Store) Coverage(ctx context.Context, repository, capability string, fie
 		}
 		erows.Close()
 		if capability == "structural" || capability == "path" {
-			missingRows, err := s.db.QueryContext(ctx, `SELECT path FROM coverage_entries WHERE coverage_id=? AND outcome='included' AND classification='source' AND (language<>'text' OR path GLOB '*.*') AND instr(',' || capability || ',', ',structural,')=0 ORDER BY path LIMIT 100`, coverage)
+			missingRows, err := s.db.QueryContext(ctx, `SELECT path FROM coverage_entries WHERE coverage_id=? AND outcome='included' AND classification='source' AND language<>'configuration' AND (language<>'text' OR path GLOB '*.*') AND instr(',' || capability || ',', ',structural,')=0 ORDER BY path LIMIT 100`, coverage)
 			if err != nil {
 				return b, err
 			}
