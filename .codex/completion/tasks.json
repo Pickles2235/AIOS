@@ -362,10 +362,10 @@
         "core",
         "web"
       ],
-      "status": "in_progress",
+      "status": "ready",
       "plan": ".codex/completion/plans/13-benchmark-lab.md",
       "completion_commit": null,
-      "review": null,
+      "review": ".codex/completion/evidence/13-review.json",
       "product_gates": [
         "core",
         "web",

@@ -1,0 +1,29 @@
+{
+  "tested_commit": "c8728a345f73c4a1e9114b4a878ecfc2e7b9fbe6",
+  "clean_tree": true,
+  "acceptance_commands": [
+    {
+      "argv": [
+        "make",
+        "acceptance-v1",
+        "ACCEPTANCE_OUTPUT=/tmp/aios-task13-c8728a3/acceptance-a"
+      ],
+      "exit_code": 0,
+      "report": "/tmp/aios-task13-c8728a3/acceptance-a/acceptance-report.json",
+      "log_sha256": "741bbef63783d0ba4f8477080911d0ac31e94585b3f333d685a52332a32559ea"
+    },
+    {
+      "argv": [
+        "make",
+        "acceptance-v1",
+        "ACCEPTANCE_OUTPUT=/tmp/aios-task13-c8728a3/acceptance-b"
+      ],
+      "exit_code": 0,
+      "report": "/tmp/aios-task13-c8728a3/acceptance-b/acceptance-report.json",
+      "log_sha256": "36727a8fc1022a8efc226fd4b006e1f75f41b8cc072196f965f7f5cfa5fe8f19"
+    }
+  ],
+  "semantic_fingerprint": "6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0",
+  "equal_fingerprints": true,
+  "platform": "Darwin arm64"
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "role": "independent_reviewer",
+  "session_id": "task13-independent-a042f0e4-cbc2-42f5-b4d9-ed3ccedcf8a9",
+  "reviewed_commit": "c8728a345f73c4a1e9114b4a878ecfc2e7b9fbe6",
+  "verdict": "pass",
+  "blocking_findings": [],
+  "checks_performed": [
+    "Read AGENTS, completion PRODUCT/MISSION/ACCEPTANCE/REVIEWER, task 13 plan, source, tests and docs. Audited Demo isolation, copied SQLite active generations/projections/coverage, verified source-byte manifest parity, first-answer scoring, unknown/error handling, persistent case binding, export privacy, cancellation, storage bounds and live main.tsx wiring.",
+    "Rejected a post-observation arbitrary duplicate-name gold answer. Delivery retained the ambiguity as a state-classification case and labelled the unique punctuation operator literal win exploratory. Exact source path, line, snippet, unsupported KB outcome and uncredited unknown are asserted; no false factual found-answer claim is made.",
+    "Inspected corrections for query punctuation false absence at the real knowledge.Query boundary, private copy owner cleanup, invalid advanced JSON draft preservation, and transparent differences between KB query-plus-evidence context bytes and literal matching-row bytes.",
+    "Ran an exact-binary live API probe on an owned fixture. Confirmed Demo source/baseline snapshot equality, unchanged user status, per-query export equality, no-store, 403 without CSRF or with foreign Origin, invalid known-answer rejection, and removal of temporary workspaces. An independently declared Worker class line-1 target produced an honestly reported KB rank-4 first-answer loss versus literal rank 1; the broad query limits its interpretation.",
+    "Ran both scoped benchmark product scenarios on the frozen binary: 2/2 passed, including My Knowledge immutable-copy parity, saved case replay across restart and source nonmutation. Ran the real Chrome 1440 browser flow on owned port 4174: 1/1 passed for Demo, primary case editor, save/replay/export/reload/clear and invalid advanced JSON preservation. Visually inspected the rendered 1440 Demo table; cases and measured outcomes were legible.",
+    "Verified core, web and scoped benchmark receipts passed on clean Darwin arm64 at reviewed_commit. Independently recomputed matching SHA256 for all three raw command logs. Web log records 34 unit tests and 40 browser cases across both viewports.",
+    "Parsed both fresh 25-repository, 14-case hermetic acceptance reports: each disposition accepted, both command exits 0, raw log hashes matched their manifest, and semantic fingerprints matched at 6c2507e8994d4d53e0ec7fb25cf5eed8ad3179b9915bdac3a6517a584d9ffcd0. Production estate remained correctly not_assessed.",
+    "Verified bin/aios is Darwin arm64 with exact Go VCS revision reviewed_commit, modified=false and SHA256 0d87b881407299887c6fd39943be2d866bf2a9345ce88291a34962f06b03a82e. git diff --check origin/main...HEAD passed. Reviewer-owned backend and port 4174 were closed; checkout remained clean."
+  ],
+  "evidence_paths": [
+    "/tmp/aios-task13-c8728a3/core.json",
+    "/tmp/aios-task13-c8728a3/core-0.log",
+    "/tmp/aios-task13-c8728a3/web.json",
+    "/tmp/aios-task13-c8728a3/web-0.log",
+    "/tmp/aios-task13-c8728a3/benchmark.json",
+    "/tmp/aios-task13-c8728a3/benchmark-0.log",
+    "/tmp/aios-task13-c8728a3/paired-acceptance.json",
+    "/tmp/aios-task13-c8728a3/acceptance-a/acceptance-report.json",
+    "/tmp/aios-task13-c8728a3/acceptance-b/acceptance-report.json"
+  ],
+  "nonblocking_findings": [],
+  "limitations": [
+    "This is milestone 13 acceptance. My Knowledge currently copies the full database with explicit 256 MiB database, 64 MiB source and 10,000-file bounds; realistic 25-100 repository feasibility and bounded cohort strategy remain required in task 14/final installed acceptance.",
+    "First/repeat wall time has uncontrolled OS/SQLite caches; source-byte counts are logical completed literal file reads, not physical I/O, and estimated tokens use ceil(JSON bytes/4). The Lab does not claim real cold storage performance or equalized context envelopes.",
+    "The exploratory operator case was selected after initial Demo inspection and is not independent holdout evidence. The 25-repository hermetic fixture does not establish arbitrary private-estate readiness or authorize release."
+  ]
+}

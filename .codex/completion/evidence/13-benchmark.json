@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "gate": "benchmark",
+  "milestone": "13-benchmark-lab",
+  "tested_commit": "c8728a345f73c4a1e9114b4a878ecfc2e7b9fbe6",
+  "clean_product_tree": true,
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "timestamp": 1791410143.656188,
+  "passed": true,
+  "commands": [
+    {
+      "argv": [
+        "make",
+        "completion-milestone",
+        "COMPLETION_MILESTONE=13-benchmark-lab",
+        "COMPLETION_GATE=benchmark"
+      ],
+      "exit_code": 0,
+      "seconds": 4.707057952880859,
+      "log_sha256": "dc788b65955747ca0e9266873f1f3f18dedcf362d196d6c24d20cd795df2dd8b"
+    }
+  ]
+}
